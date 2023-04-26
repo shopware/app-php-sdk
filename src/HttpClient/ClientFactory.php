@@ -6,6 +6,8 @@ namespace Shopware\App\SDK\HttpClient;
 
 use Http\Discovery\Psr18Client;
 use Psr\Http\Client\ClientInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Psr\SimpleCache\CacheInterface;
 use Shopware\App\SDK\Shop\ShopInterface;
 
@@ -15,8 +17,8 @@ class ClientFactory
     {
     }
 
-    public function createClient(ShopInterface $shop, ?ClientInterface $client = null): ClientInterface
+    public function createClient(ShopInterface $shop, ClientInterface $client = new Psr18Client(), LoggerInterface $logger = new NullLogger()): ClientInterface
     {
-        return new AuthenticatedClient($client ?? new Psr18Client(), $shop, $this->cache);
+        return new AuthenticatedClient(new LoggerClient($client, $logger), $shop, $this->cache);
     }
 }

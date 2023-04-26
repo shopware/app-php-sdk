@@ -12,6 +12,7 @@ use Psr\Http\Client\ClientInterface;
 use Shopware\App\SDK\HttpClient\AuthenticatedClient;
 use Shopware\App\SDK\HttpClient\ClientFactory;
 use PHPUnit\Framework\TestCase;
+use Shopware\App\SDK\HttpClient\LoggerClient;
 use Shopware\App\SDK\HttpClient\NullCache;
 use Shopware\App\SDK\Test\MockShop;
 
@@ -19,6 +20,7 @@ use Shopware\App\SDK\Test\MockShop;
 #[CoversClass(MockShop::class)]
 #[CoversClass(AuthenticatedClient::class)]
 #[CoversClass(NullCache::class)]
+#[CoversClass(LoggerClient::class)]
 class ClientFactoryTest extends TestCase
 {
     /**
