@@ -1,0 +1,19 @@
+<?php declare(strict_types=1);
+
+namespace Shopware\AppSDK\Exception;
+
+use Psr\Http\Client\RequestExceptionInterface;
+use Psr\Http\Message\RequestInterface;
+
+class SignatureNotFoundException extends \RuntimeException
+{
+    public function __construct(private RequestInterface $request, ?\Throwable $previous = null)
+    {
+        parent::__construct('Signature is not present in request', 0, $previous);
+    }
+
+    public function getRequest(): RequestInterface
+    {
+        return $this->request;
+    }
+}
