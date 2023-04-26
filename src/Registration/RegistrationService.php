@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Registration;
 
 use Psr\Http\Message\RequestInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Authentication\RequestVerifier;
 use Shopware\App\SDK\Authentication\ResponseSigner;
@@ -21,7 +23,8 @@ class RegistrationService
         private readonly ShopRepositoryInterface $shopRepository,
         private readonly RequestVerifier $requestVerifier,
         private readonly ResponseSigner $responseSigner,
-        private readonly ShopSecretGeneratorInterface $shopSecretGeneratorInterface
+        private readonly ShopSecretGeneratorInterface $shopSecretGeneratorInterface,
+        private readonly LoggerInterface $logger = new NullLogger()
     ) {
     }
 
@@ -53,6 +56,11 @@ class RegistrationService
         } else {
             $this->shopRepository->updateShop($shop->withShopUrl($queries['shop-url']));
         }
+
+        $this->logger->info('Shop registration request received', [
+            'shop-id' => $shop->getShopId(),
+            'shop-url' => $shop->getShopUrl(),
+        ]);
 
         return [
             'proof' => $this->responseSigner->getRegistrationSignature($shop),
@@ -90,5 +98,10 @@ class RegistrationService
             $shop->withClientKey($requestContent['apiKey'])
                 ->withClientSecret($requestContent['secretKey'])
         );
+
+        $this->logger->info('Shop registration confirmed', [
+            'shop-id' => $shop->getShopId(),
+            'shop-url' => $shop->getShopUrl(),
+        ]);
     }
 }
