@@ -4,7 +4,7 @@ namespace Shopware\AppSDK\Exception;
 
 class AuthenticationException extends \RuntimeException
 {
-    public function __construct(private string $shopUrl, private string $apiKey, private string $reason, ?\Throwable $previous = null)
+    public function __construct(private readonly string $shopUrl, private readonly string $apiKey, private readonly string $reason, ?\Throwable $previous = null)
     {
         $message = sprintf('Could not authenticate with store. Shopurl: %s, apikey: %s, reason: %s', $shopUrl, $apiKey, $reason);
 

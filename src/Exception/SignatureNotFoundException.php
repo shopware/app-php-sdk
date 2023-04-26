@@ -7,7 +7,7 @@ use Psr\Http\Message\RequestInterface;
 
 class SignatureNotFoundException extends \RuntimeException
 {
-    public function __construct(private RequestInterface $request, ?\Throwable $previous = null)
+    public function __construct(private readonly RequestInterface $request, ?\Throwable $previous = null)
     {
         parent::__construct('Signature is not present in request', 0, $previous);
     }
