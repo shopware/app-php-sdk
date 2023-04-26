@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Shopware\App\SDK\Exception;
 
-use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 
 class SignatureNotFoundException extends \RuntimeException

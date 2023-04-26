@@ -6,9 +6,7 @@ namespace Shopware\App\SDK\HttpClient\SimpleHttpClient;
 
 use Http\Discovery\Psr17Factory;
 use Psr\Http\Client\ClientInterface;
-use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
-use Shopware\App\SDK\PsrFactory;
 
 class SimpleHttpClient
 {

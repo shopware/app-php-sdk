@@ -6,13 +6,10 @@ namespace Shopware\App\SDK\HttpClient;
 
 use Http\Discovery\Psr17Factory;
 use Psr\Http\Client\ClientInterface;
-use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamFactoryInterface;
 use Psr\SimpleCache\CacheInterface;
 use Shopware\App\SDK\HttpClient\Exception\AuthenticationFailedException;
-use Shopware\App\SDK\PsrFactory;
 use Shopware\App\SDK\Shop\ShopInterface;
 
 class AuthenticatedClient implements ClientInterface
