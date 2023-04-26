@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Shopware\App\SDK\Test;
 
 use Shopware\App\SDK\Shop\ShopInterface;

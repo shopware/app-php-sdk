@@ -4,6 +4,7 @@ return (new PhpCsFixer\Config())
     ->setRules([
         '@PSR12' => true,
         '@PSR12:risky' => true,
+        'declare_strict_types' => true,
     ])
     ->setFinder(PhpCsFixer\Finder::create()
         ->exclude('vendor')

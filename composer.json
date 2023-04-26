@@ -17,13 +17,20 @@
   },
   "require": {
     "php": "~8.1.0 || ~8.2.0",
-    "psr-discovery/discovery": ">=1.0.2"
+    "php-http/discovery": "^1.17",
+    "psr/http-client": "^1.0.2",
+    "psr/http-client-implementation": "*",
+    "psr/http-factory": "^1.0.2",
+    "psr/http-factory-implementation": "*",
+    "psr/http-message": "^2.0",
+    "psr/simple-cache": "^3.0.0"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^3.16",
     "nyholm/psr7": "^1.7.0",
     "phpstan/phpstan": "^1.10.14",
-    "phpunit/phpunit": "^10.1"
+    "phpunit/phpunit": "^10.1",
+    "php-http/curl-client": "*"
   },
   "autoload": {
     "psr-4": {
@@ -36,7 +43,10 @@
     }
   },
   "config": {
-    "sort-packages": true
+    "sort-packages": true,
+    "allow-plugins": {
+      "php-http/discovery": false
+    }
   },
   "scripts": {
     "test": "phpunit",

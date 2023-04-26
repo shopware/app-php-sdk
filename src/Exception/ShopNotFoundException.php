@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Shopware\App\SDK\Exception;
 
 class ShopNotFoundException extends \RuntimeException

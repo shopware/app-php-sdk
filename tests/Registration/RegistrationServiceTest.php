@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Shopware\App\SDK\Tests\Registration;
 
 use Nyholm\Psr7\Request;
