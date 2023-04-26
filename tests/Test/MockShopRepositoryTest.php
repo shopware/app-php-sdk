@@ -33,4 +33,3 @@ class MockShopRepositoryTest extends TestCase
         static::assertNull($this->repository->getShopFromId('1'));
     }
 }
-
