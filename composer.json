@@ -26,9 +26,24 @@
     "phpunit/phpunit": "^10.1"
   },
   "autoload": {
-    "Shopware\\AppSDK\\": "src/"
+    "psr-4": {
+      "Shopware\\AppSDK\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Shopware\\AppSDK\\Tests\\": "tests/"
+    }
   },
   "config": {
     "sort-packages": true
+  },
+  "scripts": {
+    "test": "phpunit",
+    "check": [
+      "phpunit",
+      "php-cs-fixer fix",
+      "phpstan analyse"
+    ]
   }
 }

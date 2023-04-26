@@ -6,7 +6,7 @@ namespace Shopware\AppSDK\Authentication;
 
 use Psr\Http\Message\RequestInterface;
 use Shopware\AppSDK\Exception\SignatureNotFoundException;
-use Shopware\AppSDK\Exception\SignatureValidationException;
+use Shopware\AppSDK\Exception\SignatureInvalidException;
 use Shopware\AppSDK\Shop\ShopInterface;
 use Shopware\AppSDK\AppConfiguration;
 
@@ -17,7 +17,7 @@ class RequestVerifier
     private const SHOPWARE_APP_SIGNATURE_HEADER = 'shopware-app-signature';
 
     /**
-     * @throws SignatureValidationException
+     * @throws SignatureInvalidException
      * @throws SignatureNotFoundException
      */
     public function authenticateRegistrationRequest(RequestInterface $request, AppConfiguration $appConfiguration): void
@@ -42,7 +42,7 @@ class RequestVerifier
     }
 
     /**
-     * @throws SignatureValidationException
+     * @throws SignatureInvalidException
      * @throws SignatureNotFoundException
      */
     public function authenticatePostRequest(RequestInterface $request, ShopInterface $shop): void
@@ -58,7 +58,7 @@ class RequestVerifier
     }
 
     /**
-     * @throws SignatureValidationException
+     * @throws SignatureInvalidException
      * @throws SignatureNotFoundException
      */
     public function authenticateGetRequest(RequestInterface $request, ShopInterface $shop): void
@@ -108,7 +108,7 @@ class RequestVerifier
     }
 
     /**
-     * @throws SignatureValidationException
+     * @throws SignatureInvalidException
      */
     private function verifySignature(
         RequestInterface $request,
@@ -119,7 +119,7 @@ class RequestVerifier
         $hmac = hash_hmac('sha256', $message, $secret);
 
         if (!hash_equals($hmac, $signature)) {
-            throw new SignatureValidationException($request);
+            throw new SignatureInvalidException($request);
         }
     }
 

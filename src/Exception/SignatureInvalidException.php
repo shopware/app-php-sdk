@@ -7,7 +7,7 @@ namespace Shopware\AppSDK\Exception;
 use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 
-class SignatureValidationException extends \Exception
+class SignatureInvalidException extends \Exception
 {
     public function __construct(
         private readonly RequestInterface $request,

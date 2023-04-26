@@ -3,3 +3,4 @@
 /composer.lock export-ignore
 /phpstan.neon.dist export-ignore
 /.php-cs-fixer.dist.php export-ignore
+/phpunit.xml export-ignore

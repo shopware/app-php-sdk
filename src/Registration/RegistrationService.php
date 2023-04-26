@@ -10,7 +10,7 @@ use Shopware\AppSDK\Authentication\RequestVerifier;
 use Shopware\AppSDK\Authentication\ResponseSigner;
 use Shopware\AppSDK\Exception\MissingShopParameterException;
 use Shopware\AppSDK\Exception\SignatureNotFoundException;
-use Shopware\AppSDK\Exception\SignatureValidationException;
+use Shopware\AppSDK\Exception\SignatureInvalidException;
 use Shopware\AppSDK\Shop\ShopRepositoryInterface;
 
 class RegistrationService
@@ -60,7 +60,7 @@ class RegistrationService
 
     /**
      * @throws \JsonException
-     * @throws SignatureValidationException
+     * @throws SignatureInvalidException
      * @throws SignatureNotFoundException
      */
     public function handleConfirmation(RequestInterface $request): void
@@ -75,7 +75,7 @@ class RegistrationService
         $shop = $this->shopRepository->getShopFromId($requestContent['shopId']);
 
         if (!$shop) {
-            throw new SignatureValidationException($request);
+            throw new SignatureInvalidException($request);
         }
 
         $request->getBody()->rewind();
