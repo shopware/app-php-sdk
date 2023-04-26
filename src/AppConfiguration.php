@@ -8,8 +8,7 @@ class AppConfiguration
         private readonly string $appName,
         private readonly string $appSecret,
         private readonly string $appUrl
-    )
-    {
+    ) {
     }
 
     public function getAppName(): string
