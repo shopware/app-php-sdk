@@ -53,4 +53,11 @@ class MockShop implements ShopInterface
 
         return $this;
     }
+
+    public function withShopUrl(string $url): ShopInterface
+    {
+        $this->shopUrl = $url;
+
+        return $this;
+    }
 }

@@ -19,4 +19,6 @@ interface ShopInterface
     public function withClientKey(string $apiKey): ShopInterface;
 
     public function withClientSecret(string $secretKey): ShopInterface;
+
+    public function withShopUrl(string $url): ShopInterface;
 }

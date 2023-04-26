@@ -9,6 +9,7 @@ use Shopware\AppSDK\AppConfiguration;
 use Shopware\AppSDK\Authentication\RequestVerifier;
 use Shopware\AppSDK\Authentication\ResponseSigner;
 use Shopware\AppSDK\Exception\MissingShopParameterException;
+use Shopware\AppSDK\Exception\ShopNotFoundException;
 use Shopware\AppSDK\Exception\SignatureNotFoundException;
 use Shopware\AppSDK\Exception\SignatureInvalidException;
 use Shopware\AppSDK\Shop\ShopRepositoryInterface;
@@ -49,6 +50,8 @@ class RegistrationService
             );
 
             $this->shopRepository->createShop($shop);
+        } else {
+            $this->shopRepository->updateShop($shop->withShopUrl($queries['shop-url']));
         }
 
         return [
@@ -62,6 +65,7 @@ class RegistrationService
      * @throws \JsonException
      * @throws SignatureInvalidException
      * @throws SignatureNotFoundException
+     * @throws ShopNotFoundException
      */
     public function handleConfirmation(RequestInterface $request): void
     {
@@ -75,7 +79,7 @@ class RegistrationService
         $shop = $this->shopRepository->getShopFromId($requestContent['shopId']);
 
         if (!$shop) {
-            throw new SignatureInvalidException($request);
+            throw new ShopNotFoundException();
         }
 
         $request->getBody()->rewind();
