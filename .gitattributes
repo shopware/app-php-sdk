@@ -4,3 +4,6 @@
 /phpstan.neon.dist export-ignore
 /.php-cs-fixer.dist.php export-ignore
 /phpunit.xml export-ignore
+/devenv.nix export-ignore
+/devenv.lock export-ignore
+/.envrc export-ignore
