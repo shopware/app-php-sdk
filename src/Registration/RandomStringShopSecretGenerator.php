@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Shopware\AppSDK\Registration;
+namespace Shopware\App\SDK\Registration;
 
 /**
  * @codeCoverageIgnore

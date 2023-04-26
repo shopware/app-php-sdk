@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Shopware\AppSDK\Shop;
+namespace Shopware\App\SDK\Shop;
 
 interface ShopInterface
 {

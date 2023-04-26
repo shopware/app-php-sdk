@@ -1,10 +1,10 @@
 <?php
 
-namespace Shopware\AppSDK\Tests\Exception;
+namespace Shopware\App\SDK\Tests\Exception;
 
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
-use Shopware\AppSDK\Exception\SignatureNotFoundException;
+use Shopware\App\SDK\Exception\SignatureNotFoundException;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(SignatureNotFoundException::class)]

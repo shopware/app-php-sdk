@@ -1,9 +1,9 @@
 <?php
 
-namespace Shopware\AppSDK\Test;
+namespace Shopware\App\SDK\Test;
 
-use Shopware\AppSDK\Shop\ShopInterface;
-use Shopware\AppSDK\Shop\ShopRepositoryInterface;
+use Shopware\App\SDK\Shop\ShopInterface;
+use Shopware\App\SDK\Shop\ShopRepositoryInterface;
 
 class MockShopRepository implements ShopRepositoryInterface
 {

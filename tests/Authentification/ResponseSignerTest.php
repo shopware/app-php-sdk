@@ -1,13 +1,13 @@
 <?php
 
-namespace Shopware\AppSDK\Tests\Authentication;
+namespace Shopware\App\SDK\Tests\Authentication;
 
 use Nyholm\Psr7\Response;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Shopware\AppSDK\AppConfiguration;
-use Shopware\AppSDK\Authentication\ResponseSigner;
-use Shopware\AppSDK\Test\MockShop;
+use Shopware\App\SDK\AppConfiguration;
+use Shopware\App\SDK\Authentication\ResponseSigner;
+use Shopware\App\SDK\Test\MockShop;
 
 #[CoversClass(ResponseSigner::class)]
 #[CoversClass(AppConfiguration::class)]

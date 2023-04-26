@@ -1,10 +1,10 @@
 <?php
 
-namespace Shopware\AppSDK\Tests\Test;
+namespace Shopware\App\SDK\Tests\Test;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use Shopware\AppSDK\Test\MockShop;
-use Shopware\AppSDK\Test\MockShopRepository;
+use Shopware\App\SDK\Test\MockShop;
+use Shopware\App\SDK\Test\MockShopRepository;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(MockShopRepository::class)]

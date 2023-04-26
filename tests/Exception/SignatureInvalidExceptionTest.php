@@ -1,10 +1,10 @@
 <?php
 
-namespace Shopware\AppSDK\Tests\Exception;
+namespace Shopware\App\SDK\Tests\Exception;
 
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
-use Shopware\AppSDK\Exception\SignatureInvalidException;
+use Shopware\App\SDK\Exception\SignatureInvalidException;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(SignatureInvalidException::class)]

@@ -27,12 +27,12 @@
   },
   "autoload": {
     "psr-4": {
-      "Shopware\\AppSDK\\": "src/"
+      "Shopware\\App\\SDK\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Shopware\\AppSDK\\Tests\\": "tests/"
+      "Shopware\\App\\SDK\\Tests\\": "tests/"
     }
   },
   "config": {

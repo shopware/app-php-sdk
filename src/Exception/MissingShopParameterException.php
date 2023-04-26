@@ -1,6 +1,6 @@
 <?php
 
-namespace Shopware\AppSDK\Exception;
+namespace Shopware\App\SDK\Exception;
 
 class MissingShopParameterException extends \RuntimeException
 {

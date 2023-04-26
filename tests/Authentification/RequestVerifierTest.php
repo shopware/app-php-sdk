@@ -1,16 +1,16 @@
 <?php
 
-namespace Shopware\AppSDK\Tests\Authentication;
+namespace Shopware\App\SDK\Tests\Authentication;
 
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
-use Shopware\AppSDK\AppConfiguration;
-use Shopware\AppSDK\Authentication\RequestVerifier;
-use Shopware\AppSDK\Exception\SignatureInvalidException;
-use Shopware\AppSDK\Exception\SignatureNotFoundException;
-use Shopware\AppSDK\Test\MockShop;
+use Shopware\App\SDK\AppConfiguration;
+use Shopware\App\SDK\Authentication\RequestVerifier;
+use Shopware\App\SDK\Exception\SignatureInvalidException;
+use Shopware\App\SDK\Exception\SignatureNotFoundException;
+use Shopware\App\SDK\Test\MockShop;
 
 #[CoversClass(RequestVerifier::class)]
 #[CoversClass(SignatureNotFoundException::class)]

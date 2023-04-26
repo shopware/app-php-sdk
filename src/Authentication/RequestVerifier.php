@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Shopware\AppSDK\Authentication;
+namespace Shopware\App\SDK\Authentication;
 
 use Psr\Http\Message\RequestInterface;
-use Shopware\AppSDK\Exception\SignatureNotFoundException;
-use Shopware\AppSDK\Exception\SignatureInvalidException;
-use Shopware\AppSDK\Shop\ShopInterface;
-use Shopware\AppSDK\AppConfiguration;
+use Shopware\App\SDK\Exception\SignatureNotFoundException;
+use Shopware\App\SDK\Exception\SignatureInvalidException;
+use Shopware\App\SDK\Shop\ShopInterface;
+use Shopware\App\SDK\AppConfiguration;
 
 class RequestVerifier
 {

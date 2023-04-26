@@ -1,6 +1,6 @@
 <?php
 
-namespace Shopware\AppSDK;
+namespace Shopware\App\SDK;
 
 class AppConfiguration
 {

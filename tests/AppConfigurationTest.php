@@ -1,10 +1,10 @@
 <?php
 
-namespace Shopware\AppSDK\Tests;
+namespace Shopware\App\SDK\Tests;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Shopware\AppSDK\AppConfiguration;
+use Shopware\App\SDK\AppConfiguration;
 
 #[CoversClass(AppConfiguration::class)]
 class AppConfigurationTest extends TestCase

@@ -1,8 +1,8 @@
 <?php
 
-namespace Shopware\AppSDK\Test;
+namespace Shopware\App\SDK\Test;
 
-use Shopware\AppSDK\Shop\ShopInterface;
+use Shopware\App\SDK\Shop\ShopInterface;
 
 class MockShop implements ShopInterface
 {

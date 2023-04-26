@@ -1,19 +1,19 @@
 <?php
 
-namespace Shopware\AppSDK\Tests\Registration;
+namespace Shopware\App\SDK\Tests\Registration;
 
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
-use Shopware\AppSDK\AppConfiguration;
-use Shopware\AppSDK\Authentication\RequestVerifier;
-use Shopware\AppSDK\Authentication\ResponseSigner;
-use Shopware\AppSDK\Exception\MissingShopParameterException;
-use Shopware\AppSDK\Exception\ShopNotFoundException;
-use Shopware\AppSDK\Registration\RandomStringShopSecretGenerator;
-use Shopware\AppSDK\Registration\RegistrationService;
+use Shopware\App\SDK\AppConfiguration;
+use Shopware\App\SDK\Authentication\RequestVerifier;
+use Shopware\App\SDK\Authentication\ResponseSigner;
+use Shopware\App\SDK\Exception\MissingShopParameterException;
+use Shopware\App\SDK\Exception\ShopNotFoundException;
+use Shopware\App\SDK\Registration\RandomStringShopSecretGenerator;
+use Shopware\App\SDK\Registration\RegistrationService;
 use PHPUnit\Framework\TestCase;
-use Shopware\AppSDK\Test\MockShop;
-use Shopware\AppSDK\Test\MockShopRepository;
+use Shopware\App\SDK\Test\MockShop;
+use Shopware\App\SDK\Test\MockShopRepository;
 
 #[CoversClass(RegistrationService::class)]
 #[CoversClass(AppConfiguration::class)]
