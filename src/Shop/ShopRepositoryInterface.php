@@ -6,7 +6,7 @@ namespace Shopware\App\SDK\Shop;
 
 interface ShopRepositoryInterface
 {
-    public function createShopFromArray(string $shopId, string $shopUrl, string $shopSecret): ShopInterface;
+    public function createShopStruct(string $shopId, string $shopUrl, string $shopSecret): ShopInterface;
 
     public function createShop(ShopInterface $shop): void;
 

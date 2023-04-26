@@ -14,7 +14,7 @@ class MockShopRepository implements ShopRepositoryInterface
      */
     public array $shops = [];
 
-    public function createShopFromArray(string $shopId, string $shopUrl, string $shopSecret): ShopInterface
+    public function createShopStruct(string $shopId, string $shopUrl, string $shopSecret): ShopInterface
     {
         return new MockShop($shopId, $shopUrl, $shopSecret);
     }

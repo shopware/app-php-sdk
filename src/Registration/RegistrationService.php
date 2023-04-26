@@ -43,7 +43,7 @@ class RegistrationService
         $shop = $this->shopRepository->getShopFromId($queries['shop-id']);
 
         if ($shop === null) {
-            $shop = $this->shopRepository->createShopFromArray(
+            $shop = $this->shopRepository->createShopStruct(
                 $queries['shop-id'],
                 $queries['shop-url'],
                 $this->shopSecretGeneratorInterface->generate()

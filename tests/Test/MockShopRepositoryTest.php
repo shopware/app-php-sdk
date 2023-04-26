@@ -24,7 +24,7 @@ class MockShopRepositoryTest extends TestCase
     {
         static::assertNull($this->repository->getShopFromId('1'));
 
-        $shop = $this->repository->createShopFromArray('1', 'asd', 'test');
+        $shop = $this->repository->createShopStruct('1', 'asd', 'test');
 
         $this->repository->createShop($shop);
 
