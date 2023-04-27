@@ -1,4 +1,4 @@
-name: CS-Fixer
+name: PHPStan
 
 on:
   push:
