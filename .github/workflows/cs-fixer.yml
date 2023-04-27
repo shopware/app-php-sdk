@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '**.php'
   pull_request:
   workflow_dispatch:
 
