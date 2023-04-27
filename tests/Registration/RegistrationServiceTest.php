@@ -62,7 +62,7 @@ class RegistrationServiceTest extends TestCase
     {
         $request = new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890');
 
-        $this->registerService->handleShopRegistrationRequest($request, '');
+        $response = $this->registerService->handleShopRegistrationRequest($request, '');
 
         $shop = $this->shopRepository->getShopFromId('123');
         static::assertNotNull($shop);
@@ -70,6 +70,14 @@ class RegistrationServiceTest extends TestCase
         static::assertEquals('123', $shop->getShopId());
         static::assertEquals('https://my-shop.com', $shop->getShopUrl());
         static::assertNotNull($shop->getShopSecret());
+
+        static::assertSame(200, $response->getStatusCode());
+        $json = json_decode((string) $response->getBody()->getContents(), true);
+
+        static::assertIsArray($json);
+        static::assertArrayHasKey('proof', $json);
+        static::assertArrayHasKey('confirmation_url', $json);
+        static::assertArrayHasKey('secret', $json);
     }
 
     public function testRegisterUpdate(): void
@@ -128,7 +136,7 @@ class RegistrationServiceTest extends TestCase
 
         $request = new Request('POST', 'http://localhost', [], '{"shopId": "123", "apiKey": "1", "secretKey": "2"}');
 
-        $this->registerService->handleConfirmation($request);
+        $response = $this->registerService->handleConfirmation($request);
 
         $shop = $this->shopRepository->getShopFromId('123');
         static::assertNotNull($shop);
@@ -137,7 +145,10 @@ class RegistrationServiceTest extends TestCase
         static::assertEquals('2', $shop->getShopClientSecret());
 
         static::assertCount(2, $events);
+        static::assertArrayHasKey('0', $events);
+        static::assertArrayHasKey('1', $events);
         static::assertInstanceOf(RegistrationBeforeCompletedEvent::class, $events[0]);
         static::assertInstanceOf(RegistrationCompletedEvent::class, $events[1]);
+        static::assertSame(204, $response->getStatusCode());
     }
 }

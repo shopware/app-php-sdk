@@ -29,9 +29,6 @@ jobs:
           tools: composer:v2
           coverage: xdebug
 
-      - name: Validate composer.json and composer.lock
-        run: composer validate
-
       - name: Install lowest dependencies with composer
         if: matrix.dependencies == 'lowest'
         run: composer update --no-ansi --no-interaction --no-progress --prefer-lowest

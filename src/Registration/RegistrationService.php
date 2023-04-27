@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Shopware\App\SDK\Registration;
 
+use Http\Discovery\Psr17Factory;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Shopware\App\SDK\AppConfiguration;
@@ -35,10 +37,8 @@ class RegistrationService
     /**
      * @throws SignatureNotFoundException
      * @throws SignatureInvalidException
-     *
-     * @return array{proof: string, confirmation_url: string, secret: string}
      */
-    public function handleShopRegistrationRequest(RequestInterface $request, string $confirmUrl): array
+    public function handleShopRegistrationRequest(RequestInterface $request, string $confirmUrl): ResponseInterface
     {
         $this->requestVerifier->authenticateRegistrationRequest($request, $this->appConfiguration);
 
@@ -67,11 +67,20 @@ class RegistrationService
             'shop-url' => $shop->getShopUrl(),
         ]);
 
-        return [
+
+        $psrFactory = new Psr17Factory();
+
+        $data = [
             'proof' => $this->responseSigner->getRegistrationSignature($shop),
             'confirmation_url' => $confirmUrl,
             'secret' => $shop->getShopSecret(),
         ];
+
+        $response = $psrFactory->createResponse(200);
+
+        return $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withBody($psrFactory->createStream(json_encode($data, JSON_THROW_ON_ERROR)));
     }
 
     /**
@@ -80,7 +89,7 @@ class RegistrationService
      * @throws SignatureNotFoundException
      * @throws ShopNotFoundException
      */
-    public function handleConfirmation(RequestInterface $request): void
+    public function handleConfirmation(RequestInterface $request): ResponseInterface
     {
         /** @var array<string, mixed> $requestContent */
         $requestContent = json_decode($request->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
@@ -115,5 +124,9 @@ class RegistrationService
         if ($this->eventDispatcher !== null) {
             $this->eventDispatcher->dispatch(new RegistrationCompletedEvent($shop, $request));
         }
+
+        $psrFactory = new Psr17Factory();
+
+        return $psrFactory->createResponse(204);
     }
 }
