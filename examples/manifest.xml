@@ -17,4 +17,15 @@
         <registrationUrl>http://localhost:6000/register/authorize</registrationUrl>
         <secret>test</secret>
     </setup>
+    <admin>
+        <action-button action="detail" entity="product" view="detail" url="http://localhost:6000/action/product">
+            <label>Do something</label>
+        </action-button>
+    </admin>
+    <webhooks>
+        <webhook name="productWritten" url="http://localhost:6000/webhook/product.written" event="product.written"/>
+    </webhooks>
+    <permissions>
+        <read>product</read>
+    </permissions>
 </manifest>

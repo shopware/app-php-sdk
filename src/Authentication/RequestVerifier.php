@@ -49,10 +49,12 @@ class RequestVerifier
     {
         $signature = $this->getSignatureFromHeader($request, self::SHOPWARE_SHOP_SIGNATURE_HEADER);
 
+        $content = $request->getBody()->getContents();
+        $request->getBody()->rewind();
         $this->verifySignature(
             $request,
             $shop->getShopSecret(),
-            $request->getBody()->getContents(),
+            $content,
             $signature
         );
     }
