@@ -63,8 +63,8 @@ class AuthenticatedClient implements ClientInterface
             ->withHeader('Content-Type', 'application/json')
             ->withBody($factory->createStream(json_encode([
                 'grant_type' => 'client_credentials',
-                'client_id' => $shop->getClientId(),
-                'client_secret' => $shop->getClientSecret(),
+                'client_id' => $shop->getShopClientId(),
+                'client_secret' => $shop->getShopClientSecret(),
             ], JSON_THROW_ON_ERROR)));
     }
 }

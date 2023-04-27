@@ -32,26 +32,20 @@ class MockShop implements ShopInterface
         return $this->shopSecret;
     }
 
-    public function getClientId(): ?string
+    public function getShopClientId(): ?string
     {
         return $this->clientId;
     }
 
-    public function getClientSecret(): ?string
+    public function getShopClientSecret(): ?string
     {
         return $this->clientSecret;
     }
 
-    public function withClientKey(string $apiKey): ShopInterface
+    public function withShopApiCredentials(string $clientId, string $clientSecret): ShopInterface
     {
-        $this->clientId = $apiKey;
-
-        return $this;
-    }
-
-    public function withClientSecret(string $secretKey): ShopInterface
-    {
-        $this->clientSecret = $secretKey;
+        $this->clientId = $clientId;
+        $this->clientSecret = $clientSecret;
 
         return $this;
     }

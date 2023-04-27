@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Shopware\App\SDK\Registration;
 
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Authentication\RequestVerifier;
 use Shopware\App\SDK\Authentication\ResponseSigner;
+use Shopware\App\SDK\Events\RegistrationBeforeCompletedEvent;
+use Shopware\App\SDK\Events\RegistrationCompletedEvent;
 use Shopware\App\SDK\Exception\MissingShopParameterException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
 use Shopware\App\SDK\Exception\SignatureNotFoundException;
@@ -24,12 +27,14 @@ class RegistrationService
         private readonly RequestVerifier $requestVerifier,
         private readonly ResponseSigner $responseSigner,
         private readonly ShopSecretGeneratorInterface $shopSecretGeneratorInterface,
-        private readonly LoggerInterface $logger = new NullLogger()
+        private readonly LoggerInterface $logger = new NullLogger(),
+        private readonly ?EventDispatcherInterface $eventDispatcher = null
     ) {
     }
 
     /**
      * @throws SignatureNotFoundException
+     * @throws SignatureInvalidException
      *
      * @return array{proof: string, confirmation_url: string, secret: string}
      */
@@ -94,14 +99,21 @@ class RegistrationService
 
         $this->requestVerifier->authenticatePostRequest($request, $shop);
 
+        if ($this->eventDispatcher !== null) {
+            $this->eventDispatcher->dispatch(new RegistrationBeforeCompletedEvent($shop, $request, $requestContent));
+        }
+
         $this->shopRepository->updateShop(
-            $shop->withClientKey($requestContent['apiKey'])
-                ->withClientSecret($requestContent['secretKey'])
+            $shop->withShopApiCredentials($requestContent['apiKey'], $requestContent['secretKey'])
         );
 
         $this->logger->info('Shop registration confirmed', [
             'shop-id' => $shop->getShopId(),
             'shop-url' => $shop->getShopUrl(),
         ]);
+
+        if ($this->eventDispatcher !== null) {
+            $this->eventDispatcher->dispatch(new RegistrationCompletedEvent($shop, $request));
+        }
     }
 }

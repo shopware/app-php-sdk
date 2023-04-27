@@ -12,13 +12,11 @@ interface ShopInterface
 
     public function getShopSecret(): string;
 
-    public function getClientId(): ?string;
+    public function getShopClientId(): ?string;
 
-    public function getClientSecret(): ?string;
+    public function getShopClientSecret(): ?string;
 
-    public function withClientKey(string $apiKey): ShopInterface;
-
-    public function withClientSecret(string $secretKey): ShopInterface;
+    public function withShopApiCredentials(string $clientId, string $clientSecret): ShopInterface;
 
     public function withShopUrl(string $url): ShopInterface;
 }
