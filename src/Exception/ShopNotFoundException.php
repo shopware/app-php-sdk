@@ -6,8 +6,8 @@ namespace Shopware\App\SDK\Exception;
 
 class ShopNotFoundException extends \RuntimeException
 {
-    public function __construct(?\Throwable $previous = null)
+    public function __construct(string $shopId, ?\Throwable $previous = null)
     {
-        parent::__construct('Shop not found', 0, $previous);
+        parent::__construct(sprintf('Shop with id "%s" not found', $shopId), 0, $previous);
     }
 }

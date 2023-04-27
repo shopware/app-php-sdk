@@ -101,7 +101,7 @@ class RegistrationService
         $shop = $this->shopRepository->getShopFromId($requestContent['shopId']);
 
         if (!$shop) {
-            throw new ShopNotFoundException();
+            throw new ShopNotFoundException($requestContent['shopId']);
         }
 
         $request->getBody()->rewind();
