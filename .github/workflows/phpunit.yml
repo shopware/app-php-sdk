@@ -1,4 +1,4 @@
-name: PHP
+name: PHPUnit
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  unit:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -45,36 +45,3 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           file: ./coverage.xml
-
-  cs-fixer:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.1'
-          coverage: none
-
-      - name: Install dependencies
-        run: composer install
-
-      - name: Run PHP-CS-Fixer
-        run: vendor/bin/php-cs-fixer fix --dry-run
-  static-analyse:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.1'
-          coverage: none
-
-      - name: Install dependencies
-        run: composer install
-
-      - name: Run PHPStan
-        run: vendor/bin/phpstan
