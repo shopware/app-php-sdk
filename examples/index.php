@@ -7,7 +7,6 @@ use Nyholm\Psr7Server\ServerRequestCreator;
 use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Authentication\RequestVerifier;
 use Shopware\App\SDK\Authentication\ResponseSigner;
-use Shopware\App\SDK\Registration\RandomStringShopSecretGenerator;
 use Shopware\App\SDK\Registration\RegistrationService;
 
 require __DIR__ . '/../vendor/autoload.php';
