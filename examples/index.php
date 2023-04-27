@@ -25,7 +25,7 @@ $creator = new ServerRequestCreator(
 
 $serverRequest = $creator->fromGlobals();
 
-$app = new AppConfiguration('Foo', 'test', 'http://localhost:6000');
+$app = new AppConfiguration('Foo', 'test');
 
 $register = new RegistrationService(
     $app,

@@ -15,12 +15,10 @@ class AppConfigurationTest extends TestCase
     {
         $config = new AppConfiguration(
             'My App',
-            'my-secret',
-            'https://my-app.com'
+            'my-secret'
         );
 
         static::assertSame('My App', $config->getAppName());
         static::assertSame('my-secret', $config->getAppSecret());
-        static::assertSame('https://my-app.com', $config->getAppUrl());
     }
 }

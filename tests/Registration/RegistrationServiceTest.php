@@ -38,7 +38,7 @@ class RegistrationServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->appConfiguration = new AppConfiguration('My App', 'my-secret', 'https://my-app.com');
+        $this->appConfiguration = new AppConfiguration('My App', 'my-secret');
         $this->shopRepository = new MockShopRepository();
         $this->registerService = new RegistrationService(
             $this->appConfiguration,

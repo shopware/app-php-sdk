@@ -20,7 +20,7 @@ class ResponseSignerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->signer = new ResponseSigner(new AppConfiguration('test', 'test', 'test.de'));
+        $this->signer = new ResponseSigner(new AppConfiguration('test', 'test'));
     }
 
     public function testRegisterSigning(): void
