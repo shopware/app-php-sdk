@@ -28,7 +28,7 @@ class RegistrationService
         private readonly ShopRepositoryInterface $shopRepository,
         private readonly RequestVerifier $requestVerifier,
         private readonly ResponseSigner $responseSigner,
-        private readonly ShopSecretGeneratorInterface $shopSecretGeneratorInterface,
+        private readonly ShopSecretGeneratorInterface $shopSecretGeneratorInterface = new RandomStringShopSecretGenerator(),
         private readonly LoggerInterface $logger = new NullLogger(),
         private readonly ?EventDispatcherInterface $eventDispatcher = null
     ) {

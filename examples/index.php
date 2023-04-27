@@ -31,8 +31,7 @@ $register = new RegistrationService(
     $app,
     new FileShopRepository(),
     new RequestVerifier(),
-    new ResponseSigner($app),
-    new RandomStringShopSecretGenerator()
+    new ResponseSigner($app)
 );
 
 if (str_starts_with($serverRequest->getUri()->getPath(), '/register/authorize')) {

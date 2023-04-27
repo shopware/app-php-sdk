@@ -6,6 +6,10 @@ use Shopware\App\SDK\Shop\ShopInterface;
 use Shopware\App\SDK\Shop\ShopRepositoryInterface;
 use Shopware\App\SDK\Test\MockShop;
 
+/**
+ * This is a simple example implementation of a ShopRepositoryInterface.
+ * Do not use this in production.
+ */
 class FileShopRepository implements ShopRepositoryInterface
 {
     private function getPath(string $shopId): string
