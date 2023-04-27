@@ -6,7 +6,7 @@ namespace Shopware\App\SDK\Tests\Events;
 
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
-use Shopware\App\SDK\Events\RegistrationBeforeCompletedEvent;
+use Shopware\App\SDK\Event\RegistrationBeforeCompletedEvent;
 use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Test\MockShop;
 

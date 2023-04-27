@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Shopware\App\SDK\Events;
+namespace Shopware\App\SDK\Event;
 
 use Psr\Http\Message\RequestInterface;
 use Shopware\App\SDK\Shop\ShopInterface;
