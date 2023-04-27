@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Shopware\App\SDK\Tests\Events;
 
 use Nyholm\Psr7\Request;
@@ -28,4 +30,3 @@ class RegistrationBeforeCompletedEventTest extends TestCase
         static::assertSame(['apiKey' => 'foo', 'secretKey' => 'bar'], $event->getConfirmation());
     }
 }
-

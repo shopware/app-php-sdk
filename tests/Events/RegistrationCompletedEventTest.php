@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Shopware\App\SDK\Tests\Events;
 
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
-use Shopware\App\SDK\Events\RegistrationBeforeCompletedEvent;
 use Shopware\App\SDK\Events\RegistrationCompletedEvent;
 use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Test\MockShop;
@@ -27,4 +28,3 @@ class RegistrationCompletedEventTest extends TestCase
 
     }
 }
-
