@@ -14,5 +14,5 @@ interface ShopRepositoryInterface
 
     public function updateShop(ShopInterface $shop): void;
 
-    public function deleteShop(ShopInterface $shop): void;
+    public function deleteShop(string $shopId): void;
 }

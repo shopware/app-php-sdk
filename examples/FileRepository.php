@@ -47,9 +47,9 @@ class FileShopRepository implements ShopRepositoryInterface
         $this->createShop($shop);
     }
 
-    public function deleteShop(ShopInterface $shop): void
+    public function deleteShop(string $shopId): void
     {
-        $path = $this->getPath($shop->getShopId());
+        $path = $this->getPath($shopId);
 
         if (file_exists($path)) {
             unlink($path);

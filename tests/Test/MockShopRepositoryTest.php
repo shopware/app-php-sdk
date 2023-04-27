@@ -30,7 +30,7 @@ class MockShopRepositoryTest extends TestCase
 
         static::assertSame($shop, $this->repository->getShopFromId('1'));
 
-        $this->repository->deleteShop($shop);
+        $this->repository->deleteShop($shop->getShopId());
 
         static::assertNull($this->repository->getShopFromId('1'));
     }

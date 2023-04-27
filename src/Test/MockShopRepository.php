@@ -34,8 +34,8 @@ class MockShopRepository implements ShopRepositoryInterface
         $this->shops[$shop->getShopId()] = $shop;
     }
 
-    public function deleteShop(ShopInterface $shop): void
+    public function deleteShop(string $shopId): void
     {
-        unset($this->shops[$shop->getShopId()]);
+        unset($this->shops[$shopId]);
     }
 }
