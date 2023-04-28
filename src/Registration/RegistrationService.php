@@ -71,7 +71,7 @@ class RegistrationService
         $psrFactory = new Psr17Factory();
 
         $data = [
-            'proof' => $this->responseSigner->getRegistrationSignature($shop),
+            'proof' => $this->responseSigner->getRegistrationSignature($this->appConfiguration, $shop),
             'confirmation_url' => $confirmUrl,
             'secret' => $shop->getShopSecret(),
         ];

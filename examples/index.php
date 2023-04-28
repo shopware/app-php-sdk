@@ -33,7 +33,7 @@ $register = new RegistrationService(
     $app,
     $fileShopRepository,
     new RequestVerifier(),
-    new ResponseSigner($app)
+    new ResponseSigner()
 );
 $shopResolver = new ShopResolver($fileShopRepository);
 $contextResolver = new ContextResolver();

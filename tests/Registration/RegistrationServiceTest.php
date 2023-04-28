@@ -44,7 +44,7 @@ class RegistrationServiceTest extends TestCase
             $this->appConfiguration,
             $this->shopRepository,
             $this->createMock(RequestVerifier::class),
-            new ResponseSigner($this->appConfiguration),
+            new ResponseSigner(),
             new RandomStringShopSecretGenerator()
         );
     }
@@ -126,7 +126,7 @@ class RegistrationServiceTest extends TestCase
             $this->appConfiguration,
             $this->shopRepository,
             $this->createMock(RequestVerifier::class),
-            new ResponseSigner($this->appConfiguration),
+            new ResponseSigner(),
             new RandomStringShopSecretGenerator(),
             new NullLogger(),
             $eventDispatcher
