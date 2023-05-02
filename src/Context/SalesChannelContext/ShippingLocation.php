@@ -16,7 +16,7 @@ class ShippingLocation extends ArrayStruct
 
     public function getCountryState(): ?CountryState
     {
-        if (is_null($this->data['countryState'])) {
+        if (is_null($this->data['countryState'] ?? null)) {
             return null;
         }
 

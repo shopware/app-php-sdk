@@ -24,7 +24,8 @@ class TaxProviderResponseBuilder
      */
     protected array $cartPriceTaxes = [];
 
-    public function __construct() {
+    public function __construct()
+    {
     }
 
     public function addLineItemTax(string $uniqueIdentifier, CalculatedTax $tax): self

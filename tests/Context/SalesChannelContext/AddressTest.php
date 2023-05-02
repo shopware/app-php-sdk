@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Shopware\App\SDK\Tests\Context\SalesChannelContext;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -39,4 +41,3 @@ class AddressTest extends TestCase
         static::assertSame('test', $address->getAdditionalAddressLine2());
     }
 }
-

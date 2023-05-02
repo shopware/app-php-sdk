@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Shopware\App\SDK\Context\Cart;
 
 use Shopware\App\SDK\Context\ArrayStruct;

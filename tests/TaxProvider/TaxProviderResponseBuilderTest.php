@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Shopware\App\SDK\Tests\TaxProvider;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -50,4 +52,3 @@ class TaxProviderResponseBuilderTest extends TestCase
         );
     }
 }
-

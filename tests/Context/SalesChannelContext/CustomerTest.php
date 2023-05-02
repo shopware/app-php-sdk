@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Shopware\App\SDK\Tests\Context\SalesChannelContext;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -17,4 +19,3 @@ class CustomerTest extends TestCase
         static::assertNull($customer->getSalutation());
     }
 }
-

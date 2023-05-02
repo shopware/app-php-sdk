@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Shopware\App\SDK\Tests\Context\SalesChannelContext;
 
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -16,11 +18,10 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ArrayStruct::class)]
 class ShippingLocationTest extends TestCase
 {
-    public function testFilledState() :void
+    public function testFilledState(): void
     {
         $location = new ShippingLocation(['countryState' => []]);
 
         static::assertNotNull($location->getCountryState());
     }
 }
-

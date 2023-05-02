@@ -6,7 +6,6 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7Server\ServerRequestCreator;
 use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\AppLifecycle;
-use Shopware\App\SDK\Authentication\RequestVerifier;
 use Shopware\App\SDK\Authentication\ResponseSigner;
 use Shopware\App\SDK\Context\ContextResolver;
 use Shopware\App\SDK\Registration\RegistrationService;

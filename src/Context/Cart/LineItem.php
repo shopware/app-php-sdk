@@ -82,6 +82,6 @@ class LineItem extends ArrayStruct
     {
         \assert(is_array($this->data['children']));
 
-        return array_map(fn(array $child): LineItem => new LineItem($child), $this->data['children']);
+        return array_map(fn (array $child): LineItem => new LineItem($child), $this->data['children']);
     }
 }
