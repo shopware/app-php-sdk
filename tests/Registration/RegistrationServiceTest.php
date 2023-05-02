@@ -11,6 +11,7 @@ use Psr\Log\NullLogger;
 use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Authentication\RequestVerifier;
 use Shopware\App\SDK\Authentication\ResponseSigner;
+use Shopware\App\SDK\Event\AbstractAppLifecycleEvent;
 use Shopware\App\SDK\Event\RegistrationBeforeCompletedEvent;
 use Shopware\App\SDK\Event\RegistrationCompletedEvent;
 use Shopware\App\SDK\Exception\MissingShopParameterException;
@@ -26,6 +27,7 @@ use Shopware\App\SDK\Test\MockShopRepository;
 #[CoversClass(ResponseSigner::class)]
 #[CoversClass(MissingShopParameterException::class)]
 #[CoversClass(ShopNotFoundException::class)]
+#[CoversClass(AbstractAppLifecycleEvent::class)]
 #[CoversClass(MockShop::class)]
 #[CoversClass(MockShopRepository::class)]
 #[CoversClass(RegistrationBeforeCompletedEvent::class)]
@@ -38,7 +40,7 @@ class RegistrationServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->appConfiguration = new AppConfiguration('My App', 'my-secret');
+        $this->appConfiguration = new AppConfiguration('My App', 'my-secret', 'http://localhost');
         $this->shopRepository = new MockShopRepository();
         $this->registerService = new RegistrationService(
             $this->appConfiguration,
@@ -55,14 +57,14 @@ class RegistrationServiceTest extends TestCase
 
         static::expectException(MissingShopParameterException::class);
 
-        $this->registerService->handleShopRegistrationRequest($request, '');
+        $this->registerService->register($request);
     }
 
     public function testRegisterCreate(): void
     {
         $request = new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890');
 
-        $response = $this->registerService->handleShopRegistrationRequest($request, '');
+        $response = $this->registerService->register($request);
 
         $shop = $this->shopRepository->getShopFromId('123');
         static::assertNotNull($shop);
@@ -86,7 +88,7 @@ class RegistrationServiceTest extends TestCase
 
         $this->shopRepository->createShop(new MockShop('123', 'https://foo.com', '1234567890'));
 
-        $this->registerService->handleShopRegistrationRequest($request, '');
+        $this->registerService->register($request);
 
         $shop = $this->shopRepository->getShopFromId('123');
         static::assertNotNull($shop);
@@ -101,7 +103,7 @@ class RegistrationServiceTest extends TestCase
         $request = new Request('POST', 'http://localhost', [], '{}');
 
         static::expectException(MissingShopParameterException::class);
-        $this->registerService->handleConfirmation($request);
+        $this->registerService->registerConfirm($request);
     }
 
     public function testConfirmNotExistingShop(): void
@@ -109,7 +111,7 @@ class RegistrationServiceTest extends TestCase
         $request = new Request('POST', 'http://localhost', [], '{"shopId": "123", "apiKey": "1", "secretKey": "1"}');
 
         static::expectException(ShopNotFoundException::class);
-        $this->registerService->handleConfirmation($request);
+        $this->registerService->registerConfirm($request);
     }
 
     public function testConfirm(): void
@@ -136,7 +138,7 @@ class RegistrationServiceTest extends TestCase
 
         $request = new Request('POST', 'http://localhost', [], '{"shopId": "123", "apiKey": "1", "secretKey": "2"}');
 
-        $response = $this->registerService->handleConfirmation($request);
+        $response = $this->registerService->registerConfirm($request);
 
         $shop = $this->shopRepository->getShopFromId('123');
         static::assertNotNull($shop);

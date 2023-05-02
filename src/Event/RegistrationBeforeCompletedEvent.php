@@ -10,25 +10,14 @@ use Shopware\App\SDK\Shop\ShopInterface;
 /**
  * This event is fired before the shop has been saved to the database. So you are able to modify the shop before it is saved.
  */
-class RegistrationBeforeCompletedEvent
+class RegistrationBeforeCompletedEvent extends AbstractAppLifecycleEvent
 {
     /**
-     * @param ShopInterface $shop
-     * @param RequestInterface $request
      * @param array{apiKey: string, secretKey: string} $confirmation
      */
-    public function __construct(private readonly ShopInterface $shop, private readonly RequestInterface $request, private readonly array $confirmation)
+    public function __construct(ShopInterface $shop, RequestInterface $request, private readonly array $confirmation)
     {
-    }
-
-    public function getShop(): ShopInterface
-    {
-        return $this->shop;
-    }
-
-    public function getRequest(): RequestInterface
-    {
-        return $this->request;
+        parent::__construct($request, $shop);
     }
 
     /**

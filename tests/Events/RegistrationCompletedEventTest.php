@@ -6,19 +6,21 @@ namespace Shopware\App\SDK\Tests\Events;
 
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
+use Shopware\App\SDK\Event\AbstractAppLifecycleEvent;
 use Shopware\App\SDK\Event\RegistrationCompletedEvent;
 use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Test\MockShop;
 
 #[CoversClass(RegistrationCompletedEvent::class)]
+#[CoversClass(AbstractAppLifecycleEvent::class)]
 #[CoversClass(MockShop::class)]
 class RegistrationCompletedEventTest extends TestCase
 {
     public function testEvent(): void
     {
         $event = new RegistrationCompletedEvent(
-            new MockShop('shop-id', 'shop-url', 'shop-secret'),
             new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890'),
+            new MockShop('shop-id', 'shop-url', 'shop-secret'),
         );
 
         static::assertSame('shop-id', $event->getShop()->getShopId());

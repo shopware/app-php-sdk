@@ -27,7 +27,7 @@ class RequestVerifierTest extends TestCase
 
         $verifier = new RequestVerifier();
         static::expectException(SignatureNotFoundException::class);
-        $verifier->authenticateRegistrationRequest($request, new AppConfiguration('My App', 'my-secret'));
+        $verifier->authenticateRegistrationRequest($request, new AppConfiguration('My App', 'my-secret', 'http://localhost'));
     }
 
     public function testAuthenticateRegistrationRequestMissingParameters(): void
@@ -37,7 +37,7 @@ class RequestVerifierTest extends TestCase
 
         $verifier = new RequestVerifier();
         static::expectException(SignatureNotFoundException::class);
-        $verifier->authenticateRegistrationRequest($request, new AppConfiguration('My App', 'my-secret'));
+        $verifier->authenticateRegistrationRequest($request, new AppConfiguration('My App', 'my-secret', 'http://localhost'));
     }
 
     public function testAuthenticateRegistrationRequestInvalidSignature(): void
@@ -47,7 +47,7 @@ class RequestVerifierTest extends TestCase
 
         $verifier = new RequestVerifier();
         static::expectException(SignatureInvalidException::class);
-        $verifier->authenticateRegistrationRequest($request, new AppConfiguration('My App', 'my-secret'));
+        $verifier->authenticateRegistrationRequest($request, new AppConfiguration('My App', 'my-secret', 'http://localhost'));
     }
 
     #[DoesNotPerformAssertions]
@@ -57,7 +57,7 @@ class RequestVerifierTest extends TestCase
         $request = $request->withHeader('shopware-app-signature', '96c91f86c822e11444b7a57b54ef125ed86b1a639c5360d45c5397daa8c3f70b');
 
         $verifier = new RequestVerifier();
-        $verifier->authenticateRegistrationRequest($request, new AppConfiguration('My App', 'my-secret'));
+        $verifier->authenticateRegistrationRequest($request, new AppConfiguration('My App', 'my-secret', 'http://localhost'));
     }
 
     public function testAuthenticatePostMissingHeader(): void

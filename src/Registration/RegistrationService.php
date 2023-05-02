@@ -38,7 +38,7 @@ class RegistrationService
      * @throws SignatureNotFoundException
      * @throws SignatureInvalidException
      */
-    public function handleShopRegistrationRequest(RequestInterface $request, string $confirmUrl): ResponseInterface
+    public function register(RequestInterface $request): ResponseInterface
     {
         $this->requestVerifier->authenticateRegistrationRequest($request, $this->appConfiguration);
 
@@ -72,7 +72,7 @@ class RegistrationService
 
         $data = [
             'proof' => $this->responseSigner->getRegistrationSignature($this->appConfiguration, $shop),
-            'confirmation_url' => $confirmUrl,
+            'confirmation_url' => $this->appConfiguration->getRegistrationConfirmUrl(),
             'secret' => $shop->getShopSecret(),
         ];
 
@@ -89,7 +89,7 @@ class RegistrationService
      * @throws SignatureNotFoundException
      * @throws ShopNotFoundException
      */
-    public function handleConfirmation(RequestInterface $request): ResponseInterface
+    public function registerConfirm(RequestInterface $request): ResponseInterface
     {
         /** @var array<string, mixed> $requestContent */
         $requestContent = json_decode($request->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
@@ -108,9 +108,7 @@ class RegistrationService
 
         $this->requestVerifier->authenticatePostRequest($request, $shop);
 
-        if ($this->eventDispatcher !== null) {
-            $this->eventDispatcher->dispatch(new RegistrationBeforeCompletedEvent($shop, $request, $requestContent));
-        }
+        $this->eventDispatcher?->dispatch(new RegistrationBeforeCompletedEvent($shop, $request, $requestContent));
 
         $this->shopRepository->updateShop(
             $shop->withShopApiCredentials($requestContent['apiKey'], $requestContent['secretKey'])
@@ -121,9 +119,7 @@ class RegistrationService
             'shop-url' => $shop->getShopUrl(),
         ]);
 
-        if ($this->eventDispatcher !== null) {
-            $this->eventDispatcher->dispatch(new RegistrationCompletedEvent($shop, $request));
-        }
+        $this->eventDispatcher?->dispatch(new RegistrationCompletedEvent($request, $shop));
 
         $psrFactory = new Psr17Factory();
 

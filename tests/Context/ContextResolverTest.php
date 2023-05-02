@@ -117,7 +117,7 @@ class ContextResolverTest extends TestCase
 
     private function getShop(): ShopInterface
     {
-        return new MockShop('shop-id', 'shop-url', 'shop-secret', 'shop-api-key');
+        return new MockShop('shop-id', 'shop-url', 'shop-secret');
     }
 
     /**

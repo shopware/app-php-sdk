@@ -12,8 +12,9 @@ class MockShop implements ShopInterface
         private string $shopId,
         private string $shopUrl,
         private string $shopSecret,
+        private bool $shopActive = false,
         private ?string $clientId = null,
-        private ?string $clientSecret = null
+        private ?string $clientSecret = null,
     ) {
     }
 
@@ -42,6 +43,11 @@ class MockShop implements ShopInterface
         return $this->clientSecret;
     }
 
+    public function isShopActive(): bool
+    {
+        return $this->shopActive;
+    }
+
     public function withShopApiCredentials(string $clientId, string $clientSecret): ShopInterface
     {
         $this->clientId = $clientId;
@@ -53,6 +59,13 @@ class MockShop implements ShopInterface
     public function withShopUrl(string $url): ShopInterface
     {
         $this->shopUrl = $url;
+
+        return $this;
+    }
+
+    public function withShopActive(bool $active): ShopInterface
+    {
+        $this->shopActive = $active;
 
         return $this;
     }
