@@ -5,8 +5,8 @@
         <name>Foo</name>
         <label>Foo</label>
         <label lang="de-DE">Foo</label>
-        <description></description>
-        <description lang="de-DE"></description>
+        <description/>
+        <description lang="de-DE"/>
         <author>Your Company</author>
         <copyright>(c) by Your Company</copyright>
         <version>1.0.0</version>

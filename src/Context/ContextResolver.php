@@ -6,7 +6,10 @@ namespace Shopware\App\SDK\Context;
 
 use Psr\Http\Message\RequestInterface;
 use Shopware\App\SDK\Context\ActionButton\ActionButton;
+use Shopware\App\SDK\Context\Cart\Cart;
 use Shopware\App\SDK\Context\Module\Module;
+use Shopware\App\SDK\Context\SalesChannelContext\SalesChannelContext;
+use Shopware\App\SDK\Context\TaxProvider\TaxProvider;
 use Shopware\App\SDK\Context\Webhook\Webhook;
 use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
 use Shopware\App\SDK\Shop\ShopInterface;
@@ -62,6 +65,23 @@ class ContextResolver
             $params['sw-version'],
             $params['sw-context-language'],
             $params['sw-user-language']
+        );
+    }
+
+    public function assembleTaxProvider(RequestInterface $request, ShopInterface $shop): TaxProvider
+    {
+        $body = json_decode($request->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        return new TaxProvider(
+            $shop,
+            $this->parseSource($body['source']),
+            new SalesChannelContext($body['context']),
+            new Cart($body['cart'])
         );
     }
 

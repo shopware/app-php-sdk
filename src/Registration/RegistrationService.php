@@ -26,8 +26,8 @@ class RegistrationService
     public function __construct(
         private readonly AppConfiguration $appConfiguration,
         private readonly ShopRepositoryInterface $shopRepository,
-        private readonly RequestVerifier $requestVerifier,
-        private readonly ResponseSigner $responseSigner,
+        private readonly RequestVerifier $requestVerifier = new RequestVerifier(),
+        private readonly ResponseSigner $responseSigner = new ResponseSigner(),
         private readonly ShopSecretGeneratorInterface $shopSecretGeneratorInterface = new RandomStringShopSecretGenerator(),
         private readonly LoggerInterface $logger = new NullLogger(),
         private readonly ?EventDispatcherInterface $eventDispatcher = null

@@ -11,6 +11,8 @@ use Shopware\App\SDK\Authentication\ResponseSigner;
 use Shopware\App\SDK\Context\ContextResolver;
 use Shopware\App\SDK\Registration\RegistrationService;
 use Shopware\App\SDK\Shop\ShopResolver;
+use Shopware\App\SDK\TaxProvider\CalculatedTax;
+use Shopware\App\SDK\TaxProvider\TaxProviderResponseBuilder;
 
 require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/helper.php';
@@ -30,14 +32,9 @@ $serverRequest = $creator->fromGlobals();
 $app = new AppConfiguration('Foo', 'test', 'http://localhost:6001/register/callback');
 
 $fileShopRepository = new FileShopRepository();
-$register = new RegistrationService(
-    $app,
-    $fileShopRepository,
-    new RequestVerifier(),
-    new ResponseSigner()
-);
+$registrationService = new RegistrationService($app, $fileShopRepository);
 $shopResolver = new ShopResolver($fileShopRepository);
-$appLifecycle = new AppLifecycle($register, $shopResolver, $fileShopRepository);
+$appLifecycle = new AppLifecycle($registrationService, $shopResolver, $fileShopRepository);
 $contextResolver = new ContextResolver();
 
 if (str_starts_with($serverRequest->getUri()->getPath(), '/register/authorize')) {
@@ -53,7 +50,29 @@ if (str_starts_with($serverRequest->getUri()->getPath(), '/register/authorize'))
 } elseif (str_starts_with($serverRequest->getUri()->getPath(), '/webhook/product.written')) {
     $shop = $shopResolver->resolveShop($serverRequest);
     $webhook = $contextResolver->assembleWebhook($serverRequest, $shop);
+
     error_log(sprintf('Got request from shop %s for event %s', $shop->getShopUrl(), $webhook->eventName));
+} elseif (str_starts_with($serverRequest->getUri()->getPath(), '/tax/process')) {
+    $shop = $shopResolver->resolveShop($serverRequest);
+    $taxProviderContext = $contextResolver->assembleTaxProvider($serverRequest, $shop);
+
+    $builder = new TaxProviderResponseBuilder();
+    $signer = new ResponseSigner();
+
+    // Add tax for each line item
+    foreach ($taxProviderContext->cart->getLineItems() as $item) {
+        $taxRate = 50;
+
+        $taxProviderContext = $item->getPrice()->getTotalPrice() * $taxRate / 100;
+
+        $builder->addLineItemTax($item->getUniqueIdentifier(), new CalculatedTax(
+            $taxProviderContext,
+            $taxRate,
+            $item->getPrice()->getTotalPrice()
+        ));
+    }
+
+    send($signer->signResponse($builder->build(), $shop));
 } elseif(str_starts_with($serverRequest->getUri()->getPath(), '/module/test')) {
     $shop = $shopResolver->resolveShop($serverRequest);
     $module = $contextResolver->assembleModule($serverRequest, $shop);
