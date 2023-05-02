@@ -27,7 +27,7 @@ $creator = new ServerRequestCreator(
 
 $serverRequest = $creator->fromGlobals();
 
-$app = new AppConfiguration('Foo', 'test', 'http://localhost:6000/register/callback');
+$app = new AppConfiguration('Foo', 'test', 'http://localhost:6001/register/callback');
 
 $fileShopRepository = new FileShopRepository();
 $register = new RegistrationService(
@@ -54,6 +54,17 @@ if (str_starts_with($serverRequest->getUri()->getPath(), '/register/authorize'))
     $shop = $shopResolver->resolveShop($serverRequest);
     $webhook = $contextResolver->assembleWebhook($serverRequest, $shop);
     error_log(sprintf('Got request from shop %s for event %s', $shop->getShopUrl(), $webhook->eventName));
+} elseif(str_starts_with($serverRequest->getUri()->getPath(), '/module/test')) {
+    $shop = $shopResolver->resolveShop($serverRequest);
+    $module = $contextResolver->assembleModule($serverRequest, $shop);
+
+    error_log(sprintf('Got module request language: %s, user language: %s', $module->contentLanguage, $module->userLanguage));
+
+    header('Content-Type: text/html');
+    echo '<h1>Hello World</h1>';
+    echo "<script>
+    window.parent.postMessage('sw-app-loaded', '*');
+    </script>";
 } elseif (str_starts_with($serverRequest->getUri()->getPath(), '/action/product')) {
     $shop = $shopResolver->resolveShop($serverRequest);
     $actionButton = $contextResolver->assembleActionButton($serverRequest, $shop);

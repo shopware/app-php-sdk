@@ -6,6 +6,7 @@ namespace Shopware\App\SDK\Context;
 
 use Psr\Http\Message\RequestInterface;
 use Shopware\App\SDK\Context\ActionButton\ActionButton;
+use Shopware\App\SDK\Context\Module\Module;
 use Shopware\App\SDK\Context\Webhook\Webhook;
 use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
 use Shopware\App\SDK\Shop\ShopInterface;
@@ -45,6 +46,22 @@ class ContextResolver
             $body['data']['ids'],
             $body['data']['entity'],
             $body['data']['action']
+        );
+    }
+
+    public function assembleModule(RequestInterface $request, ShopInterface $shop): Module
+    {
+        parse_str($request->getUri()->getQuery(), $params);
+
+        if (!isset($params['sw-version']) || !is_string($params['sw-version']) || !isset($params['sw-context-language']) || !is_string($params['sw-context-language']) || !isset($params['sw-user-language']) || !is_string($params['sw-user-language'])) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        return new Module(
+            $shop,
+            $params['sw-version'],
+            $params['sw-context-language'],
+            $params['sw-user-language']
         );
     }
 

@@ -3,8 +3,8 @@
           xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/platform/trunk/src/Core/Framework/App/Manifest/Schema/manifest-2.0.xsd">
     <meta>
         <name>Foo</name>
-        <label>My Label</label>
-        <label lang="de-DE">My Label</label>
+        <label>Foo</label>
+        <label lang="de-DE">Foo</label>
         <description></description>
         <description lang="de-DE"></description>
         <author>Your Company</author>
@@ -14,16 +14,22 @@
         <license>MIT</license>
     </meta>
     <setup>
-        <registrationUrl>http://localhost:6000/register/authorize</registrationUrl>
+        <registrationUrl>http://localhost:6001/register/authorize</registrationUrl>
         <secret>test</secret>
     </setup>
     <admin>
-        <action-button action="detail" entity="product" view="detail" url="http://localhost:6000/action/product">
+        <action-button action="detail" entity="product" view="detail" url="http://localhost:6001/action/product">
             <label>Do something</label>
         </action-button>
+        <module name="LOL" parent="sw-marketing" position="0" source="http://localhost:6001/module/test">
+            <label>LOL</label>
+        </module>
     </admin>
     <webhooks>
-        <webhook name="productWritten" url="http://localhost:6000/webhook/product.written" event="product.written"/>
+        <webhook name="productWritten" url="http://localhost:6001/webhook/product.written" event="product.written"/>
+        <webhook name="appDeleted" url="http://localhost:6001/webhook/app.deleted" event="app.deleted"/>
+        <webhook name="appActivated" url="http://localhost:6001/webhook/app.activated" event="app.activated"/>
+        <webhook name="appDeactivated" url="http://localhost:6001/webhook/app.deactivated" event="app.deactivated"/>
     </webhooks>
     <permissions>
         <read>product</read>
