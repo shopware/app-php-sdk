@@ -6,17 +6,17 @@ namespace Shopware\App\SDK\Context\Cart;
 
 use Shopware\App\SDK\Context\ArrayStruct;
 
-class LineItemPrice extends ArrayStruct
+class CalculatedPrice extends ArrayStruct
 {
     public function getUnitPrice(): float
     {
-        \assert(is_float($this->data['unitPrice']));
+        \assert(is_float($this->data['unitPrice']) || is_int($this->data['unitPrice']));
         return $this->data['unitPrice'];
     }
 
     public function getTotalPrice(): float
     {
-        \assert(is_float($this->data['totalPrice']));
+        \assert(is_float($this->data['totalPrice']) || is_int($this->data['totalPrice']));
         return $this->data['totalPrice'];
     }
 

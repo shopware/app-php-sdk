@@ -8,6 +8,7 @@ use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\AppLifecycle;
 use Shopware\App\SDK\Authentication\ResponseSigner;
 use Shopware\App\SDK\Context\ContextResolver;
+use Shopware\App\SDK\Payment\PaymentResponse;
 use Shopware\App\SDK\Registration\RegistrationService;
 use Shopware\App\SDK\Shop\ShopResolver;
 use Shopware\App\SDK\TaxProvider\CalculatedTax;
@@ -25,6 +26,16 @@ $creator = new ServerRequestCreator(
     $psr17Factory,
     $psr17Factory
 );
+
+set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+    error_log($errstr);
+    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+});
+
+set_exception_handler(function (Throwable $e) {
+    error_log($e->getMessage());
+    error_log($e->getTraceAsString());
+});
 
 $serverRequest = $creator->fromGlobals();
 
@@ -72,6 +83,52 @@ if (str_starts_with($serverRequest->getUri()->getPath(), '/register/authorize'))
     }
 
     send($signer->signResponse($builder->build(), $shop));
+} elseif (str_starts_with($serverRequest->getUri()->getPath(), '/payment/pay')) {
+    $shop = $shopResolver->resolveShop($serverRequest);
+    $payment = $contextResolver->assemblePaymentPay($serverRequest, $shop);
+
+    // do payment stuff
+    error_log($payment->order->getOrderNumber());
+
+    $signer = new ResponseSigner();
+
+    send($signer->signResponse(PaymentResponse::paid(), $shop));
+} elseif (str_starts_with($serverRequest->getUri()->getPath(), '/payment/async-pay')) {
+    $shop = $shopResolver->resolveShop($serverRequest);
+    $payment = $contextResolver->assemblePaymentPay($serverRequest, $shop);
+
+    // do payment stuff
+    error_log($payment->order->getOrderNumber());
+
+    $signer = new ResponseSigner();
+
+    send($signer->signResponse(PaymentResponse::redirect($payment->returnUrl), $shop));
+} elseif (str_starts_with($serverRequest->getUri()->getPath(), '/payment/finalize')) {
+    $shop = $shopResolver->resolveShop($serverRequest);
+
+    $payment = $contextResolver->assemblePaymentFinalize($serverRequest, $shop);
+
+    $signer = new ResponseSigner();
+
+    send($signer->signResponse(PaymentResponse::paid(), $shop));
+} elseif (str_starts_with($serverRequest->getUri()->getPath(), '/payment/validate')) {
+    $shop = $shopResolver->resolveShop($serverRequest);
+
+    $payment = $contextResolver->assemblePaymentValidate($serverRequest, $shop);
+
+    $signer = new ResponseSigner();
+
+    send($signer->signResponse(PaymentResponse::validateSuccessResponse(['myValue' => 1]), $shop));
+} elseif (str_starts_with($serverRequest->getUri()->getPath(), '/payment/capture')) {
+    $shop = $shopResolver->resolveShop($serverRequest);
+
+    $capture = $contextResolver->assemblePaymentCapture($serverRequest, $shop);
+
+    error_log((string)$capture->requestData['myValue']);
+
+    $signer = new ResponseSigner();
+
+    send($signer->signResponse(PaymentResponse::paid(), $shop));
 } elseif(str_starts_with($serverRequest->getUri()->getPath(), '/module/test')) {
     $shop = $shopResolver->resolveShop($serverRequest);
     $module = $contextResolver->assembleModule($serverRequest, $shop);

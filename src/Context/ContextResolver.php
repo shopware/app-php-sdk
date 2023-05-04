@@ -8,6 +8,12 @@ use Psr\Http\Message\RequestInterface;
 use Shopware\App\SDK\Context\ActionButton\ActionButton;
 use Shopware\App\SDK\Context\Cart\Cart;
 use Shopware\App\SDK\Context\Module\Module;
+use Shopware\App\SDK\Context\Order\Order;
+use Shopware\App\SDK\Context\Order\OrderTransaction;
+use Shopware\App\SDK\Context\Payment\PaymentCaptureAction;
+use Shopware\App\SDK\Context\Payment\PaymentFinalizeAction;
+use Shopware\App\SDK\Context\Payment\PaymentPayAction;
+use Shopware\App\SDK\Context\Payment\PaymentValidateAction;
 use Shopware\App\SDK\Context\SalesChannelContext\SalesChannelContext;
 use Shopware\App\SDK\Context\TaxProvider\TaxProvider;
 use Shopware\App\SDK\Context\Webhook\Webhook;
@@ -82,6 +88,78 @@ class ContextResolver
             $this->parseSource($body['source']),
             new SalesChannelContext($body['context']),
             new Cart($body['cart'])
+        );
+    }
+
+    public function assemblePaymentPay(RequestInterface $request, ShopInterface $shop): PaymentPayAction
+    {
+        $body = json_decode($request->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        return new PaymentPayAction(
+            $shop,
+            $this->parseSource($body['source']),
+            new Order($body['order']),
+            new OrderTransaction($body['orderTransaction']),
+            $body['returnUrl'] ?? null,
+            $body['requestData'] ?? []
+        );
+    }
+
+    public function assemblePaymentFinalize(RequestInterface $request, ShopInterface $shop): PaymentFinalizeAction
+    {
+        $body = json_decode($request->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        return new PaymentFinalizeAction(
+            $shop,
+            $this->parseSource($body['source']),
+            new OrderTransaction($body['orderTransaction']),
+            $body['queryParameters'] ?? []
+        );
+    }
+
+    public function assemblePaymentCapture(RequestInterface $request, ShopInterface $shop): PaymentCaptureAction
+    {
+        $body = json_decode($request->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        return new PaymentCaptureAction(
+            $shop,
+            $this->parseSource($body['source']),
+            new Order($body['order']),
+            new OrderTransaction($body['orderTransaction']),
+            $body['preOrderPayment'] ?? []
+        );
+    }
+
+    public function assemblePaymentValidate(RequestInterface $request, ShopInterface $shop): PaymentValidateAction
+    {
+        $body = json_decode($request->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        return new PaymentValidateAction(
+            $shop,
+            $this->parseSource($body['source']),
+            new Cart($body['cart']),
+            new SalesChannelContext($body['salesChannelContext']),
+            $body['requestData'] ?? []
         );
     }
 

@@ -59,10 +59,10 @@ class LineItem extends ArrayStruct
         return $this->data['payload'];
     }
 
-    public function getPrice(): LineItemPrice
+    public function getPrice(): CalculatedPrice
     {
         \assert(is_array($this->data['price']));
-        return new LineItemPrice($this->data['price']);
+        return new CalculatedPrice($this->data['price']);
     }
 
     /**

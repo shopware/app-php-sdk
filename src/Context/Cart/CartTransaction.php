@@ -14,9 +14,9 @@ class CartTransaction extends ArrayStruct
         return $this->data['paymentMethodId'];
     }
 
-    public function getAmount(): LineItemPrice
+    public function getAmount(): CalculatedPrice
     {
         \assert(is_array($this->data['amount']));
-        return new LineItemPrice($this->data['amount']);
+        return new CalculatedPrice($this->data['amount']);
     }
 }

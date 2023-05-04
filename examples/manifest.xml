@@ -5,8 +5,8 @@
         <name>Foo</name>
         <label>Foo</label>
         <label lang="de-DE">Foo</label>
-        <description/>
-        <description lang="de-DE"/>
+        <description></description>
+        <description lang="de-DE"></description>
         <author>Your Company</author>
         <copyright>(c) by Your Company</copyright>
         <version>1.0.0</version>
@@ -25,6 +25,35 @@
             <label>LOL</label>
         </module>
     </admin>
+    <tax>
+        <tax-provider>
+            <identifier>foo</identifier>
+            <name>foo</name>
+            <priority>0</priority>
+            <process-url>http://localhost:6001/tax/process</process-url>
+        </tax-provider>
+    </tax>
+    <payments>
+        <payment-method>
+            <name>Payment Sync</name>
+            <identifier>sync</identifier>
+            <pay-url>http://localhost:6001/payment/pay</pay-url>
+        </payment-method>
+
+        <payment-method>
+            <name>Payment Async</name>
+            <identifier>async</identifier>
+            <pay-url>http://localhost:6001/payment/async-pay</pay-url>
+            <finalize-url>http://localhost:6001/payment/finalize</finalize-url>
+        </payment-method>
+
+        <payment-method>
+            <name>Payment Prepared</name>
+            <identifier>prepared</identifier>
+            <validate-url>http://localhost:6001/payment/validate</validate-url>
+            <capture-url>http://localhost:6001/payment/capture</capture-url>
+        </payment-method>
+    </payments>
     <webhooks>
         <webhook name="productWritten" url="http://localhost:6001/webhook/product.written" event="product.written"/>
         <webhook name="appDeleted" url="http://localhost:6001/webhook/app.deleted" event="app.deleted"/>

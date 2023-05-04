@@ -18,11 +18,19 @@ use Shopware\App\SDK\Context\Cart\Delivery;
 use Shopware\App\SDK\Context\Cart\DeliveryDate;
 use Shopware\App\SDK\Context\Cart\DeliveryPosition;
 use Shopware\App\SDK\Context\Cart\LineItem;
-use Shopware\App\SDK\Context\Cart\LineItemPrice;
+use Shopware\App\SDK\Context\Cart\CalculatedPrice;
 use Shopware\App\SDK\Context\Cart\TaxRule;
 use Shopware\App\SDK\Context\ContextResolver;
 use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Context\Module\Module;
+use Shopware\App\SDK\Context\Order\Order;
+use Shopware\App\SDK\Context\Order\OrderDelivery;
+use Shopware\App\SDK\Context\Order\OrderTransaction;
+use Shopware\App\SDK\Context\Order\StateMachineState;
+use Shopware\App\SDK\Context\Payment\PaymentCaptureAction;
+use Shopware\App\SDK\Context\Payment\PaymentFinalizeAction;
+use Shopware\App\SDK\Context\Payment\PaymentPayAction;
+use Shopware\App\SDK\Context\Payment\PaymentValidateAction;
 use Shopware\App\SDK\Context\SalesChannelContext\Address;
 use Shopware\App\SDK\Context\SalesChannelContext\Country;
 use Shopware\App\SDK\Context\SalesChannelContext\CountryState;
@@ -53,7 +61,7 @@ use Shopware\App\SDK\Test\MockShop;
 #[CoversClass(ArrayStruct::class)]
 #[CoversClass(Cart::class)]
 #[CoversClass(LineItem::class)]
-#[CoversClass(LineItemPrice::class)]
+#[CoversClass(CalculatedPrice::class)]
 #[CoversClass(TaxProvider::class)]
 #[CoversClass(CalculatedTax::class)]
 #[CoversClass(TaxRule::class)]
@@ -76,6 +84,14 @@ use Shopware\App\SDK\Test\MockShop;
 #[CoversClass(TaxInfo::class)]
 #[CoversClass(SalesChannel::class)]
 #[CoversClass(SalesChannelDomain::class)]
+#[CoversClass(PaymentPayAction::class)]
+#[CoversClass(Order::class)]
+#[CoversClass(OrderDelivery::class)]
+#[CoversClass(OrderTransaction::class)]
+#[CoversClass(StateMachineState::class)]
+#[CoversClass(PaymentFinalizeAction::class)]
+#[CoversClass(PaymentCaptureAction::class)]
+#[CoversClass(PaymentValidateAction::class)]
 class ContextResolverTest extends TestCase
 {
     public function testAssembleWebhookMalformed(): void
@@ -202,7 +218,7 @@ class ContextResolverTest extends TestCase
     public function testAssembleTaxProvider(): void
     {
         $contextResolver = new ContextResolver();
-        $tax = $contextResolver->assembleTaxProvider(new Request('GET', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/test.json')), $this->getShop());
+        $tax = $contextResolver->assembleTaxProvider(new Request('GET', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/tax.json')), $this->getShop());
 
         static::assertSame('W4K2OUeCshirU015lWDfche9vymD4cUt', $tax->cart->getToken());
         static::assertNull($tax->cart->getAffiliateCode());
@@ -425,6 +441,148 @@ class ContextResolverTest extends TestCase
 
         static::assertSame('670254e7d23b4d79bd9829a818089e77', $location->getAddress()->getId());
         static::assertNull($location->getCountryState()?->getId());
+    }
+
+    public function testAssemblePayInvalid(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        static::expectException(MalformedWebhookBodyException::class);
+        $contextResolver->assemblePaymentPay(
+            new Request('POST', '/', [], '{}'),
+            $this->getShop()
+        );
+    }
+
+    public function testResolvePay(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $action = $contextResolver->assemblePaymentPay(
+            new Request('POST', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/payment.json')),
+            $this->getShop()
+        );
+
+        static::assertSame([], $action->requestData);
+
+        $order = $action->order;
+
+        static::assertSame('EUR', $order->getCurrency()->getShortName());
+        static::assertSame('8f69d4874c53486a95383b2126161738', $order->getId());
+        static::assertSame('10077', $order->getOrderNumber());
+        static::assertSame(1.0, $order->getCurrencyFactor());
+        static::assertSame(1683207386, $order->getOrderDate()->getTimestamp());
+        static::assertSame(395.01, $order->getPrice()->getTotalPrice());
+        static::assertSame(395.01, $order->getAmountTotal());
+        static::assertSame(395.01, $order->getAmountNet());
+        static::assertSame(395.01, $order->getPositionPrice());
+        static::assertSame('gross', $order->getTaxStatus());
+        static::assertSame(0.0, $order->getShippingTotal());
+        static::assertSame(0.0, $order->getShippingCosts()->getTotalPrice());
+        static::assertSame('Max', $order->getOrderCustomer()->getFirstName());
+        static::assertSame('Max', $order->getBillingAddress()->getFirstName());
+        static::assertSame('bSMFEC_9bc6HYjzgpnXfCFP3mKAPeK7S', $order->getDeepLinkCode());
+        static::assertSame(true, $order->getItemRounding()->isRoundForNet());
+        static::assertSame(true, $order->getTotalRounding()->isRoundForNet());
+        static::assertSame('9b2fe3ca29174971a645cafa4715c223', $order->getSalesChannelId());
+
+        $lineItems = $order->getLineItems();
+
+        static::assertCount(1, $lineItems);
+        static::assertSame('5567f5758b414a2686afa1c6492c63a1', $lineItems[0]->getId());
+        static::assertSame('Aerodynamic Bronze Slo-Cooked Prawns', $lineItems[0]->getLabel());
+
+        $deliveries = $order->getDeliveries();
+
+        static::assertCount(1, $deliveries);
+
+        $delivery = $deliveries[0];
+        static::assertSame([], $delivery->getTrackingCodes());
+        static::assertSame(0.0, $delivery->getShippingCosts()->getTotalPrice());
+        static::assertSame('Max', $delivery->getShippingOrderAddress()->getFirstName());
+        static::assertSame('042855f94e95438f886e26abf714d4ac', $delivery->getStateMachineState()->getId());
+        static::assertSame('open', $delivery->getStateMachineState()->getTechnicalName());
+        static::assertSame(1683244800, $delivery->getShippingDateEarliest()->getTimestamp());
+        static::assertSame(1683417600, $delivery->getShippingDateLatest()->getTimestamp());
+
+        $transactions = $order->getTransactions();
+        static::assertCount(1, $transactions);
+
+        $transaction = $transactions[0];
+
+        static::assertSame('55e858b413b54f8a97c64a040610b359', $transaction->getId());
+        static::assertSame(395.01, $transaction->getAmount()->getTotalPrice());
+        static::assertSame('open', $transaction->getStateMachineState()->getTechnicalName());
+        static::assertSame('Payment Sync', $transaction->getPaymentMethod()->getName());
+    }
+
+    public function testAssembleFinalizeInvalid(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        static::expectException(MalformedWebhookBodyException::class);
+        $contextResolver->assemblePaymentFinalize(
+            new Request('POST', '/', [], '{}'),
+            $this->getShop()
+        );
+    }
+
+    public function testAssembleFinalize(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $action = $contextResolver->assemblePaymentFinalize(
+            new Request('POST', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/payment.json')),
+            $this->getShop()
+        );
+
+        static::assertSame(395.01, $action->orderTransaction->getAmount()->getTotalPrice());
+    }
+
+    public function testAssembleCaptureInvalid(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        static::expectException(MalformedWebhookBodyException::class);
+        $contextResolver->assemblePaymentCapture(
+            new Request('POST', '/', [], '{}'),
+            $this->getShop()
+        );
+    }
+
+    public function testAssembleCapture(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $action = $contextResolver->assemblePaymentCapture(
+            new Request('POST', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/payment.json')),
+            $this->getShop()
+        );
+
+        static::assertSame(395.01, $action->orderTransaction->getAmount()->getTotalPrice());
+    }
+
+    public function testAssembleValidationInvalid(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        static::expectException(MalformedWebhookBodyException::class);
+        $contextResolver->assemblePaymentValidate(
+            new Request('POST', '/', [], '{}'),
+            $this->getShop()
+        );
+    }
+
+    public function testAssembleValidate(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $action = $contextResolver->assemblePaymentValidate(
+            new Request('POST', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/payment-validation.json')),
+            $this->getShop()
+        );
+
+        static::assertSame(['tos' => 'on'], $action->requestData);
     }
 
     private function getShop(): ShopInterface
