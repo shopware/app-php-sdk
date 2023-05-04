@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Shopware\App\SDK\Payment;
+namespace Shopware\App\SDK\Response;
 
 use Http\Discovery\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
@@ -12,7 +12,7 @@ class PaymentResponse
     /**
      * @param array<mixed> $data - Data that will be saved on the order to identify the payment
      */
-    public static function validateSuccessResponse(array $data): ResponseInterface
+    public static function validateSuccess(array $data): ResponseInterface
     {
         return self::createResponse(['preOrderPayment' => $data]);
     }

@@ -8,7 +8,8 @@ use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\AppLifecycle;
 use Shopware\App\SDK\Authentication\ResponseSigner;
 use Shopware\App\SDK\Context\ContextResolver;
-use Shopware\App\SDK\Payment\PaymentResponse;
+use Shopware\App\SDK\Response\ActionButtonResponse;
+use Shopware\App\SDK\Response\PaymentResponse;
 use Shopware\App\SDK\Registration\RegistrationService;
 use Shopware\App\SDK\Shop\ShopResolver;
 use Shopware\App\SDK\TaxProvider\CalculatedTax;
@@ -27,16 +28,6 @@ $creator = new ServerRequestCreator(
     $psr17Factory
 );
 
-set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-    error_log($errstr);
-    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
-});
-
-set_exception_handler(function (Throwable $e) {
-    error_log($e->getMessage());
-    error_log($e->getTraceAsString());
-});
-
 $serverRequest = $creator->fromGlobals();
 
 $app = new AppConfiguration('Foo', 'test', 'http://localhost:6001/register/callback');
@@ -46,6 +37,7 @@ $registrationService = new RegistrationService($app, $fileShopRepository);
 $shopResolver = new ShopResolver($fileShopRepository);
 $appLifecycle = new AppLifecycle($registrationService, $shopResolver, $fileShopRepository);
 $contextResolver = new ContextResolver();
+$signer = new ResponseSigner();
 
 if (str_starts_with($serverRequest->getUri()->getPath(), '/register/authorize')) {
     send($appLifecycle->register($serverRequest));
@@ -67,7 +59,6 @@ if (str_starts_with($serverRequest->getUri()->getPath(), '/register/authorize'))
     $taxProviderContext = $contextResolver->assembleTaxProvider($serverRequest, $shop);
 
     $builder = new TaxProviderResponseBuilder();
-    $signer = new ResponseSigner();
 
     // Add tax for each line item
     foreach ($taxProviderContext->cart->getLineItems() as $item) {
@@ -90,8 +81,6 @@ if (str_starts_with($serverRequest->getUri()->getPath(), '/register/authorize'))
     // do payment stuff
     error_log($payment->order->getOrderNumber());
 
-    $signer = new ResponseSigner();
-
     send($signer->signResponse(PaymentResponse::paid(), $shop));
 } elseif (str_starts_with($serverRequest->getUri()->getPath(), '/payment/async-pay')) {
     $shop = $shopResolver->resolveShop($serverRequest);
@@ -99,8 +88,6 @@ if (str_starts_with($serverRequest->getUri()->getPath(), '/register/authorize'))
 
     // do payment stuff
     error_log($payment->order->getOrderNumber());
-
-    $signer = new ResponseSigner();
 
     send($signer->signResponse(PaymentResponse::redirect($payment->returnUrl), $shop));
 } elseif (str_starts_with($serverRequest->getUri()->getPath(), '/payment/finalize')) {
@@ -116,9 +103,7 @@ if (str_starts_with($serverRequest->getUri()->getPath(), '/register/authorize'))
 
     $payment = $contextResolver->assemblePaymentValidate($serverRequest, $shop);
 
-    $signer = new ResponseSigner();
-
-    send($signer->signResponse(PaymentResponse::validateSuccessResponse(['myValue' => 1]), $shop));
+    send($signer->signResponse(PaymentResponse::validateSuccess(['myValue' => 1]), $shop));
 } elseif (str_starts_with($serverRequest->getUri()->getPath(), '/payment/capture')) {
     $shop = $shopResolver->resolveShop($serverRequest);
 
@@ -144,6 +129,8 @@ if (str_starts_with($serverRequest->getUri()->getPath(), '/register/authorize'))
     $shop = $shopResolver->resolveShop($serverRequest);
     $actionButton = $contextResolver->assembleActionButton($serverRequest, $shop);
     error_log(sprintf('Got request from shop %s for action %s and ids %s', $shop->getShopUrl(), $actionButton->action, implode(', ', $actionButton->ids)));
+
+    send($signer->signResponse(ActionButtonResponse::notification('success', 'foo'), $shop));
 } else {
     http_response_code(404);
 }

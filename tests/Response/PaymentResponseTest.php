@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Shopware\App\SDK\Tests\Payment;
+namespace Shopware\App\SDK\Tests\Response;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use Shopware\App\SDK\Payment\PaymentResponse;
+use Shopware\App\SDK\Response\PaymentResponse;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(PaymentResponse::class)]
@@ -89,5 +89,29 @@ class PaymentResponseTest extends TestCase
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('{"status":"chargeback"}', $response->getBody()->getContents());
+    }
+
+    public function testValidateSuccess(): void
+    {
+        $response = PaymentResponse::validateSuccess(['foo' => 'bar']);
+
+        static::assertSame(200, $response->getStatusCode());
+        static::assertSame('{"preOrderPayment":{"foo":"bar"}}', $response->getBody()->getContents());
+    }
+
+    public function testValidateError(): void
+    {
+        $response = PaymentResponse::validationError('error');
+
+        static::assertSame(200, $response->getStatusCode());
+        static::assertSame('{"message":"error"}', $response->getBody()->getContents());
+    }
+
+    public function testRedirect(): void
+    {
+        $response = PaymentResponse::redirect('https://example.com');
+
+        static::assertSame(200, $response->getStatusCode());
+        static::assertSame('{"redirectUrl":"https:\/\/example.com"}', $response->getBody()->getContents());
     }
 }
