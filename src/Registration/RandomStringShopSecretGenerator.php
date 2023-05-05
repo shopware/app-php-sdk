@@ -6,6 +6,7 @@ namespace Shopware\App\SDK\Registration;
 
 /**
  * @codeCoverageIgnore
+ * @infection-ignore-all
  */
 class RandomStringShopSecretGenerator implements ShopSecretGeneratorInterface
 {

@@ -19,5 +19,6 @@ class AuthenticationFailedExceptionTest extends TestCase
 
         static::assertSame('Authentication failed for shop shop-id', $exception->getMessage());
         static::assertSame($response, $exception->getResponse());
+        static::assertSame(0, $exception->getCode());
     }
 }

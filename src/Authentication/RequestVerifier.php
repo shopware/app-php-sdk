@@ -89,6 +89,7 @@ class RequestVerifier
         $header = $queries[self::SHOPWARE_SHOP_SIGNATURE_HEADER];
 
         if (!is_string($header)) {
+            /** @infection-ignore-all */
             throw new SignatureNotFoundException($request);
         }
 
@@ -140,10 +141,13 @@ class RequestVerifier
 
     private function removeSignatureFromQuery(string $query, string $signature): string
     {
-        return (string) preg_replace(
+        /** @var string $query */
+        $query = \preg_replace(
             sprintf('/&%s=%s/', self::SHOPWARE_SHOP_SIGNATURE_HEADER, $signature),
             '',
             $query
         );
+
+        return $query;
     }
 }

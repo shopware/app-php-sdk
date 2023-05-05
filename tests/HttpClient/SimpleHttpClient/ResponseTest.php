@@ -13,13 +13,13 @@ class ResponseTest extends TestCase
 {
     public function testResponse(): void
     {
-        $raw = new \Nyholm\Psr7\Response(200, ['Content-Type' => 'application/json'], '{"foo": "bar"}');
+        $raw = new \Nyholm\Psr7\Response(200, ['Content-Type' => 'application/json'], '{"foo": "bar", "baz": 1}');
         $response = new Response($raw);
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('application/json', $response->getHeader('Content-Type'));
-        static::assertSame('{"foo": "bar"}', $response->getContent());
-        static::assertSame(['foo' => 'bar'], $response->toArray());
+        static::assertSame('{"foo": "bar", "baz": 1}', $response->getContent());
+        static::assertSame(['foo' => 'bar', 'baz' => 1], $response->toArray());
         static::assertTrue($response->ok());
         static::assertSame($raw, $response->getRawResponse());
     }
@@ -34,5 +34,30 @@ class ResponseTest extends TestCase
         static::expectException(\RuntimeException::class);
         static::expectExceptionMessage('Response is not a valid JSON array');
         $response->toArray();
+    }
+    /**
+     * @dataProvider okDataProvider
+     */
+    public function testOk(int $status, bool $shouldBeOk): void
+    {
+        $raw = new \Nyholm\Psr7\Response($status, ['Content-Type' => 'application/json'], 'true');
+        $response = new Response($raw);
+
+        static::assertSame($response->ok(), $shouldBeOk);
+    }
+
+    /**
+     * @return iterable<array{int, bool}>
+     */
+    public static function okDataProvider(): iterable
+    {
+        yield [200, true];
+        yield [201, true];
+        yield [299, true];
+        yield [199, false];
+        yield [300, false];
+        yield [400, false];
+        yield [500, false];
+        yield [-1, false];
     }
 }

@@ -7,6 +7,7 @@ namespace Shopware\App\SDK\Tests\Shop;
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\StreamInterface;
 use Shopware\App\SDK\Authentication\RequestVerifier;
 use Shopware\App\SDK\Exception\MissingShopParameterException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
@@ -69,6 +70,82 @@ class ShopResolverTest extends TestCase
         $this->shopRepository->createShop(new MockShop('1', 'test.de', 'asd'));
         $shop = $this->shopResolver->resolveShop($this->createGetRequest('shop-id=1'));
         static::assertSame('1', $shop->getShopId());
+    }
+
+    public function testResolveFromSourceRequestIsAuthenticated(): void
+    {
+        $this->shopRepository->createShop(new MockShop('1', 'test.de', 'asd'));
+
+        $request = $this->createJsonRequest('{"source": {"shopId": "1"}}');
+
+        $verifier = static::createMock(RequestVerifier::class);
+        $verifier
+            ->expects(static::once())
+            ->method('authenticatePostRequest')
+            ->with($request);
+
+        $resolver = new ShopResolver($this->shopRepository, $verifier);
+        $resolver->resolveShop($request);
+    }
+
+    public function testResolveFromQueryStringRequestIsAuthenticated(): void
+    {
+        $this->shopRepository->createShop(new MockShop('1', 'test.de', 'asd'));
+
+        $request = $this->createGetRequest('shop-id=1');
+
+        $verifier = static::createMock(RequestVerifier::class);
+        $verifier
+            ->expects(static::once())
+            ->method('authenticateGetRequest')
+            ->with($request);
+
+        $resolver = new ShopResolver($this->shopRepository, $verifier);
+        $resolver->resolveShop($request);
+    }
+
+    public function testRequestRewindIsCalled(): void
+    {
+        $this->shopRepository->createShop(new MockShop('1', 'test.de', 'asd'));
+
+        $body = static::createMock(StreamInterface::class);
+        $body
+            ->expects(static::once())
+            ->method('rewind');
+
+        $body
+            ->expects(static::once())
+            ->method('getContents')
+            ->willReturn('{"source": {"shopId": "1"}}');
+
+        $request = $this->createJsonRequest('');
+        $request = $request->withBody($body);
+
+        $this->shopResolver->resolveShop($request);
+    }
+
+    /**
+     * @dataProvider missingSourceParametersProvider
+     */
+    public function testMissingSourceParameters(string $body): void
+    {
+        $request = $this->createJsonRequest($body);
+
+        $resolver = new ShopResolver($this->shopRepository, static::createMock(RequestVerifier::class));
+
+        static::expectException(MissingShopParameterException::class);
+        $resolver->resolveShop($request);
+    }
+
+    /**
+     * @return iterable<array{0: string}>
+     */
+    public static function missingSourceParametersProvider(): iterable
+    {
+        yield['[]'];
+        yield ['{}'];
+        yield ['{"source": {}}'];
+        yield ['{"source": {"shopId": 1}}'];
     }
 
     private function createJsonRequest(string $body): RequestInterface

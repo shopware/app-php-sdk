@@ -8,6 +8,7 @@ use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\StreamInterface;
 use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Authentication\RequestVerifier;
 use Shopware\App\SDK\Exception\SignatureInvalidException;
@@ -83,6 +84,24 @@ class RequestVerifierTest extends TestCase
     public function testAuthenticatePostValid(): void
     {
         $request = new Request('POST', 'https://my-shop.com/webhook', [], 'body');
+        $request = $request->withHeader('shopware-shop-signature', 'dc46983557fea127b43af721467eb9b3fde2338fe3e14f51952aa8478c13d355');
+
+        $verifier = new RequestVerifier();
+        $verifier->authenticatePostRequest($request, new MockShop('1', 'a', 'secret'));
+    }
+
+    public function testAuthenticatePostRequestRewindsBody(): void
+    {
+        $body = static::createMock(StreamInterface::class);
+        $body
+            ->expects(static::once())
+            ->method('rewind');
+
+        $body
+            ->method('getContents')
+            ->willReturn('body');
+
+        $request = new Request('POST', 'https://my-shop.com/webhook?shopware-shop-signature=', [], $body);
         $request = $request->withHeader('shopware-shop-signature', 'dc46983557fea127b43af721467eb9b3fde2338fe3e14f51952aa8478c13d355');
 
         $verifier = new RequestVerifier();

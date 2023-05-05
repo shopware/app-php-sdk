@@ -19,5 +19,6 @@ class SignatureInvalidExceptionTest extends TestCase
 
         static::assertSame($request, $exception->getRequest());
         static::assertSame('Signature could not be verified', $exception->getMessage());
+        static::assertSame(0, $exception->getCode());
     }
 }
