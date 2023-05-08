@@ -1,7 +1,7 @@
 # Events
 
-The `Shopware\App\SDK\AppLifecycle` and `Shopware\App\SDK\Registration\RegistrationService` accepts a PSR event dispatcher.
-When one PSR Dispatcher is passed, the following events will be fired:
+The `Shopware\App\SDK\AppLifecycle` and `Shopware\App\SDK\Registration\RegistrationService` class accepts a PSR event dispatcher.
+When an PSR Dispatcher is passed, the following events will be fired:
 
 - [BeforeShopActivateEvent](../src/Event/BeforeShopActivateEvent.php)
 - [ShopActivatedEvent](../src/Event/ShopActivatedEvent.php)

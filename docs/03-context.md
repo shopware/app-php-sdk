@@ -7,7 +7,9 @@ It also does some validation and checks if the request is valid.
 
 ```php
 $app = new AppConfiguration('Foo', 'test', 'http://localhost:6001/register/callback');
-// for a repository to save stores implementing \Shopware\App\SDK\Shop\ShopRepositoryInterface, see FileShopRepository as an example$repository = ...;
+// for a repository to save stores implementing \Shopware\App\SDK\Shop\ShopRepositoryInterface, see FileShopRepository as an example
+$repository = ...;
+
 // Create a psr 7 request or convert it (HttpFoundation Symfony)
 $psrRequest = ...;
 
