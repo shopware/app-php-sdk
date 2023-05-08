@@ -31,6 +31,9 @@ use Shopware\App\SDK\Context\Payment\PaymentCaptureAction;
 use Shopware\App\SDK\Context\Payment\PaymentFinalizeAction;
 use Shopware\App\SDK\Context\Payment\PaymentPayAction;
 use Shopware\App\SDK\Context\Payment\PaymentValidateAction;
+use Shopware\App\SDK\Context\Payment\Refund;
+use Shopware\App\SDK\Context\Payment\RefundAction;
+use Shopware\App\SDK\Context\Payment\RefundTransactionCapture;
 use Shopware\App\SDK\Context\SalesChannelContext\Address;
 use Shopware\App\SDK\Context\SalesChannelContext\Country;
 use Shopware\App\SDK\Context\SalesChannelContext\CountryState;
@@ -92,6 +95,9 @@ use Shopware\App\SDK\Test\MockShop;
 #[CoversClass(PaymentFinalizeAction::class)]
 #[CoversClass(PaymentCaptureAction::class)]
 #[CoversClass(PaymentValidateAction::class)]
+#[CoversClass(RefundAction::class)]
+#[CoversClass(Refund::class)]
+#[CoversClass(RefundTransactionCapture::class)]
 class ContextResolverTest extends TestCase
 {
     public function testAssembleWebhookMalformed(): void
@@ -583,6 +589,36 @@ class ContextResolverTest extends TestCase
         );
 
         static::assertSame(['tos' => 'on'], $action->requestData);
+    }
+
+    public function testAssembleRefundInvalid(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        static::expectException(MalformedWebhookBodyException::class);
+        $contextResolver->assemblePaymentRefund(
+            new Request('POST', '/', [], '{}'),
+            $this->getShop()
+        );
+    }
+
+    public function testRefund(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $action = $contextResolver->assemblePaymentRefund(
+            new Request('POST', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/refund.json')),
+            $this->getShop()
+        );
+
+        static::assertSame('70d9f8c7b9074445b9dd84b7b179374b', $action->refund->getId());
+        static::assertSame([], $action->refund->getCustomFields());
+        static::assertSame(420.69, $action->refund->getAmount()->getTotalPrice());
+        static::assertNull($action->refund->getReason());
+        static::assertSame('open', $action->refund->getStateMachineState()->getTechnicalName());
+        static::assertNull($action->refund->getTransactionCapture()->getExternalReference());
+        static::assertSame(420.69, $action->refund->getTransactionCapture()->getAmount()->getTotalPrice());
+        static::assertSame('a357e3b039a046079856f6a7425ec700', $action->refund->getTransactionCapture()->getTransaction()->getId());
     }
 
     private function getShop(): ShopInterface

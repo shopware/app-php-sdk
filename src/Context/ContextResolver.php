@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Shopware\App\SDK\Context;
 
+use DateTimeImmutable;
 use Psr\Http\Message\RequestInterface;
 use Shopware\App\SDK\Context\ActionButton\ActionButton;
 use Shopware\App\SDK\Context\Cart\Cart;
@@ -14,6 +15,8 @@ use Shopware\App\SDK\Context\Payment\PaymentCaptureAction;
 use Shopware\App\SDK\Context\Payment\PaymentFinalizeAction;
 use Shopware\App\SDK\Context\Payment\PaymentPayAction;
 use Shopware\App\SDK\Context\Payment\PaymentValidateAction;
+use Shopware\App\SDK\Context\Payment\Refund;
+use Shopware\App\SDK\Context\Payment\RefundAction;
 use Shopware\App\SDK\Context\SalesChannelContext\SalesChannelContext;
 use Shopware\App\SDK\Context\TaxProvider\TaxProvider;
 use Shopware\App\SDK\Context\Webhook\Webhook;
@@ -36,7 +39,7 @@ class ContextResolver
             $this->parseSource($body['source']),
             $body['data']['event'],
             $body['data']['payload'],
-            new \DateTimeImmutable('@' . $body['timestamp'])
+            new DateTimeImmutable('@' . $body['timestamp'])
         );
     }
 
@@ -160,6 +163,23 @@ class ContextResolver
             new Cart($body['cart']),
             new SalesChannelContext($body['salesChannelContext']),
             $body['requestData'] ?? []
+        );
+    }
+
+    public function assemblePaymentRefund(RequestInterface $request, ShopInterface $shop): RefundAction
+    {
+        $body = json_decode($request->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        return new RefundAction(
+            $shop,
+            $this->parseSource($body['source']),
+            new Order($body['order']),
+            new Refund($body['refund']),
         );
     }
 
