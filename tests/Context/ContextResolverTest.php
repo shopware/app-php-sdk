@@ -311,6 +311,7 @@ class ContextResolverTest extends TestCase
 
         $position = $positions['0'];
 
+        static::assertSame('91298e263c5b4bb88c3f51c873d7e76e', $position->getIdentifier());
         static::assertSame(1, $position->getQuantity());
         static::assertSame(1683129600, $position->getDeliveryDate()->getEarliest()->getTimestamp());
         static::assertSame(1683302400, $position->getDeliveryDate()->getLatest()->getTimestamp());

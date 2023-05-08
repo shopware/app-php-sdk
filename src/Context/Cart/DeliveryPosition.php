@@ -8,6 +8,12 @@ use Shopware\App\SDK\Context\ArrayStruct;
 
 class DeliveryPosition extends ArrayStruct
 {
+    public function getIdentifier(): string
+    {
+        \assert(is_string($this->data['identifier']));
+        return $this->data['identifier'];
+    }
+
     public function getLineItem(): LineItem
     {
         \assert(is_array($this->data['lineItem']));
