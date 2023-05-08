@@ -18,4 +18,10 @@ class CustomerTest extends TestCase
         $customer = new Customer(['salutation' => null]);
         static::assertNull($customer->getSalutation());
     }
+
+    public function testGetVatIds(): void
+    {
+        $customer = new Customer(['vatIds' => ['foo', 'bar']]);
+        static::assertSame(['foo', 'bar'], $customer->getVatIds());
+    }
 }

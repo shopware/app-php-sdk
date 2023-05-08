@@ -19,5 +19,6 @@ class SignatureNotFoundExceptionTest extends TestCase
 
         static::assertSame($request, $exception->getRequest());
         static::assertSame('Signature is not present in request', $exception->getMessage());
+        static::assertSame(0, $exception->getCode());
     }
 }

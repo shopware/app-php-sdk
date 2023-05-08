@@ -1,0 +1,35 @@
+{
+    "$schema": "vendor/infection/infection/resources/schema.json",
+    "source": {
+        "directories": [
+            "src"
+        ],
+        excludes: [
+            "Test"
+        ]
+    },
+    "logs": {
+        "stryker": {
+            "report": "main"
+        }
+    },
+    "mutators": {
+        "@default": true,
+        "CastFloat": {
+            ignore: [
+                'Shopware\\App\\SDK\\Context\\SalesChannelContext\\Currency::getTaxFreeFrom'
+            ]
+        },
+        "LogicalAnd": {
+            ignore: [
+                'Shopware\\App\\SDK\\Context\\SalesChannelContext\\SalesChannelContext'
+            ]
+        },
+        "LogicalOr": {
+            ignore: [
+                'Shopware\\App\\SDK\\Registration\\RegistrationService::registerConfirm',
+                'Shopware\\App\\SDK\\Shop\\ShopResolver::resolveFromSource'
+            ]
+        }
+    }
+}

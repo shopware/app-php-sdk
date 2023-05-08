@@ -25,7 +25,7 @@ class Response
      */
     public function toArray(): array
     {
-        $data = json_decode($this->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $data = \json_decode($this->getContent(), true, flags: JSON_THROW_ON_ERROR);
 
         if (!is_array($data)) {
             throw new \RuntimeException('Response is not a valid JSON array');

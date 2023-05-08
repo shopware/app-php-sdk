@@ -42,7 +42,7 @@ class RegistrationService
     {
         $this->requestVerifier->authenticateRegistrationRequest($request, $this->appConfiguration);
 
-        parse_str($request->getUri()->getQuery(), $queries);
+        \parse_str($request->getUri()->getQuery(), $queries);
 
         if (!isset($queries['shop-id']) || !is_string($queries['shop-id']) || !isset($queries['shop-url']) || !is_string($queries['shop-url'])) {
             throw new MissingShopParameterException();
@@ -80,7 +80,7 @@ class RegistrationService
 
         return $response
             ->withHeader('Content-Type', 'application/json')
-            ->withBody($psrFactory->createStream(json_encode($data, JSON_THROW_ON_ERROR)));
+            ->withBody($psrFactory->createStream(\json_encode($data, JSON_THROW_ON_ERROR)));
     }
 
     /**
@@ -92,7 +92,7 @@ class RegistrationService
     public function registerConfirm(RequestInterface $request): ResponseInterface
     {
         /** @var array<string, mixed> $requestContent */
-        $requestContent = json_decode($request->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+        $requestContent = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
 
         if (!isset($requestContent['shopId']) || !is_string($requestContent['shopId']) || !isset($requestContent['apiKey']) || !is_string($requestContent['apiKey']) || !isset($requestContent['secretKey']) || !is_string($requestContent['secretKey'])) {
             throw new MissingShopParameterException();

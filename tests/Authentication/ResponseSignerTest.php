@@ -7,6 +7,7 @@ namespace Shopware\App\SDK\Tests\Authentication;
 use Nyholm\Psr7\Response;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\StreamInterface;
 use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Authentication\ResponseSigner;
 use Shopware\App\SDK\Test\MockShop;
@@ -36,5 +37,21 @@ class ResponseSignerTest extends TestCase
 
         static::assertTrue($signedResponse->hasHeader('shopware-app-signature'));
         static::assertSame('88cd2108b5347d973cf39cdf9053d7dd42704876d8c9a9bd8e2d168259d3ddf7', $signedResponse->getHeaderLine('shopware-app-signature'));
+    }
+
+    public function testBodyRewindIsCalled(): void
+    {
+        $body = static::createMock(StreamInterface::class);
+        $body
+            ->expects(static::once())
+            ->method('rewind');
+
+        $body
+            ->method('getContents')
+            ->willReturn('test');
+
+        $response = new Response(200, [], $body);
+
+        $this->signer->signResponse($response, new MockShop('test', 'test.de', 'test'));
     }
 }

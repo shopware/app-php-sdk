@@ -35,7 +35,7 @@ class ShopResolver
      */
     private function resolveFromSource(RequestInterface $request): ShopInterface
     {
-        $body = json_decode($request->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
         $request->getBody()->rewind();
 
         if (!is_array($body) || !isset($body['source']) || !isset($body['source']['shopId']) || !is_string($body['source']['shopId'])) {
@@ -59,9 +59,9 @@ class ShopResolver
      */
     private function resolveFromQueryString(RequestInterface $request): ShopInterface
     {
-        parse_str($request->getUri()->getQuery(), $query);
+        \parse_str($request->getUri()->getQuery(), $query);
 
-        if (!isset($query['shop-id']) || !is_string($query['shop-id'])) {
+        if (!isset($query['shop-id']) || !\is_string($query['shop-id'])) {
             throw new MissingShopParameterException();
         }
 

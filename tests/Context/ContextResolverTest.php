@@ -7,6 +7,7 @@ namespace Shopware\App\SDK\Tests\Context;
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\StreamInterface;
 use Shopware\App\SDK\Context\ActionButton\ActionButtonAction;
 use Shopware\App\SDK\Context\ActionSource;
 use Shopware\App\SDK\Context\ArrayStruct;
@@ -205,12 +206,17 @@ class ContextResolverTest extends TestCase
         static::assertSame('en-GB', $module->userLanguage);
     }
 
-    public function testAssembleModuleInvalid(): void
+    /**
+     * @dataProvider assembleModuleInvalidRequestBodyProvider
+     */
+    public function testAssembleModuleInvalid(string $uri): void
     {
         $contextResolver = new ContextResolver();
 
+        $uri = '/?' . $uri;
+
         static::expectException(MalformedWebhookBodyException::class);
-        $contextResolver->assembleModule(new Request('GET', '/'), $this->getShop());
+        $contextResolver->assembleModule(new Request('GET', $uri), $this->getShop());
     }
 
     public function testAssembleTaxProviderInvalid(): void
@@ -450,6 +456,102 @@ class ContextResolverTest extends TestCase
         static::assertNull($location->getCountryState()?->getId());
     }
 
+    public function testAssemblePay(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+            ],
+            'order' => [
+                'id' => 'foo',
+            ],
+            'orderTransaction' => [
+                'id' => 'bar',
+            ],
+            'returnUrl' => 'https://example.com/return',
+            'requestData' => [
+                'returnId' => '123',
+            ],
+        ];
+
+        $paymentPayResponse = $contextResolver->assemblePaymentPay(
+            new Request('POST', '/', [], \json_encode($body, JSON_THROW_ON_ERROR)),
+            $this->getShop()
+        );
+
+        static::assertInstanceOf(PaymentPayAction::class, $paymentPayResponse);
+        static::assertSame('https://example.com', $paymentPayResponse->source->url);
+        static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame('foo', $paymentPayResponse->order->getId());
+        static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
+        static::assertSame('https://example.com/return', $paymentPayResponse->returnUrl);
+        static::assertSame(['returnId' => '123'], $paymentPayResponse->requestData);
+    }
+
+    public function testAssemblePayFinalize(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+            ],
+            'orderTransaction' => [
+                'id' => 'bar',
+            ],
+            'queryParameters' => [
+                'returnId' => '123',
+            ],
+        ];
+
+        $paymentPayResponse = $contextResolver->assemblePaymentFinalize(
+            new Request('POST', '/', [], \json_encode($body, JSON_THROW_ON_ERROR)),
+            $this->getShop()
+        );
+
+        static::assertInstanceOf(PaymentFinalizeAction::class, $paymentPayResponse);
+        static::assertSame('https://example.com', $paymentPayResponse->source->url);
+        static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
+        static::assertSame(['returnId' => '123'], $paymentPayResponse->queryParameters);
+    }
+
+    public function testPaymentPayCapture(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+            ],
+            'order' => [
+                'id' => 'foo',
+            ],
+            'orderTransaction' => [
+                'id' => 'bar',
+            ],
+            'preOrderPayment' => [
+                'returnId' => '123',
+            ],
+        ];
+
+        $paymentPayResponse = $contextResolver->assemblePaymentCapture(
+            new Request('POST', '/', [], \json_encode($body, JSON_THROW_ON_ERROR)),
+            $this->getShop()
+        );
+
+        static::assertInstanceOf(PaymentCaptureAction::class, $paymentPayResponse);
+        static::assertSame('https://example.com', $paymentPayResponse->source->url);
+        static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
+        static::assertSame(['returnId' => '123'], $paymentPayResponse->requestData);
+    }
+
     public function testAssemblePayInvalid(): void
     {
         $contextResolver = new ContextResolver();
@@ -620,6 +722,82 @@ class ContextResolverTest extends TestCase
         static::assertNull($action->refund->getTransactionCapture()->getExternalReference());
         static::assertSame(420.69, $action->refund->getTransactionCapture()->getAmount()->getTotalPrice());
         static::assertSame('a357e3b039a046079856f6a7425ec700', $action->refund->getTransactionCapture()->getTransaction()->getId());
+    }
+
+    /**
+     * @dataProvider methodsProvider
+     */
+    public function testBodyRewindIsCalled(string $method): void
+    {
+        $body = static::createMock(StreamInterface::class);
+        $body
+            ->expects(static::once())
+            ->method('rewind');
+
+        $body
+            ->expects(static::once())
+            ->method('getContents')
+            ->willReturn('{}');
+
+        $request = new Request('POST', '/', [], $body);
+
+        static::expectException(MalformedWebhookBodyException::class);
+
+        $contextResolver = new ContextResolver();
+        $contextResolver->$method($request, $this->getShop());
+    }
+
+    /**
+     * @dataProvider invalidSourceProvider
+     */
+    public function testParseSourceInvalid(string $source): void
+    {
+        $request = new Request('POST', '/', [], $source);
+
+        $contextResolver = new ContextResolver();
+        static::expectException(MalformedWebhookBodyException::class);
+        $contextResolver->assembleWebhook($request, $this->getShop());
+    }
+
+    /**
+     * @return iterable<string[]>
+     */
+    public static function assembleModuleInvalidRequestBodyProvider(): iterable
+    {
+        yield [''];
+        yield ['sw-version='];
+        yield ['sw-version=640'];
+        yield ['sw-version=6.5.0.0&sw-context-language='];
+        yield ['sw-version=6.5.0.0&sw-context-language=1'];
+    }
+
+    /**
+     * @return iterable<string[]>
+     */
+    public static function methodsProvider(): iterable
+    {
+        yield ['assembleWebhook'];
+        yield ['assembleActionButton'];
+        yield ['assembleTaxProvider'];
+        yield ['assemblePaymentPay'];
+        yield ['assemblePaymentFinalize'];
+        yield ['assemblePaymentCapture'];
+        yield ['assemblePaymentValidate'];
+        yield ['assemblePaymentRefund'];
+    }
+
+    /**
+     * @return iterable<string[]>
+     */
+    public static function invalidSourceProvider(): iterable
+    {
+        yield ['{}'];
+        yield ['{"source":{}}'];
+        yield ['{"source":{"foo":"bar"}}'];
+        yield ['{"source":{"url":1}}'];
+        yield ['{"source":{"url":"https://example.com"}}'];
+        yield ['{"source":{"url":"https://example.com", "foo":"bar"}}'];
+        yield ['{"source":{"url":"https://example.com", "appVersion":1}}'];
     }
 
     private function getShop(): ShopInterface
