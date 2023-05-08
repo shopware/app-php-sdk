@@ -7,7 +7,28 @@
 
 This SDK is independent of any Framework. It uses PSR Request/Response/HttpClient to be usable cross framework.
 
+## Featuers
+
+- Registration Flow
+- Lifecycle Handling (app activated, deactivated, uninstalled)
+- Convert Actions (Webhook, ActionButton, Payment, ...) into Structs
+- Framework agnostic (PSR Request/Response/HttpClient/Repository)
+- Events
+
 ## Symfony Bundle
 
 If you are using Symfony, you can use the [Symfony Bundle](https://github.com/shopware/AppBundle) to integrate the SDK.
 See Getting Started of the Bundle for more information.
+
+## Documentation
+
+- [Getting Started](./docs/01-getting_started.md)
+- [Lifecycle](./docs/02-lifecycle.md)
+- [Context](./docs/03-context.md)
+- [Signing](./docs/04-signing.md)
+- [HTTP Client](./docs/05-http-client.md)
+- [Events](./docs/06-events.md)
+
+## Example
+
+Checkout the [Example project](./examples) for a simple working example.

@@ -13,7 +13,7 @@ use Psr\Log\NullLogger;
 use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Authentication\RequestVerifier;
 use Shopware\App\SDK\Authentication\ResponseSigner;
-use Shopware\App\SDK\Event\RegistrationBeforeCompletedEvent;
+use Shopware\App\SDK\Event\BeforeRegistrationCompletedEvent;
 use Shopware\App\SDK\Event\RegistrationCompletedEvent;
 use Shopware\App\SDK\Exception\MissingShopParameterException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
@@ -108,7 +108,7 @@ class RegistrationService
 
         $this->requestVerifier->authenticatePostRequest($request, $shop);
 
-        $this->eventDispatcher?->dispatch(new RegistrationBeforeCompletedEvent($shop, $request, $requestContent));
+        $this->eventDispatcher?->dispatch(new BeforeRegistrationCompletedEvent($shop, $request, $requestContent));
 
         $this->shopRepository->updateShop(
             $shop->withShopApiCredentials($requestContent['apiKey'], $requestContent['secretKey'])

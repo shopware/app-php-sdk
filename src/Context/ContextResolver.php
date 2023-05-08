@@ -6,9 +6,9 @@ namespace Shopware\App\SDK\Context;
 
 use DateTimeImmutable;
 use Psr\Http\Message\RequestInterface;
-use Shopware\App\SDK\Context\ActionButton\ActionButton;
+use Shopware\App\SDK\Context\ActionButton\ActionButtonAction;
 use Shopware\App\SDK\Context\Cart\Cart;
-use Shopware\App\SDK\Context\Module\Module;
+use Shopware\App\SDK\Context\Module\ModuleAction;
 use Shopware\App\SDK\Context\Order\Order;
 use Shopware\App\SDK\Context\Order\OrderTransaction;
 use Shopware\App\SDK\Context\Payment\PaymentCaptureAction;
@@ -18,14 +18,14 @@ use Shopware\App\SDK\Context\Payment\PaymentValidateAction;
 use Shopware\App\SDK\Context\Payment\Refund;
 use Shopware\App\SDK\Context\Payment\RefundAction;
 use Shopware\App\SDK\Context\SalesChannelContext\SalesChannelContext;
-use Shopware\App\SDK\Context\TaxProvider\TaxProvider;
-use Shopware\App\SDK\Context\Webhook\Webhook;
+use Shopware\App\SDK\Context\TaxProvider\TaxProviderAction;
+use Shopware\App\SDK\Context\Webhook\WebhookAction;
 use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
 use Shopware\App\SDK\Shop\ShopInterface;
 
 class ContextResolver
 {
-    public function assembleWebhook(RequestInterface $request, ShopInterface $shop): Webhook
+    public function assembleWebhook(RequestInterface $request, ShopInterface $shop): WebhookAction
     {
         $body = json_decode($request->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
         $request->getBody()->rewind();
@@ -34,7 +34,7 @@ class ContextResolver
             throw new MalformedWebhookBodyException();
         }
 
-        return new Webhook(
+        return new WebhookAction(
             $shop,
             $this->parseSource($body['source']),
             $body['data']['event'],
@@ -43,7 +43,7 @@ class ContextResolver
         );
     }
 
-    public function assembleActionButton(RequestInterface $request, ShopInterface $shop): ActionButton
+    public function assembleActionButton(RequestInterface $request, ShopInterface $shop): ActionButtonAction
     {
         $body = json_decode($request->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
         $request->getBody()->rewind();
@@ -52,7 +52,7 @@ class ContextResolver
             throw new MalformedWebhookBodyException();
         }
 
-        return new ActionButton(
+        return new ActionButtonAction(
             $shop,
             $this->parseSource($body['source']),
             $body['data']['ids'],
@@ -61,7 +61,7 @@ class ContextResolver
         );
     }
 
-    public function assembleModule(RequestInterface $request, ShopInterface $shop): Module
+    public function assembleModule(RequestInterface $request, ShopInterface $shop): ModuleAction
     {
         parse_str($request->getUri()->getQuery(), $params);
 
@@ -69,7 +69,7 @@ class ContextResolver
             throw new MalformedWebhookBodyException();
         }
 
-        return new Module(
+        return new ModuleAction(
             $shop,
             $params['sw-version'],
             $params['sw-context-language'],
@@ -77,7 +77,7 @@ class ContextResolver
         );
     }
 
-    public function assembleTaxProvider(RequestInterface $request, ShopInterface $shop): TaxProvider
+    public function assembleTaxProvider(RequestInterface $request, ShopInterface $shop): TaxProviderAction
     {
         $body = json_decode($request->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
         $request->getBody()->rewind();
@@ -86,7 +86,7 @@ class ContextResolver
             throw new MalformedWebhookBodyException();
         }
 
-        return new TaxProvider(
+        return new TaxProviderAction(
             $shop,
             $this->parseSource($body['source']),
             new SalesChannelContext($body['context']),

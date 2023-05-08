@@ -93,7 +93,7 @@ class AppLifecycle
         }
     }
 
-    public function handleShopStatus(RequestInterface $request, bool $status): ResponseInterface
+    private function handleShopStatus(RequestInterface $request, bool $status): ResponseInterface
     {
         $psrFactory = new Psr17Factory();
         $response = $psrFactory->createResponse(204);

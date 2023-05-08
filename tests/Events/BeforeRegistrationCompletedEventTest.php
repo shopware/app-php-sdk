@@ -7,18 +7,18 @@ namespace Shopware\App\SDK\Tests\Events;
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Shopware\App\SDK\Event\AbstractAppLifecycleEvent;
-use Shopware\App\SDK\Event\RegistrationBeforeCompletedEvent;
+use Shopware\App\SDK\Event\BeforeRegistrationCompletedEvent;
 use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Test\MockShop;
 
-#[CoversClass(RegistrationBeforeCompletedEvent::class)]
+#[CoversClass(BeforeRegistrationCompletedEvent::class)]
 #[CoversClass(AbstractAppLifecycleEvent::class)]
 #[CoversClass(MockShop::class)]
-class RegistrationBeforeCompletedEventTest extends TestCase
+class BeforeRegistrationCompletedEventTest extends TestCase
 {
     public function testEvent(): void
     {
-        $event = new RegistrationBeforeCompletedEvent(
+        $event = new BeforeRegistrationCompletedEvent(
             new MockShop('shop-id', 'shop-url', 'shop-secret'),
             new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890'),
             ['apiKey' => 'foo', 'secretKey' => 'bar']

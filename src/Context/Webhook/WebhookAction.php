@@ -7,7 +7,7 @@ namespace Shopware\App\SDK\Context\Webhook;
 use Shopware\App\SDK\Context\ActionSource;
 use Shopware\App\SDK\Shop\ShopInterface;
 
-class Webhook
+class WebhookAction
 {
     /**
      * @param array<mixed> $payload

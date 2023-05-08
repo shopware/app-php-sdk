@@ -8,9 +8,9 @@ use Shopware\App\SDK\Context\ActionSource;
 use Shopware\App\SDK\Shop\ShopInterface;
 
 /**
- * This
+ * This class represents the action button response
  */
-class ActionButton
+class ActionButtonAction
 {
     /**
      * @param array<string> $ids

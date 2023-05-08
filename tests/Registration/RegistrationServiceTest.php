@@ -12,7 +12,7 @@ use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Authentication\RequestVerifier;
 use Shopware\App\SDK\Authentication\ResponseSigner;
 use Shopware\App\SDK\Event\AbstractAppLifecycleEvent;
-use Shopware\App\SDK\Event\RegistrationBeforeCompletedEvent;
+use Shopware\App\SDK\Event\BeforeRegistrationCompletedEvent;
 use Shopware\App\SDK\Event\RegistrationCompletedEvent;
 use Shopware\App\SDK\Exception\MissingShopParameterException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
@@ -30,7 +30,7 @@ use Shopware\App\SDK\Test\MockShopRepository;
 #[CoversClass(AbstractAppLifecycleEvent::class)]
 #[CoversClass(MockShop::class)]
 #[CoversClass(MockShopRepository::class)]
-#[CoversClass(RegistrationBeforeCompletedEvent::class)]
+#[CoversClass(BeforeRegistrationCompletedEvent::class)]
 #[CoversClass(RegistrationCompletedEvent::class)]
 class RegistrationServiceTest extends TestCase
 {
@@ -149,7 +149,7 @@ class RegistrationServiceTest extends TestCase
         static::assertCount(2, $events);
         static::assertArrayHasKey('0', $events);
         static::assertArrayHasKey('1', $events);
-        static::assertInstanceOf(RegistrationBeforeCompletedEvent::class, $events[0]);
+        static::assertInstanceOf(BeforeRegistrationCompletedEvent::class, $events[0]);
         static::assertInstanceOf(RegistrationCompletedEvent::class, $events[1]);
         static::assertSame(204, $response->getStatusCode());
     }

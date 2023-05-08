@@ -9,7 +9,7 @@ use Shopware\App\SDK\Context\Cart\Cart;
 use Shopware\App\SDK\Context\SalesChannelContext\SalesChannelContext;
 use Shopware\App\SDK\Shop\ShopInterface;
 
-class TaxProvider
+class TaxProviderAction
 {
     public function __construct(
         public readonly ShopInterface       $shop,

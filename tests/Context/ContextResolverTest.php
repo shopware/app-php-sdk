@@ -7,7 +7,7 @@ namespace Shopware\App\SDK\Tests\Context;
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Psr\Http\Message\RequestInterface;
-use Shopware\App\SDK\Context\ActionButton\ActionButton;
+use Shopware\App\SDK\Context\ActionButton\ActionButtonAction;
 use Shopware\App\SDK\Context\ActionSource;
 use Shopware\App\SDK\Context\ArrayStruct;
 use Shopware\App\SDK\Context\Cart\CalculatedTax;
@@ -22,7 +22,7 @@ use Shopware\App\SDK\Context\Cart\CalculatedPrice;
 use Shopware\App\SDK\Context\Cart\TaxRule;
 use Shopware\App\SDK\Context\ContextResolver;
 use PHPUnit\Framework\TestCase;
-use Shopware\App\SDK\Context\Module\Module;
+use Shopware\App\SDK\Context\Module\ModuleAction;
 use Shopware\App\SDK\Context\Order\Order;
 use Shopware\App\SDK\Context\Order\OrderDelivery;
 use Shopware\App\SDK\Context\Order\OrderTransaction;
@@ -48,24 +48,24 @@ use Shopware\App\SDK\Context\SalesChannelContext\Salutation;
 use Shopware\App\SDK\Context\SalesChannelContext\ShippingLocation;
 use Shopware\App\SDK\Context\SalesChannelContext\ShippingMethod;
 use Shopware\App\SDK\Context\SalesChannelContext\TaxInfo;
-use Shopware\App\SDK\Context\TaxProvider\TaxProvider;
-use Shopware\App\SDK\Context\Webhook\Webhook;
+use Shopware\App\SDK\Context\TaxProvider\TaxProviderAction;
+use Shopware\App\SDK\Context\Webhook\WebhookAction;
 use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
 use Shopware\App\SDK\Shop\ShopInterface;
 use Shopware\App\SDK\Test\MockShop;
 
 #[CoversClass(ContextResolver::class)]
 #[CoversClass(ActionSource::class)]
-#[CoversClass(Webhook::class)]
-#[CoversClass(ActionButton::class)]
-#[CoversClass(Module::class)]
+#[CoversClass(WebhookAction::class)]
+#[CoversClass(ActionButtonAction::class)]
+#[CoversClass(ModuleAction::class)]
 #[CoversClass(MockShop::class)]
 #[CoversClass(MalformedWebhookBodyException::class)]
 #[CoversClass(ArrayStruct::class)]
 #[CoversClass(Cart::class)]
 #[CoversClass(LineItem::class)]
 #[CoversClass(CalculatedPrice::class)]
-#[CoversClass(TaxProvider::class)]
+#[CoversClass(TaxProviderAction::class)]
 #[CoversClass(CalculatedTax::class)]
 #[CoversClass(TaxRule::class)]
 #[CoversClass(CartPrice::class)]

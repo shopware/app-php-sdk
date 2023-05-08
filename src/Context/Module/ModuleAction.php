@@ -6,7 +6,7 @@ namespace Shopware\App\SDK\Context\Module;
 
 use Shopware\App\SDK\Shop\ShopInterface;
 
-class Module
+class ModuleAction
 {
     /**
      * @param string $contentLanguage - The language of the Shopware content as UUID

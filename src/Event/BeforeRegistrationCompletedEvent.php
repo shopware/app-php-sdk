@@ -10,7 +10,7 @@ use Shopware\App\SDK\Shop\ShopInterface;
 /**
  * This event is fired before the shop has been saved to the database. So you are able to modify the shop before it is saved.
  */
-class RegistrationBeforeCompletedEvent extends AbstractAppLifecycleEvent
+class BeforeRegistrationCompletedEvent extends AbstractAppLifecycleEvent
 {
     /**
      * @param array{apiKey: string, secretKey: string} $confirmation
