@@ -4,6 +4,7 @@
 [![PHPUnit](https://github.com/shopware/app-php-sdk/actions/workflows/phpunit.yml/badge.svg)](https://github.com/shopware/app-php-sdk/actions/workflows/phpunit.yml)
 [![PHPStan](https://github.com/shopware/app-php-sdk/actions/workflows/phpstan.yml/badge.svg)](https://github.com/shopware/app-php-sdk/actions/workflows/phpstan.yml)
 [![CS-Fixer](https://github.com/shopware/app-php-sdk/actions/workflows/cs-fixer.yml/badge.svg)](https://github.com/shopware/app-php-sdk/actions/workflows/cs-fixer.yml)
+[![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fshopware%2Fapp-php-sdk%2Fmain)](https://dashboard.stryker-mutator.io/reports/github.com/shopware/app-php-sdk/main)
 
 This SDK is independent of any Framework. It uses PSR Request/Response/HttpClient to be usable cross framework.
 
