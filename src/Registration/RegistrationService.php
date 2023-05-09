@@ -63,7 +63,7 @@ class RegistrationService
 
             $this->shopRepository->createShop($shop);
         } else {
-            $this->shopRepository->updateShop($shop->withShopUrl($queries['shop-url']));
+            $this->shopRepository->updateShop($shop->setShopUrl($queries['shop-url']));
         }
 
         $this->logger->info('Shop registration request received', [
@@ -115,7 +115,7 @@ class RegistrationService
         $this->eventDispatcher?->dispatch(new BeforeRegistrationCompletedEvent($shop, $request, $requestContent));
 
         $this->shopRepository->updateShop(
-            $shop->withShopApiCredentials($requestContent['apiKey'], $requestContent['secretKey'])
+            $shop->setShopApiCredentials($requestContent['apiKey'], $requestContent['secretKey'])
         );
 
         $this->logger->info('Shop registration confirmed', [

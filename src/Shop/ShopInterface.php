@@ -21,9 +21,9 @@ interface ShopInterface
 
     public function getShopClientSecret(): ?string;
 
-    public function withShopApiCredentials(string $clientId, string $clientSecret): ShopInterface;
+    public function setShopApiCredentials(string $clientId, string $clientSecret): ShopInterface;
 
-    public function withShopUrl(string $url): ShopInterface;
+    public function setShopUrl(string $url): ShopInterface;
 
-    public function withShopActive(bool $active): ShopInterface;
+    public function setShopActive(bool $active): ShopInterface;
 }

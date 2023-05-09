@@ -113,7 +113,7 @@ class AppLifecycle
             $this->eventDispatcher?->dispatch(new BeforeShopDeactivatedEvent($request, $shop));
         }
 
-        $this->shopRepository->updateShop($shop->withShopActive($status));
+        $this->shopRepository->updateShop($shop->setShopActive($status));
 
         if ($status) {
             $this->eventDispatcher?->dispatch(new ShopActivatedEvent($request, $shop));
