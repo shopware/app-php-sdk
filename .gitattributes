@@ -8,4 +8,9 @@
 /examples export-ignore
 /devenv.nix export-ignore
 /devenv.lock export-ignore
+/devenv.yaml export-ignore
+/README.md export-ignore
+/LICENSE export-ignore
+/.gitignore export-ignore
 /.envrc export-ignore
+/infection.json5 export-ignore
