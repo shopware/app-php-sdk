@@ -44,7 +44,7 @@ if (str_starts_with($serverRequest->getUri()->getPath(), '/register/authorize'))
 } elseif (str_starts_with($serverRequest->getUri()->getPath(), '/register/callback')) {
     send($appLifecycle->registerConfirm($serverRequest));
 } elseif (str_starts_with($serverRequest->getUri()->getPath(), '/webhook/app.deleted')) {
-    send($appLifecycle->uninstall($serverRequest));
+    send($appLifecycle->delete($serverRequest));
 } elseif (str_starts_with($serverRequest->getUri()->getPath(), '/webhook/app.activated')) {
     send($appLifecycle->activate($serverRequest));
 } elseif (str_starts_with($serverRequest->getUri()->getPath(), '/webhook/app.deactivated')) {

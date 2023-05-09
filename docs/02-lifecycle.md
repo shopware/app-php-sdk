@@ -11,9 +11,20 @@ To track correctly the state in our Database, we need to implement some lifecycl
 - `deactivate`
 - `uninstall`
 
+The lifecycle registration in the `manifest.xml` would look like this:
+
+```xml
+<webhooks>
+    <webhook name="appActivate" url="https://app-server.com/app/activate" event="app.activated"/>
+    <webhook name="appDeactivated" url="https://app-server.com/app/deactivated" event="app.deactivated"/>
+    <webhook name="appDelete" url="https://app-server.com/app/delete" event="app.deleted"/>
+</webhooks>
+```
+
 ## Usage
 
-The implementation is similar to [Registration](./getting_started.md)
+The implementation is similar to [Registration](./01-getting_started.md)
+and wraps the RegistrationService to inject only one controller for all lifecycle methods.
 
 ```php
 $app = new AppConfiguration('Foo', 'test', 'http://localhost:6001/register/callback');
@@ -32,7 +43,7 @@ $response = match ($_SERVER['REQUEST_URI']) {
     '/app/register/confirm' => $lifecycle->registerConfirm($psrRequest),
     '/app/activate' => $lifecycle->activate($psrRequest),
     '/app/deactivate' => $lifecycle->deactivate($psrRequest),
-    '/app/uninstall' => $lifecycle->uninstall($psrRequest),
+    '/app/delete' => $lifecycle->delete($psrRequest),
     default => throw new \RuntimeException('Unknown route')
 };
 

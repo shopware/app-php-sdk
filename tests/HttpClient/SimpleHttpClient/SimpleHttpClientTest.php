@@ -42,7 +42,7 @@ class SimpleHttpClientTest extends TestCase
         $resp = $simpleHttpClient->get('https://example.com');
 
         static::assertTrue($resp->ok());
-        static::assertSame(['foo' => 'bar'], $resp->toArray());
+        static::assertSame(['foo' => 'bar'], $resp->json());
     }
 
     #[DataProvider('provideMethods')]

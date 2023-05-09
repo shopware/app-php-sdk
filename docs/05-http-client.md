@@ -22,7 +22,7 @@ $httpClient = $clientFactory->createClient($shop);
 $response = $httpClient->sendRequest($psrHttpRequest);
 ```
 
-The client will automatically fetch the oauth token for the shop and add it to the request.
+The client will automatically fetch the OAuth2 token for the shop and add it to the request.
 
 ## SimpleHttpClient
 
@@ -31,7 +31,11 @@ The SimpleHttpClient is a wrapper around the PSR18 ClientInterface and provides 
 ```php
 $simpleClient = new \Shopware\App\SDK\HttpClient\SimpleHttpClient\SimpleHttpClient($httpClient);
 
-$simpleClient->get('https://shop.com/api/_info/version');
+$response = $simpleClient->get('https://shop.com/api/_info/version');
+$response->getHeader('Content-Type'); // application/json
+$response->ok(); // true when 200 <= status code < 300
+$body = $response->json(); // json decoded body
+echo $body['version'];
 
 $simpleClient->post('https://shop.com/api/_action/sync', [
     'entity' => 'product',

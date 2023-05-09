@@ -57,9 +57,9 @@ class AppLifecycle
     }
 
     /**
-     * Handles the app.uninstalled Hook to remove the shop from the repository
+     * Handles the app.deleted Hook to remove the shop from the repository
      */
-    public function uninstall(RequestInterface $request): ResponseInterface
+    public function delete(RequestInterface $request): ResponseInterface
     {
         $psrFactory = new Psr17Factory();
         $response = $psrFactory->createResponse(204);

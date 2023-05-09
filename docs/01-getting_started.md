@@ -2,13 +2,15 @@
 
 ## Installation
 
+Install the Shopware APP SDK via composer:
+
 ```bash
-composer req shopware/app-php-sdk
+composer require shopware/app-php-sdk
 ```
 
-The dependency `php-http/discovery` will automatically install a missing HTTP Client
+After the package installation, Composer will automatically install http client if missing
 
-## Registration
+## Registration process
 
 ```php
 $app = new AppConfiguration('Foo', 'test', 'http://localhost:6001/register/callback');

@@ -108,7 +108,7 @@ class AppLifecycleTest extends TestCase
     {
         $this->shopRepository->createShop(new MockShop('123', 'https://foo.com', '1234567890'));
 
-        $response = $this->appLifecycle->uninstall(new Request("POST", '/?shop-id=123', [], '{}'));
+        $response = $this->appLifecycle->delete(new Request("POST", '/?shop-id=123', [], '{}'));
         static::assertSame(204, $response->getStatusCode());
 
         static::assertNull($this->shopRepository->getShopFromId('123'));
@@ -122,7 +122,7 @@ class AppLifecycleTest extends TestCase
 
     public function testUninstallNotExisting(): void
     {
-        $response = $this->appLifecycle->uninstall(new Request("POST", '/?shop-id=123', [], '{}'));
+        $response = $this->appLifecycle->delete(new Request("POST", '/?shop-id=123', [], '{}'));
         static::assertSame(204, $response->getStatusCode());
 
         static::assertNull($this->shopRepository->getShopFromId('123'));
@@ -141,7 +141,7 @@ class AppLifecycleTest extends TestCase
         );
 
         $this->shopRepository->createShop(new MockShop('123', 'https://foo.com', '1234567890'));
-        $response = $appLifeCycle->uninstall(new Request("POST", '/?shop-id=123', [], '{}'));
+        $response = $appLifeCycle->delete(new Request("POST", '/?shop-id=123', [], '{}'));
         static::assertSame(204, $response->getStatusCode());
 
         static::assertNull($this->shopRepository->getShopFromId('123'));
@@ -165,7 +165,7 @@ class AppLifecycleTest extends TestCase
             null
         );
 
-        $response = $appLifeCycle->uninstall(new Request("POST", '/?shop-id=123', [], '{}'));
+        $response = $appLifeCycle->delete(new Request("POST", '/?shop-id=123', [], '{}'));
         static::assertSame(204, $response->getStatusCode());
     }
 

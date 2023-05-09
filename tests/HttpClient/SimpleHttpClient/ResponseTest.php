@@ -19,7 +19,7 @@ class ResponseTest extends TestCase
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('application/json', $response->getHeader('Content-Type'));
         static::assertSame('{"foo": "bar", "baz": 1}', $response->getContent());
-        static::assertSame(['foo' => 'bar', 'baz' => 1], $response->toArray());
+        static::assertSame(['foo' => 'bar', 'baz' => 1], $response->json());
         static::assertTrue($response->ok());
         static::assertSame($raw, $response->getRawResponse());
     }
@@ -33,7 +33,7 @@ class ResponseTest extends TestCase
         static::assertSame('application/json', $response->getHeader('Content-Type'));
         static::expectException(\RuntimeException::class);
         static::expectExceptionMessage('Response is not a valid JSON array');
-        $response->toArray();
+        $response->json();
     }
     /**
      * @dataProvider okDataProvider

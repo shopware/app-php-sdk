@@ -23,7 +23,7 @@ class Response
     /**
      * @return array<mixed>
      */
-    public function toArray(): array
+    public function json(): array
     {
         $data = \json_decode($this->getContent(), true, flags: JSON_THROW_ON_ERROR);
 

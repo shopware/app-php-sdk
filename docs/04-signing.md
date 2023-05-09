@@ -10,7 +10,7 @@ The signing is required for the following actions:
 - Payment
 
 
-To sign the response, you need to create a `ResponseSigner` and call the `signResponse` method.
+To sign the response, you need to create a `ResponseSigner` and call the `signResponse` method with our PSR 7 Response.
 
 ```php
 $app = new AppConfiguration('Foo', 'test', 'http://localhost:6001/register/callback');
