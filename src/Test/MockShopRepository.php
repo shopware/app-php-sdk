@@ -7,10 +7,13 @@ namespace Shopware\App\SDK\Test;
 use Shopware\App\SDK\Shop\ShopInterface;
 use Shopware\App\SDK\Shop\ShopRepositoryInterface;
 
+/**
+ * @implements ShopRepositoryInterface<MockShop>
+ */
 class MockShopRepository implements ShopRepositoryInterface
 {
     /**
-     * @var array<string, ShopInterface>
+     * @var array<string, MockShop>
      */
     public array $shops = [];
 

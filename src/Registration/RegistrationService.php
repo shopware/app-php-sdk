@@ -19,10 +19,14 @@ use Shopware\App\SDK\Exception\MissingShopParameterException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
 use Shopware\App\SDK\Exception\SignatureNotFoundException;
 use Shopware\App\SDK\Exception\SignatureInvalidException;
+use Shopware\App\SDK\Shop\ShopInterface;
 use Shopware\App\SDK\Shop\ShopRepositoryInterface;
 
 class RegistrationService
 {
+    /**
+     * @param ShopRepositoryInterface<ShopInterface> $shopRepository
+     */
     public function __construct(
         private readonly AppConfiguration $appConfiguration,
         private readonly ShopRepositoryInterface $shopRepository,

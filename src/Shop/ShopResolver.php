@@ -15,6 +15,9 @@ use Shopware\App\SDK\Exception\SignatureInvalidException;
  */
 class ShopResolver
 {
+    /**
+     * @param ShopRepositoryInterface<ShopInterface> $shopRepository
+     */
     public function __construct(private readonly ShopRepositoryInterface $shopRepository, private readonly RequestVerifier $requestVerifier = new RequestVerifier())
     {
     }

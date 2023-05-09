@@ -27,6 +27,9 @@ use Shopware\App\SDK\Shop\ShopResolver;
  */
 class AppLifecycle
 {
+    /**
+     * @param ShopRepositoryInterface<ShopInterface> $shopRepository
+     */
     public function __construct(
         private readonly RegistrationService $registrationService,
         private readonly ShopResolver $shopResolver,
