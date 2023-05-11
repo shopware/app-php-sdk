@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Tests\HttpClient\SimpleHttpClient;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use Shopware\App\SDK\HttpClient\SimpleHttpClient\Response;
+use Shopware\App\SDK\HttpClient\SimpleHttpClient\SimpleHttpClientResponse;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(Response::class)]
-class ResponseTest extends TestCase
+#[CoversClass(SimpleHttpClientResponse::class)]
+class SimpleHttpClientResponseTest extends TestCase
 {
     public function testResponse(): void
     {
         $raw = new \Nyholm\Psr7\Response(200, ['Content-Type' => 'application/json'], '{"foo": "bar", "baz": 1}');
-        $response = new Response($raw);
+        $response = new SimpleHttpClientResponse($raw);
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('application/json', $response->getHeader('Content-Type'));
@@ -27,7 +27,7 @@ class ResponseTest extends TestCase
     public function testNonArrayResponse(): void
     {
         $raw = new \Nyholm\Psr7\Response(200, ['Content-Type' => 'application/json'], 'true');
-        $response = new Response($raw);
+        $response = new SimpleHttpClientResponse($raw);
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('application/json', $response->getHeader('Content-Type'));
@@ -41,7 +41,7 @@ class ResponseTest extends TestCase
     public function testOk(int $status, bool $shouldBeOk): void
     {
         $raw = new \Nyholm\Psr7\Response($status, ['Content-Type' => 'application/json'], 'true');
-        $response = new Response($raw);
+        $response = new SimpleHttpClientResponse($raw);
 
         static::assertSame($response->ok(), $shouldBeOk);
     }

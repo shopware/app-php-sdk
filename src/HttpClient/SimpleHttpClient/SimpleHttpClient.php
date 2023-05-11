@@ -17,20 +17,20 @@ class SimpleHttpClient
     /**
      * @param array<string, string> $headers
      */
-    public function get(string $url, array $headers = []): Response
+    public function get(string $url, array $headers = []): SimpleHttpClientResponse
     {
         $request = $this->createRequest('GET', $url, $headers);
 
         $response = $this->client->sendRequest($request);
 
-        return new Response($response);
+        return new SimpleHttpClientResponse($response);
     }
 
     /**
      * @param array<mixed> $body
      * @param array<string, string> $headers
      */
-    public function post(string $url, array $body = [], array $headers = []): Response
+    public function post(string $url, array $body = [], array $headers = []): SimpleHttpClientResponse
     {
         return $this->doRequest('POST', $url, $body, $headers);
     }
@@ -39,7 +39,7 @@ class SimpleHttpClient
      * @param array<mixed> $body
      * @param array<string, string> $headers
      */
-    public function patch(string $url, array $body = [], array $headers = []): Response
+    public function patch(string $url, array $body = [], array $headers = []): SimpleHttpClientResponse
     {
         return $this->doRequest('PATCH', $url, $body, $headers);
     }
@@ -48,7 +48,7 @@ class SimpleHttpClient
      * @param array<mixed> $body
      * @param array<string, string> $headers
      */
-    public function put(string $url, array $body = [], array $headers = []): Response
+    public function put(string $url, array $body = [], array $headers = []): SimpleHttpClientResponse
     {
         return $this->doRequest('PUT', $url, $body, $headers);
     }
@@ -57,7 +57,7 @@ class SimpleHttpClient
      * @param array<mixed> $body
      * @param array<string, string> $headers
      */
-    public function delete(string $url, array $body = [], array $headers = []): Response
+    public function delete(string $url, array $body = [], array $headers = []): SimpleHttpClientResponse
     {
         return $this->doRequest('DELETE', $url, $body, $headers);
     }
@@ -67,7 +67,7 @@ class SimpleHttpClient
      * @param array<mixed> $body
      * @param array<string, string> $headers
      */
-    private function doRequest(string $method, string $url, array $body = [], array $headers = []): Response
+    private function doRequest(string $method, string $url, array $body = [], array $headers = []): SimpleHttpClientResponse
     {
         $factory = new Psr17Factory();
 
@@ -78,7 +78,7 @@ class SimpleHttpClient
 
         $response = $this->client->sendRequest($request);
 
-        return new Response($response);
+        return new SimpleHttpClientResponse($response);
     }
 
     /**

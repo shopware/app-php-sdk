@@ -6,7 +6,7 @@ namespace Shopware\App\SDK\HttpClient\SimpleHttpClient;
 
 use Psr\Http\Message\ResponseInterface;
 
-class Response
+class SimpleHttpClientResponse
 {
     public function __construct(private readonly ResponseInterface $response)
     {

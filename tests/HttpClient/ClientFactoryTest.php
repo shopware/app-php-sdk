@@ -33,6 +33,16 @@ class ClientFactoryTest extends TestCase
         $factory->createClient(new MockShop('shop-id', 'shop-secret', ''));
     }
 
+    /**
+     * Should not throw an exception when discover works
+     */
+    #[DoesNotPerformAssertions]
+    public function testSimpleFactory(): void
+    {
+        $factory = new ClientFactory();
+        $factory->createSimpleClient(new MockShop('shop-id', 'shop-secret', ''));
+    }
+
     public function testFactoryOwnClient(): void
     {
         $testClient = $this->createMock(ClientInterface::class);

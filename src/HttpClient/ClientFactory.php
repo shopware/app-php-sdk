@@ -9,6 +9,7 @@ use Psr\Http\Client\ClientInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Psr\SimpleCache\CacheInterface;
+use Shopware\App\SDK\HttpClient\SimpleHttpClient\SimpleHttpClient;
 use Shopware\App\SDK\Shop\ShopInterface;
 
 class ClientFactory
@@ -23,5 +24,10 @@ class ClientFactory
     public function createClient(ShopInterface $shop): ClientInterface
     {
         return new AuthenticatedClient(new LoggerClient($this->client, $this->logger), $shop, $this->cache);
+    }
+
+    public function createSimpleClient(ShopInterface $shop): SimpleHttpClient
+    {
+        return new SimpleHttpClient($this->createClient($shop));
     }
 }
