@@ -115,7 +115,7 @@ class RequestVerifier
      */
     private function verifySignature(
         RequestInterface $request,
-        string $secret,
+        #[\SensitiveParameter] string $secret,
         string $message,
         string $signature
     ): void {

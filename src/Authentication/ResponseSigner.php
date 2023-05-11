@@ -26,7 +26,7 @@ class ResponseSigner
         );
     }
 
-    private function sign(string $message, string $secret): string
+    private function sign(string $message, #[\SensitiveParameter] string $secret): string
     {
         return hash_hmac('sha256', $message, $secret);
     }
