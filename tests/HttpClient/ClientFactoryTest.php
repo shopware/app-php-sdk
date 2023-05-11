@@ -41,8 +41,8 @@ class ClientFactoryTest extends TestCase
             ->method('sendRequest')
             ->willReturn(new Response(200, [], '{"access_token": "a", "expires_in": 3600}'));
 
-        $factory = new ClientFactory();
-        $client = $factory->createClient(new MockShop('shop-id', 'shop-secret', ''), $testClient);
+        $factory = new ClientFactory(new NullCache(), $testClient);
+        $client = $factory->createClient(new MockShop('shop-id', 'shop-secret', ''));
 
         $client->sendRequest(new Request('GET', 'https://example.com'));
     }

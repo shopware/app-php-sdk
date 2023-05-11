@@ -13,12 +13,15 @@ use Shopware\App\SDK\Shop\ShopInterface;
 
 class ClientFactory
 {
-    public function __construct(private readonly CacheInterface $cache = new NullCache())
-    {
+    public function __construct(
+        private readonly CacheInterface $cache = new NullCache(),
+        private readonly ClientInterface $client = new Psr18Client(),
+        private readonly LoggerInterface $logger = new NullLogger()
+    ) {
     }
 
-    public function createClient(ShopInterface $shop, ClientInterface $client = new Psr18Client(), LoggerInterface $logger = new NullLogger()): ClientInterface
+    public function createClient(ShopInterface $shop): ClientInterface
     {
-        return new AuthenticatedClient(new LoggerClient($client, $logger), $shop, $this->cache);
+        return new AuthenticatedClient(new LoggerClient($this->client, $this->logger), $shop, $this->cache);
     }
 }
