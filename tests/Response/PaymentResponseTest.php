@@ -43,12 +43,12 @@ class PaymentResponseTest extends TestCase
         static::assertSame('{"status":"failed"}', $response->getBody()->getContents());
     }
 
-    public function testAuthorized(): void
+    public function testAuthorize(): void
     {
-        $response = PaymentResponse::authorized();
+        $response = PaymentResponse::authorize();
 
         static::assertSame(200, $response->getStatusCode());
-        static::assertSame('{"status":"authorized"}', $response->getBody()->getContents());
+        static::assertSame('{"status":"authorize"}', $response->getBody()->getContents());
     }
 
     public function testUnconfirmed(): void
