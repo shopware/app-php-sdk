@@ -42,9 +42,9 @@ class PaymentResponse
         return self::createStatusResponse('failed', $message);
     }
 
-    public static function authorized(): ResponseInterface
+    public static function authorize(): ResponseInterface
     {
-        return self::createStatusResponse('authorized');
+        return self::createStatusResponse('authorize');
     }
 
     public static function unconfirmed(): ResponseInterface
