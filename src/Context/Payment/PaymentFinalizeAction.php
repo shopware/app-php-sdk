@@ -20,7 +20,8 @@ class PaymentFinalizeAction
         public readonly ShopInterface $shop,
         public readonly ActionSource $source,
         public readonly OrderTransaction $orderTransaction,
-        public readonly array $queryParameters
+        public readonly ?RecurringData $recurring = null,
+        public readonly array $queryParameters = [],
     ) {
     }
 }

@@ -14,7 +14,9 @@ use Shopware\App\SDK\Context\Order\OrderTransaction;
 use Shopware\App\SDK\Context\Payment\PaymentCaptureAction;
 use Shopware\App\SDK\Context\Payment\PaymentFinalizeAction;
 use Shopware\App\SDK\Context\Payment\PaymentPayAction;
+use Shopware\App\SDK\Context\Payment\PaymentRecurringAction;
 use Shopware\App\SDK\Context\Payment\PaymentValidateAction;
+use Shopware\App\SDK\Context\Payment\RecurringData;
 use Shopware\App\SDK\Context\Payment\Refund;
 use Shopware\App\SDK\Context\Payment\RefundAction;
 use Shopware\App\SDK\Context\SalesChannelContext\SalesChannelContext;
@@ -109,6 +111,7 @@ class ContextResolver
             new Order($body['order']),
             new OrderTransaction($body['orderTransaction']),
             $body['returnUrl'] ?? null,
+            isset($body['recurring']) ? new RecurringData($body['recurring']) : null,
             $body['requestData'] ?? []
         );
     }
@@ -126,6 +129,7 @@ class ContextResolver
             $shop,
             $this->parseSource($body['source']),
             new OrderTransaction($body['orderTransaction']),
+            isset($body['recurring']) ? new RecurringData($body['recurring']) : null,
             $body['queryParameters'] ?? []
         );
     }
@@ -139,12 +143,32 @@ class ContextResolver
             throw new MalformedWebhookBodyException();
         }
 
+
+
         return new PaymentCaptureAction(
             $shop,
             $this->parseSource($body['source']),
             new Order($body['order']),
             new OrderTransaction($body['orderTransaction']),
+            isset($body['recurring']) ? new RecurringData($body['recurring']) : null,
             $body['preOrderPayment'] ?? []
+        );
+    }
+
+    public function assemblePaymentRecurringCapture(RequestInterface $request, ShopInterface $shop): PaymentRecurringAction
+    {
+        $body = json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        return new PaymentRecurringAction(
+            $shop,
+            $this->parseSource($body['source']),
+            new Order($body['order']),
+            new OrderTransaction($body['orderTransaction']),
         );
     }
 
