@@ -19,7 +19,8 @@ class PaymentCaptureAction
         public readonly ActionSource $source,
         public readonly Order $order,
         public readonly OrderTransaction $orderTransaction,
-        public readonly array $requestData
+        public readonly ?RecurringData $recurring = null,
+        public readonly array $requestData = [],
     ) {
     }
 }

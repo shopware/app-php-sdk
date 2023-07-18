@@ -31,7 +31,9 @@ use Shopware\App\SDK\Context\Order\StateMachineState;
 use Shopware\App\SDK\Context\Payment\PaymentCaptureAction;
 use Shopware\App\SDK\Context\Payment\PaymentFinalizeAction;
 use Shopware\App\SDK\Context\Payment\PaymentPayAction;
+use Shopware\App\SDK\Context\Payment\PaymentRecurringAction;
 use Shopware\App\SDK\Context\Payment\PaymentValidateAction;
+use Shopware\App\SDK\Context\Payment\RecurringData;
 use Shopware\App\SDK\Context\Payment\Refund;
 use Shopware\App\SDK\Context\Payment\RefundAction;
 use Shopware\App\SDK\Context\Payment\RefundTransactionCapture;
@@ -96,9 +98,11 @@ use Shopware\App\SDK\Test\MockShop;
 #[CoversClass(PaymentFinalizeAction::class)]
 #[CoversClass(PaymentCaptureAction::class)]
 #[CoversClass(PaymentValidateAction::class)]
+#[CoversClass(PaymentRecurringAction::class)]
 #[CoversClass(RefundAction::class)]
 #[CoversClass(Refund::class)]
 #[CoversClass(RefundTransactionCapture::class)]
+#[CoversClass(RecurringData::class)]
 class ContextResolverTest extends TestCase
 {
     public function testAssembleWebhookMalformed(): void
@@ -475,6 +479,10 @@ class ContextResolverTest extends TestCase
             'requestData' => [
                 'returnId' => '123',
             ],
+            'recurring' => [
+                'subscriptionId' => 'baz',
+                'nextSchedule' => '2023-07-18T17:00:00.000+00:00',
+            ],
         ];
 
         $paymentPayResponse = $contextResolver->assemblePaymentPay(
@@ -489,6 +497,78 @@ class ContextResolverTest extends TestCase
         static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
         static::assertSame('https://example.com/return', $paymentPayResponse->returnUrl);
         static::assertSame(['returnId' => '123'], $paymentPayResponse->requestData);
+        static::assertNotNull($paymentPayResponse->recurring);
+        static::assertSame('baz', $paymentPayResponse->recurring->getSubscriptionId());
+        static::assertEquals(new \DateTime('2023-07-18T17:00:00.000+00:00'), $paymentPayResponse->recurring->getNextSchedule());
+    }
+
+    public function testAssemblePayWithoutRecurringData(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+            ],
+            'order' => [
+                'id' => 'foo',
+            ],
+            'orderTransaction' => [
+                'id' => 'bar',
+            ],
+            'returnUrl' => 'https://example.com/return',
+            'requestData' => [
+                'returnId' => '123',
+            ],
+        ];
+
+        $paymentPayResponse = $contextResolver->assemblePaymentPay(
+            new Request('POST', '/', [], \json_encode($body, JSON_THROW_ON_ERROR)),
+            $this->getShop()
+        );
+
+        static::assertInstanceOf(PaymentPayAction::class, $paymentPayResponse);
+        static::assertSame('https://example.com', $paymentPayResponse->source->url);
+        static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame('foo', $paymentPayResponse->order->getId());
+        static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
+        static::assertSame('https://example.com/return', $paymentPayResponse->returnUrl);
+        static::assertSame(['returnId' => '123'], $paymentPayResponse->requestData);
+        static::assertNull($paymentPayResponse->recurring);
+    }
+
+    public function testAssemblePayCaptureRecurring(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+            ],
+            'order' => [
+                'id' => 'foo',
+            ],
+            'orderTransaction' => [
+                'id' => 'bar',
+            ],
+            'returnUrl' => 'https://example.com/return',
+            'requestData' => [
+                'returnId' => '123',
+            ],
+        ];
+
+        $paymentPayResponse = $contextResolver->assemblePaymentRecurringCapture(
+            new Request('POST', '/', [], \json_encode($body, JSON_THROW_ON_ERROR)),
+            $this->getShop()
+        );
+
+        static::assertInstanceOf(PaymentRecurringAction::class, $paymentPayResponse);
+        static::assertSame('https://example.com', $paymentPayResponse->source->url);
+        static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame('foo', $paymentPayResponse->order->getId());
+        static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
     }
 
     public function testAssemblePayFinalize(): void
@@ -506,6 +586,10 @@ class ContextResolverTest extends TestCase
             'queryParameters' => [
                 'returnId' => '123',
             ],
+            'recurring' => [
+                'subscriptionId' => 'baz',
+                'nextSchedule' => '2023-07-18T17:00:00.000+00:00',
+            ],
         ];
 
         $paymentPayResponse = $contextResolver->assemblePaymentFinalize(
@@ -518,6 +602,9 @@ class ContextResolverTest extends TestCase
         static::assertSame('foo', $paymentPayResponse->source->appVersion);
         static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
         static::assertSame(['returnId' => '123'], $paymentPayResponse->queryParameters);
+        static::assertNotNull($paymentPayResponse->recurring);
+        static::assertSame('baz', $paymentPayResponse->recurring->getSubscriptionId());
+        static::assertEquals(new \DateTime('2023-07-18T17:00:00.000+00:00'), $paymentPayResponse->recurring->getNextSchedule());
     }
 
     public function testPaymentPayCapture(): void
@@ -538,6 +625,10 @@ class ContextResolverTest extends TestCase
             'preOrderPayment' => [
                 'returnId' => '123',
             ],
+            'recurring' => [
+                'subscriptionId' => 'baz',
+                'nextSchedule' => '2023-07-18T17:00:00.000+00:00',
+            ],
         ];
 
         $paymentPayResponse = $contextResolver->assemblePaymentCapture(
@@ -550,6 +641,9 @@ class ContextResolverTest extends TestCase
         static::assertSame('foo', $paymentPayResponse->source->appVersion);
         static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
         static::assertSame(['returnId' => '123'], $paymentPayResponse->requestData);
+        static::assertNotNull($paymentPayResponse->recurring);
+        static::assertSame('baz', $paymentPayResponse->recurring->getSubscriptionId());
+        static::assertEquals(new \DateTime('2023-07-18T17:00:00.000+00:00'), $paymentPayResponse->recurring->getNextSchedule());
     }
 
     public function testAssemblePayInvalid(): void
@@ -671,6 +765,17 @@ class ContextResolverTest extends TestCase
         static::assertSame(395.01, $action->orderTransaction->getAmount()->getTotalPrice());
     }
 
+    public function testAssembleCaptureRecurringInvalid(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        static::expectException(MalformedWebhookBodyException::class);
+        $contextResolver->assemblePaymentRecurringCapture(
+            new Request('POST', '/', [], '{}'),
+            $this->getShop()
+        );
+    }
+
     public function testAssembleValidationInvalid(): void
     {
         $contextResolver = new ContextResolver();
@@ -784,6 +889,7 @@ class ContextResolverTest extends TestCase
         yield ['assemblePaymentCapture'];
         yield ['assemblePaymentValidate'];
         yield ['assemblePaymentRefund'];
+        yield ['assemblePaymentRecurringCapture'];
     }
 
     /**
