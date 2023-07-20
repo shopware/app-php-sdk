@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Nyholm\Psr7\Factory\Psr17Factory;
+use Nyholm\Psr7\Response;
+use Nyholm\Psr7\Stream;
 use Nyholm\Psr7Server\ServerRequestCreator;
 use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\AppLifecycle;
@@ -131,6 +133,31 @@ if (str_starts_with($serverRequest->getUri()->getPath(), '/register/authorize'))
     error_log(sprintf('Got request from shop %s for action %s and ids %s', $shop->getShopUrl(), $actionButton->action, implode(', ', $actionButton->ids)));
 
     send($signer->signResponse(ActionButtonResponse::notification('success', 'foo'), $shop));
+} elseif (str_starts_with($serverRequest->getUri()->getPath(), '/storefront/action')) {
+    $response = (new Response())
+        ->withHeader('Access-Control-Allow-Origin', '*')
+        ->withHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        ->withHeader('Access-Control-Allow-Headers', 'shopware-app-shop-id, shopware-app-token');
+
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        send($response);
+        return;
+    }
+
+    $shop = $shopResolver->resolveShop($serverRequest);
+
+    $storefront = $contextResolver->assembleStorefrontRequest($serverRequest, $shop);
+
+    $response = $response
+        ->withHeader('Content-Type', 'application/json')
+        ->withBody(Stream::create(json_encode([
+            'success' => true,
+            'data' => [
+                'foo' => 'bar'
+            ]
+        ], JSON_THROW_ON_ERROR)));
+
+    send($response);
 } else {
     http_response_code(404);
 }

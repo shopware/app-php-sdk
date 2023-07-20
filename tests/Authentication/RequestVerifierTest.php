@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Shopware\App\SDK\Tests\Authentication;
 
+use DateTimeImmutable;
+use Lcobucci\Clock\FrozenClock;
+use Lcobucci\JWT\Validation\RequiredConstraintsViolated;
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
@@ -11,6 +14,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\StreamInterface;
 use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Authentication\RequestVerifier;
+use Shopware\App\SDK\Exception\ShopNotFoundException;
 use Shopware\App\SDK\Exception\SignatureInvalidException;
 use Shopware\App\SDK\Exception\SignatureNotFoundException;
 use Shopware\App\SDK\Test\MockShop;
@@ -18,6 +22,7 @@ use Shopware\App\SDK\Test\MockShop;
 #[CoversClass(RequestVerifier::class)]
 #[CoversClass(SignatureNotFoundException::class)]
 #[CoversClass(SignatureInvalidException::class)]
+#[CoversClass(ShopNotFoundException::class)]
 #[CoversClass(MockShop::class)]
 #[CoversClass(AppConfiguration::class)]
 class RequestVerifierTest extends TestCase
@@ -133,5 +138,50 @@ class RequestVerifierTest extends TestCase
 
         $verifier = new RequestVerifier();
         $verifier->authenticateGetRequest($request, new MockShop('1', 'a', 'secret'));
+    }
+
+    public function testStorefrontRequestEmpty(): void
+    {
+        $request = new Request('GET', 'https://my-shop.com/webhook?test=1&shopware-shop-signature=9dd645162c4599f510a88a716a3aac9934c46d2964811e3efcdc53b4b672fe1c');
+
+        $verifier = new RequestVerifier();
+        $this->expectException(SignatureNotFoundException::class);
+
+        $verifier->authenticateStorefrontRequest($request, new MockShop('1', 'a', 'secret'));
+    }
+
+    public function testStorefrontRequestInvalidShop(): void
+    {
+        $request = new Request('GET', 'https://my-shop.com/webhook?test=1&shopware-shop-signature=9dd645162c4599f510a88a716a3aac9934c46d2964811e3efcdc53b4b672fe1c');
+        $request = $request->withHeader('shopware-app-token', 'bla');
+
+        $verifier = new RequestVerifier();
+
+        $this->expectException(ShopNotFoundException::class);
+        $verifier->authenticateStorefrontRequest($request, new MockShop('1', 'a', ''));
+    }
+
+    #[DoesNotPerformAssertions]
+    public function testStorefrontRequest(): void
+    {
+        $request = new Request('GET', 'https://my-shop.com/webhook?test=1&shopware-shop-signature=9dd645162c4599f510a88a716a3aac9934c46d2964811e3efcdc53b4b672fe1c');
+        $request = $request->withHeader('shopware-app-token', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJGcWFIV1VzQ1JOc3JaOWtRIiwiaWF0IjoxNjg5ODM3MDkyLjI3ODMyOSwibmJmIjoxNjg5ODM3MDkyLjI3ODMyOSwiZXhwIjoxNjg5ODQwNjkyLjI3ODI0Mywic2FsZXNDaGFubmVsSWQiOiIwMTg5NjQwNTU0YjU3MDBjODBjMmM0YTIwMmUyNDAxZCJ9.g8Da0bN3bkkmEdzMeXmI8wlDQEZMCDiKJvqS288B4JI');
+        $request = $request->withHeader('shopware-app-shop-id', 'FqaHWUsCRNsrZ9kQ');
+
+        $verifier = new RequestVerifier(new FrozenClock(new DateTimeImmutable('2023-07-20T07:13:00+00:00')));
+
+        $verifier->authenticateStorefrontRequest($request, new MockShop('FqaHWUsCRNsrZ9kQ', 'a', '4XegKN9Xi9ATj3DKfAdWmKm5vkyDjfr0NRfw9shMdyaBtpV3UteqemCPgW7wQ0tPEXjGPQ4vmmPOexSEGvkstgDEaNdFvvrkbPDn21cQ7v0VGxTCfsuwF9H5'));
+    }
+
+    public function testStorefrontRequestInvalid(): void
+    {
+        $request = new Request('GET', 'https://my-shop.com/webhook?test=1&shopware-shop-signature=9dd645162c4599f510a88a716a3aac9934c46d2964811e3efcdc53b4b672fe1c');
+        $request = $request->withHeader('shopware-app-token', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJGcWFIV1VzQ1JOc3JaOWtRIiwiaWF0IjoxNjg5ODM3MDkyLjI3ODMyOSwibmJmIjoxNjg5ODM3MDkyLjI3ODMyOSwiZXhwIjoxNjg5ODQwNjkyLjI3ODI0Mywic2FsZXNDaGFubmVsSWQiOiIwMTg5NjQwNTU0YjU3MDBjODBjMmM0YTIwMmUyNDAxZCJ9.g8Da0bN3bkkmEdzMeXmI8wlDQEZMCDiKJvqS288B4JI');
+        $request = $request->withHeader('shopware-app-shop-id', 'FqaHWUsCRNsrZ9kQ');
+
+        $verifier = new RequestVerifier(new FrozenClock(new DateTimeImmutable('2023-07-20T07:13:00+00:00')));
+
+        static::expectException(RequiredConstraintsViolated::class);
+        $verifier->authenticateStorefrontRequest($request, new MockShop('FqaHWUsCRNsrZ9kQ', 'a', '1XegKN9Xi9ATj3DKfAdWmKm5vkyDjfr0NRfw9shMdyaBtpV3UteqemCPgW7wQ0tPEXjGPQ4vmmPOexSEGvkstgDEaNdFvvrkbPDn21cQ7v0VGxTCfsuwF9H5'));
     }
 }

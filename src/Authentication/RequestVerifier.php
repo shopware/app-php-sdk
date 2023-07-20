@@ -4,7 +4,16 @@ declare(strict_types=1);
 
 namespace Shopware\App\SDK\Authentication;
 
+use Lcobucci\Clock\SystemClock;
+use Lcobucci\JWT\JwtFacade;
+use Lcobucci\JWT\Signer\Hmac\Sha256;
+use Lcobucci\JWT\Signer\Key\InMemory;
+use Lcobucci\JWT\Validation\Constraint\IssuedBy;
+use Lcobucci\JWT\Validation\Constraint\SignedWith;
+use Lcobucci\JWT\Validation\Constraint\StrictValidAt;
+use Psr\Clock\ClockInterface;
 use Psr\Http\Message\RequestInterface;
+use Shopware\App\SDK\Exception\ShopNotFoundException;
 use Shopware\App\SDK\Exception\SignatureNotFoundException;
 use Shopware\App\SDK\Exception\SignatureInvalidException;
 use Shopware\App\SDK\Shop\ShopInterface;
@@ -15,6 +24,10 @@ class RequestVerifier
     private const SHOPWARE_SHOP_SIGNATURE_HEADER = 'shopware-shop-signature';
 
     private const SHOPWARE_APP_SIGNATURE_HEADER = 'shopware-app-signature';
+
+    public function __construct(private readonly ClockInterface $clock = new SystemClock(new \DateTimeZone('UTC')))
+    {
+    }
 
     /**
      * @throws SignatureInvalidException
@@ -72,6 +85,28 @@ class RequestVerifier
             $shop->getShopSecret(),
             $this->removeSignatureFromQuery($request->getUri()->getQuery(), $signature),
             $signature
+        );
+    }
+
+    public function authenticateStorefrontRequest(RequestInterface $request, ShopInterface $shop): void
+    {
+        $token = $request->getHeaderLine('shopware-app-token');
+
+        if ($token === '') {
+            throw new SignatureNotFoundException($request);
+        }
+
+        if ($shop->getShopSecret() === '' || $shop->getShopId() === '') {
+            throw new ShopNotFoundException($shop->getShopId());
+        }
+
+        $key = InMemory::plainText($shop->getShopSecret());
+
+        (new JwtFacade())->parse(
+            $token,
+            new SignedWith(new Sha256(), $key),
+            new StrictValidAt($this->clock),
+            new IssuedBy($shop->getShopId())
         );
     }
 

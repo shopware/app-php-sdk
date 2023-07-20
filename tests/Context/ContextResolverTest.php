@@ -6,6 +6,7 @@ namespace Shopware\App\SDK\Tests\Context;
 
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Shopware\App\SDK\Context\ActionButton\ActionButtonAction;
@@ -51,6 +52,8 @@ use Shopware\App\SDK\Context\SalesChannelContext\Salutation;
 use Shopware\App\SDK\Context\SalesChannelContext\ShippingLocation;
 use Shopware\App\SDK\Context\SalesChannelContext\ShippingMethod;
 use Shopware\App\SDK\Context\SalesChannelContext\TaxInfo;
+use Shopware\App\SDK\Context\Storefront\StorefrontAction;
+use Shopware\App\SDK\Context\Storefront\StorefrontClaims;
 use Shopware\App\SDK\Context\TaxProvider\TaxProviderAction;
 use Shopware\App\SDK\Context\Webhook\WebhookAction;
 use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
@@ -103,6 +106,8 @@ use Shopware\App\SDK\Test\MockShop;
 #[CoversClass(Refund::class)]
 #[CoversClass(RefundTransactionCapture::class)]
 #[CoversClass(RecurringData::class)]
+#[CoversClass(StorefrontAction::class)]
+#[CoversClass(StorefrontClaims::class)]
 class ContextResolverTest extends TestCase
 {
     public function testAssembleWebhookMalformed(): void
@@ -829,6 +834,35 @@ class ContextResolverTest extends TestCase
         static::assertSame('a357e3b039a046079856f6a7425ec700', $action->refund->getTransactionCapture()->getTransaction()->getId());
     }
 
+    #[DataProvider('assembleStorefrontInvalidHeaders')]
+    public function testStorefrontRequestMalformed(string $header): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $this->expectException(MalformedWebhookBodyException::class);
+        $request = new Request('POST', '/', [], '{}');
+
+        $contextResolver->assembleStorefrontRequest(
+            $request->withHeader('shopware-app-token', $header),
+            $this->getShop()
+        );
+    }
+
+    public function testAssembleStorefrontRequest(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $request = new Request('POST', '/', [], '{}');
+        $request = $request->withHeader('shopware-app-token', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJGcWFIV1VzQ1JOc3JaOWtRIiwiaWF0IjoxNjg5ODM3MDkyLjI3ODMyOSwibmJmIjoxNjg5ODM3MDkyLjI3ODMyOSwiZXhwIjoxNjg5ODQwNjkyLjI3ODI0Mywic2FsZXNDaGFubmVsSWQiOiIwMTg5NjQwNTU0YjU3MDBjODBjMmM0YTIwMmUyNDAxZCJ9.g8Da0bN3bkkmEdzMeXmI8wlDQEZMCDiKJvqS288B4JI');
+
+        $action = $contextResolver->assembleStorefrontRequest(
+            $request,
+            $this->getShop()
+        );
+
+        static::assertSame('0189640554b5700c80c2c4a202e2401d', $action->claims->getSalesChannelId());
+    }
+
     /**
      * @dataProvider methodsProvider
      */
@@ -862,6 +896,15 @@ class ContextResolverTest extends TestCase
         $contextResolver = new ContextResolver();
         static::expectException(MalformedWebhookBodyException::class);
         $contextResolver->assembleWebhook($request, $this->getShop());
+    }
+
+    /**
+     * @return iterable<string[]>
+     */
+    public static function assembleStorefrontInvalidHeaders(): iterable
+    {
+        yield [''];
+        yield ['foo'];
     }
 
     /**

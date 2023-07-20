@@ -137,6 +137,35 @@ class ShopResolverTest extends TestCase
         $resolver->resolveShop($request);
     }
 
+    public function testMissingShopStorefront(): void
+    {
+        $resolver = new ShopResolver($this->shopRepository, static::createMock(RequestVerifier::class));
+
+        $request = $this->createGetRequest('shop-id=1');
+        $request = $request->withHeader('shopware-app-shop-id', 'test');
+
+        $this->expectException(ShopNotFoundException::class);
+
+        $resolver->resolveShop($request);
+    }
+
+    public function testResolveWithStorefront(): void
+    {
+        $this->shopRepository->createShop(new MockShop('1', 'test.de', 'asd'));
+
+        $requestVerifier = static::createMock(RequestVerifier::class);
+        $requestVerifier
+            ->expects(static::once())
+            ->method('authenticateStorefrontRequest');
+
+        $resolver = new ShopResolver($this->shopRepository, $requestVerifier);
+
+        $request = $this->createGetRequest('shop-id=1');
+        $request = $request->withHeader('shopware-app-shop-id', '1');
+
+        $resolver->resolveShop($request);
+    }
+
     /**
      * @return iterable<array{0: string}>
      */

@@ -20,6 +20,8 @@ use Shopware\App\SDK\Context\Payment\RecurringData;
 use Shopware\App\SDK\Context\Payment\Refund;
 use Shopware\App\SDK\Context\Payment\RefundAction;
 use Shopware\App\SDK\Context\SalesChannelContext\SalesChannelContext;
+use Shopware\App\SDK\Context\Storefront\StorefrontAction;
+use Shopware\App\SDK\Context\Storefront\StorefrontClaims;
 use Shopware\App\SDK\Context\TaxProvider\TaxProviderAction;
 use Shopware\App\SDK\Context\Webhook\WebhookAction;
 use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
@@ -143,8 +145,6 @@ class ContextResolver
             throw new MalformedWebhookBodyException();
         }
 
-
-
         return new PaymentCaptureAction(
             $shop,
             $this->parseSource($body['source']),
@@ -204,6 +204,32 @@ class ContextResolver
             $this->parseSource($body['source']),
             new Order($body['order']),
             new Refund($body['refund']),
+        );
+    }
+
+    /**
+     * @throws MalformedWebhookBodyException
+     */
+    public function assembleStorefrontRequest(RequestInterface $request, ShopInterface $shop): StorefrontAction
+    {
+        $token = $request->getHeaderLine('shopware-app-token');
+
+        if (empty($token)) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        $parts = explode('.', $token);
+
+        if (count($parts) !== 3) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        /** @var array<string, string> $claims */
+        $claims = json_decode(base64_decode($parts[1]), true, flags: JSON_THROW_ON_ERROR);
+
+        return new StorefrontAction(
+            $shop,
+            new StorefrontClaims($claims)
         );
     }
 

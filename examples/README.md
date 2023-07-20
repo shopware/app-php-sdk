@@ -13,7 +13,7 @@ but you should use any other storage by implementing the `\Shopware\App\SDK\Shop
 You can use also the PHP builtin server to run the backend:
 
 ```bash
-php -S 0.0.0.0:6000 -t
+php -S 0.0.0.0:6001 -t .
 ```
 
 ## App manifest
@@ -26,8 +26,8 @@ php -S 0.0.0.0:6000 -t
         <name>Foo</name>
         <label>My Label</label>
         <label lang="de-DE">My Label</label>
-        <description></description>
-        <description lang="de-DE"></description>
+        <description/>
+        <description lang="de-DE"/>
         <author>Your Company</author>
         <copyright>(c) by Your Company</copyright>
         <version>1.0.0</version>
@@ -35,7 +35,7 @@ php -S 0.0.0.0:6000 -t
         <license>MIT</license>
     </meta>
     <setup>
-        <registrationUrl>http://localhost:6000/register/authorize</registrationUrl>
+        <registrationUrl>http://localhost:6001/register/authorize</registrationUrl>
         <secret>test</secret>
     </setup>
 </manifest>
