@@ -35,7 +35,7 @@ class ActionButtonResponse
 
     /**
      * @param 'small'|'medium'|'large'|'fullscreen' $size
-     * @param bool $expand - If true, the modal will be expanded to the full height of the screen
+     * @param bool $expand If true, the modal will be expanded to the full height of the screen
      */
     public static function modal(string $url, string $size = 'medium', bool $expand = false): ResponseInterface
     {

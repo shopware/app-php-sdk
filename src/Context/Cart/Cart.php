@@ -39,7 +39,7 @@ class Cart extends ArrayStruct
     {
         \assert(is_array($this->data['lineItems']));
         return array_map(
-            fn (array $lineItem) => new LineItem($lineItem),
+            static fn (array $lineItem) => new LineItem($lineItem),
             $this->data['lineItems']
         );
     }
@@ -51,7 +51,7 @@ class Cart extends ArrayStruct
     {
         \assert(is_array($this->data['deliveries']));
         return array_map(
-            fn (array $delivery) => new Delivery($delivery),
+            static fn (array $delivery) => new Delivery($delivery),
             $this->data['deliveries']
         );
     }
@@ -63,7 +63,7 @@ class Cart extends ArrayStruct
     {
         \assert(is_array($this->data['transactions']));
         return array_map(
-            fn (array $transaction) => new CartTransaction($transaction),
+            static fn (array $transaction) => new CartTransaction($transaction),
             $this->data['transactions']
         );
     }

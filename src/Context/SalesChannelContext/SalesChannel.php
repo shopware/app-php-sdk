@@ -44,7 +44,7 @@ class SalesChannel extends ArrayStruct
     public function getDomains(): array
     {
         \assert(is_array($this->data['domains']));
-        return array_map(function (array $domain): SalesChannelDomain {
+        return array_map(static function (array $domain): SalesChannelDomain {
             return new SalesChannelDomain($domain);
         }, $this->data['domains']);
     }

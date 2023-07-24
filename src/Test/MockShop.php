@@ -9,12 +9,12 @@ use Shopware\App\SDK\Shop\ShopInterface;
 class MockShop implements ShopInterface
 {
     public function __construct(
-        private string $shopId,
-        private string $shopUrl,
-        private string $shopSecret,
-        private bool $shopActive = false,
-        private ?string $clientId = null,
-        private ?string $clientSecret = null,
+        private readonly string $shopId,
+        private string          $shopUrl,
+        private readonly string $shopSecret,
+        private bool            $shopActive = false,
+        private ?string         $clientId = null,
+        private ?string         $clientSecret = null,
     ) {
     }
 

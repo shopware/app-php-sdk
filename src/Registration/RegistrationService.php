@@ -48,7 +48,7 @@ class RegistrationService
 
         \parse_str($request->getUri()->getQuery(), $queries);
 
-        if (!isset($queries['shop-id']) || !is_string($queries['shop-id']) || !isset($queries['shop-url']) || !is_string($queries['shop-url'])) {
+        if (!isset($queries['shop-id'], $queries['shop-url']) || !is_string($queries['shop-id']) || !is_string($queries['shop-url'])) {
             throw new MissingShopParameterException();
         }
 
@@ -98,7 +98,7 @@ class RegistrationService
         /** @var array<string, mixed> $requestContent */
         $requestContent = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
 
-        if (!isset($requestContent['shopId']) || !is_string($requestContent['shopId']) || !isset($requestContent['apiKey']) || !is_string($requestContent['apiKey']) || !isset($requestContent['secretKey']) || !is_string($requestContent['secretKey'])) {
+        if (!isset($requestContent['shopId'], $requestContent['apiKey']) || !is_string($requestContent['shopId']) || !is_string($requestContent['apiKey']) || !isset($requestContent['secretKey']) || !is_string($requestContent['secretKey'])) {
             throw new MissingShopParameterException();
         }
 
@@ -125,8 +125,6 @@ class RegistrationService
 
         $this->eventDispatcher?->dispatch(new RegistrationCompletedEvent($request, $shop));
 
-        $psrFactory = new Psr17Factory();
-
-        return $psrFactory->createResponse(204);
+        return (new Psr17Factory())->createResponse(204);
     }
 }

@@ -108,7 +108,7 @@ class Order extends ArrayStruct
     public function getLineItems(): array
     {
         \assert(\is_array($this->data['lineItems']));
-        return array_map(function (array $lineItem): LineItem {
+        return array_map(static function (array $lineItem): LineItem {
             return new LineItem($lineItem);
         }, $this->data['lineItems']);
     }
@@ -143,7 +143,7 @@ class Order extends ArrayStruct
     public function getDeliveries(): array
     {
         \assert(\is_array($this->data['deliveries']));
-        return array_map(function (array $delivery): OrderDelivery {
+        return array_map(static function (array $delivery): OrderDelivery {
             return new OrderDelivery($delivery);
         }, $this->data['deliveries']);
     }
@@ -154,7 +154,7 @@ class Order extends ArrayStruct
     public function getTransactions(): array
     {
         \assert(\is_array($this->data['transactions']));
-        return array_map(function (array $transaction): OrderTransaction {
+        return array_map(static function (array $transaction): OrderTransaction {
             return new OrderTransaction($transaction);
         }, $this->data['transactions']);
     }

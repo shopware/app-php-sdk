@@ -34,9 +34,9 @@ class RefundResponse
         return self::createStatusResponse('completed');
     }
 
-    private static function createStatusResponse(string $status, string $message = ''): ResponseInterface
+    private static function createStatusResponse(string $status): ResponseInterface
     {
-        return self::createResponse(array_filter(['status' => $status, 'message' => $message]));
+        return self::createResponse(array_filter(['status' => $status, 'message' => '']));
     }
 
     /**

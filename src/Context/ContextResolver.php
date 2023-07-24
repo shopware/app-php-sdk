@@ -69,7 +69,7 @@ class ContextResolver
     {
         parse_str($request->getUri()->getQuery(), $params);
 
-        if (!isset($params['sw-version']) || !is_string($params['sw-version']) || !isset($params['sw-context-language']) || !is_string($params['sw-context-language']) || !isset($params['sw-user-language']) || !is_string($params['sw-user-language'])) {
+        if (!isset($params['sw-version'], $params['sw-context-language']) || !is_string($params['sw-version']) || !is_string($params['sw-context-language']) || !isset($params['sw-user-language']) || !is_string($params['sw-user-language'])) {
             throw new MalformedWebhookBodyException();
         }
 
@@ -239,7 +239,7 @@ class ContextResolver
      */
     private function parseSource(array $source): ActionSource
     {
-        if (!isset($source['url']) || !is_string($source['url']) || !isset($source['appVersion']) || !is_string($source['appVersion'])) {
+        if (!isset($source['url'], $source['appVersion']) || !is_string($source['url']) || !is_string($source['appVersion'])) {
             throw new MalformedWebhookBodyException();
         }
 
