@@ -15,6 +15,8 @@ use Shopware\App\SDK\Exception\SignatureInvalidException;
  */
 class ShopResolver
 {
+    private const SHOPWARE_APP_SHOP_ID = 'shopware-app-shop-id';
+
     /**
      * @param ShopRepositoryInterface<ShopInterface> $shopRepository
      */
@@ -24,6 +26,10 @@ class ShopResolver
 
     public function resolveShop(RequestInterface $request): ShopInterface
     {
+        if ($request->getHeaderLine(self::SHOPWARE_APP_SHOP_ID) !== '') {
+            return $this->resolveFromAppShopIdHeader($request);
+        }
+
         if ($request->getHeaderLine('Content-Type') === 'application/json') {
             return $this->resolveFromSource($request);
         }
@@ -75,6 +81,20 @@ class ShopResolver
         }
 
         $this->requestVerifier->authenticateGetRequest($request, $shop);
+
+        return $shop;
+    }
+
+    private function resolveFromAppShopIdHeader(RequestInterface $request): ShopInterface
+    {
+        $shopId = $request->getHeaderLine(self::SHOPWARE_APP_SHOP_ID);
+        $shop = $this->shopRepository->getShopFromId($shopId);
+
+        if ($shop === null) {
+            throw new ShopNotFoundException($shopId);
+        }
+
+        $this->requestVerifier->authenticateStorefrontRequest($request, $shop);
 
         return $shop;
     }

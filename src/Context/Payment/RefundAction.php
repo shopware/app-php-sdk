@@ -9,7 +9,7 @@ use Shopware\App\SDK\Context\Order\Order;
 use Shopware\App\SDK\Shop\ShopInterface;
 
 /**
- * This action refers to the payload of <refynd-url> in the app manifest
+ * This action refers to the payload of <refund-url> in the app manifest
  */
 class RefundAction
 {

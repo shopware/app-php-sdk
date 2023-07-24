@@ -17,7 +17,7 @@ class Delivery extends ArrayStruct
     {
         \assert(is_array($this->data['positions']));
 
-        return array_map(function (array $position) {
+        return array_map(static function (array $position) {
             return new DeliveryPosition($position);
         }, $this->data['positions']);
     }

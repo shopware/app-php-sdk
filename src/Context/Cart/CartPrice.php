@@ -26,7 +26,7 @@ class CartPrice extends ArrayStruct
     public function getCalculatedTaxes(): array
     {
         \assert(is_array($this->data['calculatedTaxes']));
-        return array_map(function (array $calculatedTax): CalculatedTax {
+        return array_map(static function (array $calculatedTax): CalculatedTax {
             return new CalculatedTax($calculatedTax);
         }, $this->data['calculatedTaxes']);
     }
@@ -44,7 +44,7 @@ class CartPrice extends ArrayStruct
     {
         \assert(is_array($this->data['taxRules']));
 
-        return array_map(function (array $taxRule): TaxRule {
+        return array_map(static function (array $taxRule): TaxRule {
             return new TaxRule($taxRule);
         }, $this->data['taxRules']);
     }

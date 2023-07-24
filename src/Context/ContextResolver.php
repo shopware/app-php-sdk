@@ -20,6 +20,8 @@ use Shopware\App\SDK\Context\Payment\RecurringData;
 use Shopware\App\SDK\Context\Payment\Refund;
 use Shopware\App\SDK\Context\Payment\RefundAction;
 use Shopware\App\SDK\Context\SalesChannelContext\SalesChannelContext;
+use Shopware\App\SDK\Context\Storefront\StorefrontAction;
+use Shopware\App\SDK\Context\Storefront\StorefrontClaims;
 use Shopware\App\SDK\Context\TaxProvider\TaxProviderAction;
 use Shopware\App\SDK\Context\Webhook\WebhookAction;
 use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
@@ -67,7 +69,7 @@ class ContextResolver
     {
         parse_str($request->getUri()->getQuery(), $params);
 
-        if (!isset($params['sw-version']) || !is_string($params['sw-version']) || !isset($params['sw-context-language']) || !is_string($params['sw-context-language']) || !isset($params['sw-user-language']) || !is_string($params['sw-user-language'])) {
+        if (!isset($params['sw-version'], $params['sw-context-language']) || !is_string($params['sw-version']) || !is_string($params['sw-context-language']) || !isset($params['sw-user-language']) || !is_string($params['sw-user-language'])) {
             throw new MalformedWebhookBodyException();
         }
 
@@ -143,8 +145,6 @@ class ContextResolver
             throw new MalformedWebhookBodyException();
         }
 
-
-
         return new PaymentCaptureAction(
             $shop,
             $this->parseSource($body['source']),
@@ -208,12 +208,38 @@ class ContextResolver
     }
 
     /**
+     * @throws MalformedWebhookBodyException
+     */
+    public function assembleStorefrontRequest(RequestInterface $request, ShopInterface $shop): StorefrontAction
+    {
+        $token = $request->getHeaderLine('shopware-app-token');
+
+        if (empty($token)) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        $parts = explode('.', $token);
+
+        if (count($parts) !== 3) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        /** @var array<string, string> $claims */
+        $claims = json_decode(base64_decode($parts[1]), true, flags: JSON_THROW_ON_ERROR);
+
+        return new StorefrontAction(
+            $shop,
+            new StorefrontClaims($claims)
+        );
+    }
+
+    /**
      * @param array<string, mixed> $source
      * @return ActionSource
      */
     private function parseSource(array $source): ActionSource
     {
-        if (!isset($source['url']) || !is_string($source['url']) || !isset($source['appVersion']) || !is_string($source['appVersion'])) {
+        if (!isset($source['url'], $source['appVersion']) || !is_string($source['url']) || !is_string($source['appVersion'])) {
             throw new MalformedWebhookBodyException();
         }
 

@@ -60,7 +60,7 @@ class AppLifecycle
     }
 
     /**
-     * Handles the app.deleted Hook to remove the shop from the repository
+     * Handles the 'app.deleted' Hook to remove the shop from the repository
      */
     public function delete(RequestInterface $request): ResponseInterface
     {
