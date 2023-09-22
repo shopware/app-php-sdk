@@ -863,6 +863,21 @@ class ContextResolverTest extends TestCase
         static::assertSame('0189640554b5700c80c2c4a202e2401d', $action->claims->getSalesChannelId());
     }
 
+    public function testAssembleStorefrontRequestWithEmptyTokenThrows(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $request = new Request('POST', '/', [], '{}');
+        $request = $request->withHeader('shopware-app-token', '');
+
+        static::expectException(MalformedWebhookBodyException::class);
+
+        $contextResolver->assembleStorefrontRequest(
+            $request,
+            $this->getShop()
+        );
+    }
+
     /**
      * @dataProvider methodsProvider
      */

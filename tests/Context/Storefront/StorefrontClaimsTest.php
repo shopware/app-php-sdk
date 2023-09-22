@@ -21,7 +21,7 @@ class StorefrontClaimsTest extends TestCase
             'currencyId' => 'currencyId',
             'languageId' => 'languageId',
             'paymentMethodId' => 'paymentMethodId',
-            'shippingMethodId'=> 'shippingMethodId',
+            'shippingMethodId' => 'shippingMethodId',
         ]);
 
         static::assertSame('salesChannelId', $claims->getSalesChannelId());

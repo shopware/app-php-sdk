@@ -215,6 +215,7 @@ class ContextResolver
         $token = $request->getHeaderLine('shopware-app-token');
 
         if (empty($token)) {
+            /** @infection-ignore-all false friend */
             throw new MalformedWebhookBodyException();
         }
 
