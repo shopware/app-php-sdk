@@ -24,4 +24,10 @@ class CustomerTest extends TestCase
         $customer = new Customer(['vatIds' => ['foo', 'bar']]);
         static::assertSame(['foo', 'bar'], $customer->getVatIds());
     }
+
+    public function testGetEmail(): void
+    {
+        $customer = new Customer(['email' => 'foo']);
+        static::assertSame('foo', $customer->getEmail());
+    }
 }

@@ -29,6 +29,12 @@ class Customer extends ArrayStruct
         return $this->data['lastName'];
     }
 
+    public function getEmail(): string
+    {
+        \assert(is_string($this->data['email']));
+        return $this->data['email'];
+    }
+
     public function getCompany(): ?string
     {
         \assert(is_string($this->data['company']) || is_null($this->data['company']));
