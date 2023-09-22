@@ -26,6 +26,7 @@ use Shopware\App\SDK\Context\ContextResolver;
 use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Context\Module\ModuleAction;
 use Shopware\App\SDK\Context\Order\Order;
+use Shopware\App\SDK\Context\Order\OrderCustomer;
 use Shopware\App\SDK\Context\Order\OrderDelivery;
 use Shopware\App\SDK\Context\Order\OrderTransaction;
 use Shopware\App\SDK\Context\Order\StateMachineState;
@@ -108,6 +109,7 @@ use Shopware\App\SDK\Test\MockShop;
 #[CoversClass(RecurringData::class)]
 #[CoversClass(StorefrontAction::class)]
 #[CoversClass(StorefrontClaims::class)]
+#[CoversClass(OrderCustomer::class)]
 class ContextResolverTest extends TestCase
 {
     public function testAssembleWebhookMalformed(): void
