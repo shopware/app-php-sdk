@@ -11,6 +11,7 @@ use Shopware\App\SDK\Context\Cart\Cart;
 use Shopware\App\SDK\Context\Module\ModuleAction;
 use Shopware\App\SDK\Context\Order\Order;
 use Shopware\App\SDK\Context\Order\OrderTransaction;
+use Shopware\App\SDK\Context\Payment\RiskAssessmentAction;
 use Shopware\App\SDK\Context\Payment\PaymentCaptureAction;
 use Shopware\App\SDK\Context\Payment\PaymentFinalizeAction;
 use Shopware\App\SDK\Context\Payment\PaymentPayAction;
@@ -31,7 +32,7 @@ class ContextResolver
 {
     public function assembleWebhook(RequestInterface $request, ShopInterface $shop): WebhookAction
     {
-        $body = json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
         $request->getBody()->rewind();
 
         if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
@@ -49,7 +50,7 @@ class ContextResolver
 
     public function assembleActionButton(RequestInterface $request, ShopInterface $shop): ActionButtonAction
     {
-        $body = json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
         $request->getBody()->rewind();
 
         if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
@@ -83,7 +84,7 @@ class ContextResolver
 
     public function assembleTaxProvider(RequestInterface $request, ShopInterface $shop): TaxProviderAction
     {
-        $body = json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
         $request->getBody()->rewind();
 
         if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
@@ -100,7 +101,7 @@ class ContextResolver
 
     public function assemblePaymentPay(RequestInterface $request, ShopInterface $shop): PaymentPayAction
     {
-        $body = json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
         $request->getBody()->rewind();
 
         if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
@@ -120,7 +121,7 @@ class ContextResolver
 
     public function assemblePaymentFinalize(RequestInterface $request, ShopInterface $shop): PaymentFinalizeAction
     {
-        $body = json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
         $request->getBody()->rewind();
 
         if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
@@ -138,7 +139,7 @@ class ContextResolver
 
     public function assemblePaymentCapture(RequestInterface $request, ShopInterface $shop): PaymentCaptureAction
     {
-        $body = json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
         $request->getBody()->rewind();
 
         if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
@@ -157,7 +158,7 @@ class ContextResolver
 
     public function assemblePaymentRecurringCapture(RequestInterface $request, ShopInterface $shop): PaymentRecurringAction
     {
-        $body = json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
         $request->getBody()->rewind();
 
         if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
@@ -174,7 +175,7 @@ class ContextResolver
 
     public function assemblePaymentValidate(RequestInterface $request, ShopInterface $shop): PaymentValidateAction
     {
-        $body = json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
         $request->getBody()->rewind();
 
         if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
@@ -192,7 +193,7 @@ class ContextResolver
 
     public function assemblePaymentRefund(RequestInterface $request, ShopInterface $shop): RefundAction
     {
-        $body = json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
         $request->getBody()->rewind();
 
         if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
@@ -204,6 +205,28 @@ class ContextResolver
             $this->parseSource($body['source']),
             new Order($body['order']),
             new Refund($body['refund']),
+        );
+    }
+
+    /**
+     * @throws MalformedWebhookBodyException
+     */
+    public function assembleRiskAssessment(RequestInterface $request, ShopInterface $shop): RiskAssessmentAction
+    {
+        $body = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!is_array($body) || !isset($body['source']) || !is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        return new RiskAssessmentAction(
+            $shop,
+            $this->parseSource($body['source']),
+            new Cart($body['cart']),
+            new SalesChannelContext($body['salesChannelContext']),
+            $body['paymentMethods'] ?? [],
+            $body['shippingMethods'] ?? []
         );
     }
 
@@ -226,7 +249,7 @@ class ContextResolver
         }
 
         /** @var array<string, string> $claims */
-        $claims = json_decode(base64_decode($parts[1]), true, flags: JSON_THROW_ON_ERROR);
+        $claims = \json_decode(base64_decode($parts[1]), true, flags: JSON_THROW_ON_ERROR);
 
         return new StorefrontAction(
             $shop,

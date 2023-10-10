@@ -124,8 +124,10 @@ class RequestVerifier
         $header = $queries[self::SHOPWARE_SHOP_SIGNATURE_HEADER];
 
         if (!is_string($header)) {
-            /** @infection-ignore-all */
+            // @codeCoverageIgnoreStart
+            /** @infection-ignore-all - this is a fallback for a type error, that can never happen */
             throw new SignatureNotFoundException($request);
+            // @codeCoverageIgnoreEnd
         }
 
         return $header;

@@ -11,7 +11,7 @@ trait CustomFieldsAware
      */
     public function getCustomFields(): array
     {
-        \assert(is_array($this->data['customFields']) || $this->data['customFields'] === null);
+        \assert(\is_array($this->data['customFields']) || $this->data['customFields'] === null);
         return $this->data['customFields'] ?? [];
     }
 }

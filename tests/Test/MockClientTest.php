@@ -18,6 +18,8 @@ class MockClientTest extends TestCase
     {
         $client = new MockClient([]);
 
+        static::assertTrue($client->isEmpty());
+
         static::expectException(RuntimeException::class);
         static::expectExceptionMessage('No more responses available');
 
@@ -31,12 +33,18 @@ class MockClientTest extends TestCase
             new Response(200, [], '{"baz": "qux"}'),
         ]);
 
+        static::assertFalse($client->isEmpty());
+
         $response = $client->sendRequest(new Request('GET', 'https://example.com'));
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('{"foo": "bar"}', $response->getBody()->getContents());
 
+        static::assertFalse($client->isEmpty());
+
         $response = $client->sendRequest(new Request('GET', 'https://example.com'));
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('{"baz": "qux"}', $response->getBody()->getContents());
+
+        static::assertTrue($client->isEmpty());
     }
 }

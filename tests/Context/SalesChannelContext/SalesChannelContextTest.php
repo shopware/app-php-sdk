@@ -5,37 +5,63 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Tests\Context\SalesChannelContext;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use Shopware\App\SDK\Context\ArrayStruct;
 use PHPUnit\Framework\TestCase;
+use Shopware\App\SDK\Context\SalesChannelContext\Currency;
+use Shopware\App\SDK\Context\SalesChannelContext\Customer;
+use Shopware\App\SDK\Context\SalesChannelContext\PaymentMethod;
 use Shopware\App\SDK\Context\SalesChannelContext\RoundingConfig;
+use Shopware\App\SDK\Context\SalesChannelContext\SalesChannel;
 use Shopware\App\SDK\Context\SalesChannelContext\SalesChannelContext;
+use Shopware\App\SDK\Context\SalesChannelContext\ShippingMethod;
 
-#[CoversClass(ArrayStruct::class)]
-#[CoversClass(RoundingConfig::class)]
 #[CoversClass(SalesChannelContext::class)]
 class SalesChannelContextTest extends TestCase
 {
-    public function testCustomer(): void
+    public function testConstruct(): void
     {
-        $context = new SalesChannelContext(['customer' => null]);
+        $rounding = [
+            'decimals' => 2,
+            'interval' => 0.01,
+            'roundForNet' => true,
+        ];
+
+        $currency = ['id' => 'foo'];
+        $shippingMethod = ['id' => 'foo'];
+        $paymentMethod = ['id' => 'foo'];
+        $salesChannel = ['id' => 'foo'];
+        $customer = ['id' => 'foo'];
+
+        $context = new SalesChannelContext([
+            'token' => 'token',
+            'context' => [
+                'currencyId' => 'currency-id',
+                'taxState' => 'taxState',
+                'rounding' => $rounding,
+            ],
+            'currency' => $currency,
+            'shippingMethod' => $shippingMethod,
+            'paymentMethod' => $paymentMethod,
+            'salesChannel' => $salesChannel,
+            'customer' => $customer,
+        ]);
+
+        static::assertSame('token', $context->getToken());
+        static::assertSame('currency-id', $context->getCurrencyId());
+        static::assertSame('taxState', $context->getTaxState());
+        static::assertEquals(new RoundingConfig($rounding), $context->getRounding());
+        static::assertEquals(new Currency($currency), $context->getCurrency());
+        static::assertEquals(new ShippingMethod($shippingMethod), $context->getShippingMethod());
+        static::assertEquals(new PaymentMethod($paymentMethod), $context->getPaymentMethod());
+        static::assertEquals(new SalesChannel($salesChannel), $context->getSalesChannel());
+        static::assertEquals(new Customer($customer), $context->getCustomer());
+    }
+
+    public function testNullables(): void
+    {
+        $context = new SalesChannelContext([
+            'customer' => null,
+        ]);
+
         static::assertNull($context->getCustomer());
-    }
-
-    public function testGetCurrencyId(): void
-    {
-        $context = new SalesChannelContext(['context' => ['currencyId' => 'foo']]);
-        static::assertSame('foo', $context->getCurrencyId());
-    }
-
-    public function testGetTaxState(): void
-    {
-        $context = new SalesChannelContext(['context' => ['taxState' => 'foo']]);
-        static::assertSame('foo', $context->getTaxState());
-    }
-
-    public function testGetRounding(): void
-    {
-        $context = new SalesChannelContext(['context' => ['rounding' => ['decimals' => 2]]]);
-        static::assertSame(2, $context->getRounding()->getDecimals());
     }
 }
