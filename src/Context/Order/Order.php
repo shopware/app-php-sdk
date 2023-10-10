@@ -10,7 +10,6 @@ use Shopware\App\SDK\Context\Cart\CalculatedPrice;
 use Shopware\App\SDK\Context\Cart\LineItem;
 use Shopware\App\SDK\Context\SalesChannelContext\Address;
 use Shopware\App\SDK\Context\SalesChannelContext\Currency;
-use Shopware\App\SDK\Context\SalesChannelContext\Customer;
 use Shopware\App\SDK\Context\SalesChannelContext\RoundingConfig;
 use Shopware\App\SDK\Context\Trait\CustomFieldsAware;
 
@@ -84,10 +83,10 @@ class Order extends ArrayStruct
         return new CalculatedPrice($this->data['shippingCosts']);
     }
 
-    public function getOrderCustomer(): Customer
+    public function getOrderCustomer(): OrderCustomer
     {
         \assert(\is_array($this->data['orderCustomer']));
-        return new Customer($this->data['orderCustomer']);
+        return new OrderCustomer($this->data['orderCustomer']);
     }
 
     public function getCurrency(): Currency
