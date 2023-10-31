@@ -38,6 +38,12 @@ class LineItem extends ArrayStruct
         return $this->data['label'];
     }
 
+    public function getDescription(): ?string
+    {
+        \assert(is_string($this->data['description']) || is_null($this->data['description']));
+        return $this->data['description'];
+    }
+
     public function isGood(): bool
     {
         \assert(is_bool($this->data['good']));
