@@ -16,7 +16,7 @@
     "chat": "https://slack.shopware.com"
   },
   "require": {
-    "php": "~8.1.0 || ~8.2.0",
+    "php": "~8.1.0 || ~8.2.0 || ~8.3.0",
     "lcobucci/jwt": "^4.0 || ^5.0",
     "lcobucci/clock": "^3",
     "php-http/discovery": "^1.17",
