@@ -8,6 +8,7 @@ use Nyholm\Psr7\Request;
 use Nyholm\Psr7\Response;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Constraint\IsEqual;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
 use Shopware\App\SDK\HttpClient\LoggerClient;
@@ -15,7 +16,6 @@ use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Test\MockClient;
 
 #[CoversClass(LoggerClient::class)]
-#[CoversClass(MockClient::class)]
 class LoggerClientTest extends TestCase
 {
     public function testRequestGetsLogged(): void
@@ -81,7 +81,7 @@ class LoggerClientTest extends TestCase
 
         $body = static::createMock(StreamInterface::class);
         $body
-            ->expects(static::once())
+            ->expects(static::exactly(2))
             ->method('rewind');
 
         $body
@@ -90,10 +90,13 @@ class LoggerClientTest extends TestCase
 
         $request = $request->withBody($body);
 
-        $client = new LoggerClient(new MockClient([
-            new Response(200, [], '{"foo": "bar"}')
-        ]), static::createMock(LoggerInterface::class));
+        $response = static::createMock(ResponseInterface::class);
+        $response
+            ->expects(static::exactly(2))
+            ->method('getBody')
+            ->willReturn($body);
 
+        $client = new LoggerClient(new MockClient([$response]), static::createMock(LoggerInterface::class));
         $client->sendRequest($request);
     }
 }

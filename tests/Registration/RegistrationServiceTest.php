@@ -13,7 +13,6 @@ use Psr\Log\NullLogger;
 use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Authentication\RequestVerifier;
 use Shopware\App\SDK\Authentication\ResponseSigner;
-use Shopware\App\SDK\Event\AbstractAppLifecycleEvent;
 use Shopware\App\SDK\Event\BeforeRegistrationCompletedEvent;
 use Shopware\App\SDK\Event\RegistrationCompletedEvent;
 use Shopware\App\SDK\Exception\MissingShopParameterException;
@@ -25,15 +24,6 @@ use Shopware\App\SDK\Test\MockShop;
 use Shopware\App\SDK\Test\MockShopRepository;
 
 #[CoversClass(RegistrationService::class)]
-#[CoversClass(AppConfiguration::class)]
-#[CoversClass(ResponseSigner::class)]
-#[CoversClass(MissingShopParameterException::class)]
-#[CoversClass(ShopNotFoundException::class)]
-#[CoversClass(AbstractAppLifecycleEvent::class)]
-#[CoversClass(MockShop::class)]
-#[CoversClass(MockShopRepository::class)]
-#[CoversClass(BeforeRegistrationCompletedEvent::class)]
-#[CoversClass(RegistrationCompletedEvent::class)]
 class RegistrationServiceTest extends TestCase
 {
     private RegistrationService $registerService;

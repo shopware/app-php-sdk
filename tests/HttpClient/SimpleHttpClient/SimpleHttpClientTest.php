@@ -9,14 +9,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestInterface;
-use Shopware\App\SDK\HttpClient\SimpleHttpClient\SimpleHttpClientResponse;
 use Shopware\App\SDK\HttpClient\SimpleHttpClient\SimpleHttpClient;
 use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Test\MockClient;
 
 #[CoversClass(SimpleHttpClient::class)]
-#[CoversClass(SimpleHttpClientResponse::class)]
-#[CoversClass(MockClient::class)]
 class SimpleHttpClientTest extends TestCase
 {
     public function testGet(): void

@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Tests\Context\SalesChannelContext;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use Shopware\App\SDK\Context\ArrayStruct;
+use Shopware\App\SDK\Context\SalesChannelContext\Address;
+use Shopware\App\SDK\Context\SalesChannelContext\Country;
+use Shopware\App\SDK\Context\SalesChannelContext\CountryState;
 use Shopware\App\SDK\Context\SalesChannelContext\ShippingLocation;
 use PHPUnit\Framework\TestCase;
 
@@ -15,13 +17,31 @@ use PHPUnit\Framework\TestCase;
  * @covers \Shopware\App\SDK\Context\SalesChannelContext\ShippingLocation
  */
 #[CoversClass(ShippingLocation::class)]
-#[CoversClass(ArrayStruct::class)]
 class ShippingLocationTest extends TestCase
 {
-    public function testFilledState(): void
+    public function testConstruct(): void
     {
-        $location = new ShippingLocation(['countryState' => []]);
+        $country = ['id' => 'country-id'];
+        $countryState = ['id' => 'country-state-id'];
+        $address = ['id' => 'address-id'];
 
-        static::assertNotNull($location->getCountryState());
+        $location = new ShippingLocation([
+            'country' => $country,
+            'countryState' => $countryState,
+            'address' => $address,
+        ]);
+
+        static::assertEquals(new Country($country), $location->getCountry());
+        static::assertEquals(new CountryState($countryState), $location->getCountryState());
+        static::assertEquals(new Address($address), $location->getAddress());
+    }
+
+    public function testNullables(): void
+    {
+        $location = new ShippingLocation([
+            'countryState' => null,
+        ]);
+
+        static::assertNull($location->getCountryState());
     }
 }

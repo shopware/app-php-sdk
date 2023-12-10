@@ -17,10 +17,6 @@ use Shopware\App\SDK\Test\MockShop;
 use Shopware\App\SDK\Test\MockShopRepository;
 
 #[CoversClass(ShopResolver::class)]
-#[CoversClass(MissingShopParameterException::class)]
-#[CoversClass(ShopNotFoundException::class)]
-#[CoversClass(MockShopRepository::class)]
-#[CoversClass(MockShop::class)]
 class ShopResolverTest extends TestCase
 {
     private MockShopRepository $shopRepository;

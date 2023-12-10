@@ -20,11 +20,6 @@ use Shopware\App\SDK\Exception\SignatureNotFoundException;
 use Shopware\App\SDK\Test\MockShop;
 
 #[CoversClass(RequestVerifier::class)]
-#[CoversClass(SignatureNotFoundException::class)]
-#[CoversClass(SignatureInvalidException::class)]
-#[CoversClass(ShopNotFoundException::class)]
-#[CoversClass(MockShop::class)]
-#[CoversClass(AppConfiguration::class)]
 class RequestVerifierTest extends TestCase
 {
     public function testAuthenticateRegistrationRequestMissingHeader(): void

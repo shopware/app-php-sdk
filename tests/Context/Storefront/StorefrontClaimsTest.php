@@ -7,10 +7,8 @@ namespace Shopware\App\SDK\Tests\Context\Storefront;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Context\Storefront\StorefrontClaims;
-use Shopware\App\SDK\Exception\MissingClaimException;
 
 #[CoversClass(StorefrontClaims::class)]
-#[CoversClass(MissingClaimException::class)]
 class StorefrontClaimsTest extends TestCase
 {
     public function testAllSet(): void

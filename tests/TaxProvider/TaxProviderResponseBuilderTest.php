@@ -10,7 +10,6 @@ use Shopware\App\SDK\TaxProvider\TaxProviderResponseBuilder;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(TaxProviderResponseBuilder::class)]
-#[CoversClass(CalculatedTax::class)]
 class TaxProviderResponseBuilderTest extends TestCase
 {
     public function testGlobalTax(): void

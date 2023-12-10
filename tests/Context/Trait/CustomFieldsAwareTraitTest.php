@@ -6,11 +6,9 @@ namespace Shopware\App\SDK\Tests\Context\Trait;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Shopware\App\SDK\Context\ArrayStruct;
 use Shopware\App\SDK\Context\Trait\CustomFieldsAware;
 use Shopware\App\SDK\Tests\Context\_fixtures\TestCustomFieldsAware;
 
-#[CoversClass(ArrayStruct::class)]
 #[CoversClass(CustomFieldsAware::class)]
 class CustomFieldsAwareTraitTest extends TestCase
 {
@@ -24,5 +22,14 @@ class CustomFieldsAwareTraitTest extends TestCase
         ]);
 
         static::assertSame(['foo' => 'bar', 'bar' => 'foo'], $test->getCustomFields());
+    }
+
+    public function testGetCustomFieldsWithNull(): void
+    {
+        $test = new TestCustomFieldsAware([
+            'customFields' => null,
+        ]);
+
+        static::assertSame([], $test->getCustomFields());
     }
 }

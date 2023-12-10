@@ -9,107 +9,17 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
-use Shopware\App\SDK\Context\ActionButton\ActionButtonAction;
-use Shopware\App\SDK\Context\ActionSource;
-use Shopware\App\SDK\Context\ArrayStruct;
-use Shopware\App\SDK\Context\Cart\CalculatedTax;
-use Shopware\App\SDK\Context\Cart\Cart;
-use Shopware\App\SDK\Context\Cart\CartPrice;
-use Shopware\App\SDK\Context\Cart\CartTransaction;
-use Shopware\App\SDK\Context\Cart\Delivery;
-use Shopware\App\SDK\Context\Cart\DeliveryDate;
-use Shopware\App\SDK\Context\Cart\DeliveryPosition;
-use Shopware\App\SDK\Context\Cart\LineItem;
-use Shopware\App\SDK\Context\Cart\CalculatedPrice;
-use Shopware\App\SDK\Context\Cart\TaxRule;
 use Shopware\App\SDK\Context\ContextResolver;
 use PHPUnit\Framework\TestCase;
-use Shopware\App\SDK\Context\Module\ModuleAction;
-use Shopware\App\SDK\Context\Order\Order;
-use Shopware\App\SDK\Context\Order\OrderCustomer;
-use Shopware\App\SDK\Context\Order\OrderDelivery;
-use Shopware\App\SDK\Context\Order\OrderTransaction;
-use Shopware\App\SDK\Context\Order\StateMachineState;
 use Shopware\App\SDK\Context\Payment\PaymentCaptureAction;
 use Shopware\App\SDK\Context\Payment\PaymentFinalizeAction;
 use Shopware\App\SDK\Context\Payment\PaymentPayAction;
 use Shopware\App\SDK\Context\Payment\PaymentRecurringAction;
-use Shopware\App\SDK\Context\Payment\PaymentValidateAction;
-use Shopware\App\SDK\Context\Payment\RecurringData;
-use Shopware\App\SDK\Context\Payment\Refund;
-use Shopware\App\SDK\Context\Payment\RefundAction;
-use Shopware\App\SDK\Context\Payment\RefundTransactionCapture;
-use Shopware\App\SDK\Context\SalesChannelContext\Address;
-use Shopware\App\SDK\Context\SalesChannelContext\Country;
-use Shopware\App\SDK\Context\SalesChannelContext\CountryState;
-use Shopware\App\SDK\Context\SalesChannelContext\Currency;
-use Shopware\App\SDK\Context\SalesChannelContext\Customer;
-use Shopware\App\SDK\Context\SalesChannelContext\PaymentMethod;
-use Shopware\App\SDK\Context\SalesChannelContext\RoundingConfig;
-use Shopware\App\SDK\Context\SalesChannelContext\SalesChannel;
-use Shopware\App\SDK\Context\SalesChannelContext\SalesChannelContext;
-use Shopware\App\SDK\Context\SalesChannelContext\SalesChannelDomain;
-use Shopware\App\SDK\Context\SalesChannelContext\Salutation;
-use Shopware\App\SDK\Context\SalesChannelContext\ShippingLocation;
-use Shopware\App\SDK\Context\SalesChannelContext\ShippingMethod;
-use Shopware\App\SDK\Context\SalesChannelContext\TaxInfo;
-use Shopware\App\SDK\Context\Storefront\StorefrontAction;
-use Shopware\App\SDK\Context\Storefront\StorefrontClaims;
-use Shopware\App\SDK\Context\TaxProvider\TaxProviderAction;
-use Shopware\App\SDK\Context\Webhook\WebhookAction;
 use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
 use Shopware\App\SDK\Shop\ShopInterface;
 use Shopware\App\SDK\Test\MockShop;
 
 #[CoversClass(ContextResolver::class)]
-#[CoversClass(ActionSource::class)]
-#[CoversClass(WebhookAction::class)]
-#[CoversClass(ActionButtonAction::class)]
-#[CoversClass(ModuleAction::class)]
-#[CoversClass(MockShop::class)]
-#[CoversClass(MalformedWebhookBodyException::class)]
-#[CoversClass(ArrayStruct::class)]
-#[CoversClass(Cart::class)]
-#[CoversClass(LineItem::class)]
-#[CoversClass(CalculatedPrice::class)]
-#[CoversClass(TaxProviderAction::class)]
-#[CoversClass(CalculatedTax::class)]
-#[CoversClass(TaxRule::class)]
-#[CoversClass(CartPrice::class)]
-#[CoversClass(Delivery::class)]
-#[CoversClass(ShippingMethod::class)]
-#[CoversClass(DeliveryDate::class)]
-#[CoversClass(DeliveryPosition::class)]
-#[CoversClass(Country::class)]
-#[CoversClass(ShippingLocation::class)]
-#[CoversClass(CartTransaction::class)]
-#[CoversClass(SalesChannelContext::class)]
-#[CoversClass(Currency::class)]
-#[CoversClass(RoundingConfig::class)]
-#[CoversClass(PaymentMethod::class)]
-#[CoversClass(Customer::class)]
-#[CoversClass(Salutation::class)]
-#[CoversClass(Address::class)]
-#[CoversClass(CountryState::class)]
-#[CoversClass(TaxInfo::class)]
-#[CoversClass(SalesChannel::class)]
-#[CoversClass(SalesChannelDomain::class)]
-#[CoversClass(PaymentPayAction::class)]
-#[CoversClass(Order::class)]
-#[CoversClass(OrderDelivery::class)]
-#[CoversClass(OrderTransaction::class)]
-#[CoversClass(StateMachineState::class)]
-#[CoversClass(PaymentFinalizeAction::class)]
-#[CoversClass(PaymentCaptureAction::class)]
-#[CoversClass(PaymentValidateAction::class)]
-#[CoversClass(PaymentRecurringAction::class)]
-#[CoversClass(RefundAction::class)]
-#[CoversClass(Refund::class)]
-#[CoversClass(RefundTransactionCapture::class)]
-#[CoversClass(RecurringData::class)]
-#[CoversClass(StorefrontAction::class)]
-#[CoversClass(StorefrontClaims::class)]
-#[CoversClass(OrderCustomer::class)]
 class ContextResolverTest extends TestCase
 {
     public function testAssembleWebhookMalformed(): void
@@ -836,6 +746,28 @@ class ContextResolverTest extends TestCase
         static::assertSame('a357e3b039a046079856f6a7425ec700', $action->refund->getTransactionCapture()->getTransaction()->getId());
     }
 
+    public function testAssembleRiskAssessment(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $action = $contextResolver->assembleRiskAssessment(
+            new Request('POST', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/risk-assessment.json')),
+            $this->getShop()
+        );
+
+        static::assertSame([
+            '018b03edb1b07149886990689ed3cc8b' => 'handler_shopware_cashpayment',
+            '018b045dcdf473548d6598526c1fcfb8' => 'handler_app_swagbraintreeapp_swagbraintree_creditcard',
+            '018b03edb1b37102a1a99a8064bc4aae' => 'handler_shopware_prepayment',
+            '018b03edb1ac7351abcd09ed97221746' => 'handler_shopware_invoicepayment',
+        ], $action->paymentMethods);
+
+        static::assertSame([
+            '018b03edb1ca7372a83e5b29b5d2674c' => 'Standard',
+            '018b03edb1ca7372a83e5b29b69cd46d' => 'Express',
+        ], $action->shippingMethods);
+    }
+
     #[DataProvider('assembleStorefrontInvalidHeaders')]
     public function testStorefrontRequestMalformed(string $header): void
     {
@@ -950,6 +882,7 @@ class ContextResolverTest extends TestCase
         yield ['assemblePaymentValidate'];
         yield ['assemblePaymentRefund'];
         yield ['assemblePaymentRecurringCapture'];
+        yield ['assembleRiskAssessment'];
     }
 
     /**

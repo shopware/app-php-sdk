@@ -10,7 +10,6 @@ use Shopware\App\SDK\Test\MockShopRepository;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(MockShopRepository::class)]
-#[CoversClass(MockShop::class)]
 class MockShopRepositoryTest extends TestCase
 {
     private MockShopRepository $repository;
@@ -27,6 +26,12 @@ class MockShopRepositoryTest extends TestCase
         $shop = $this->repository->createShopStruct('1', 'asd', 'test');
 
         $this->repository->createShop($shop);
+
+        static::assertSame($shop, $this->repository->getShopFromId('1'));
+
+        $shop = new MockShop('1', 'asd', 'test', true, 'asd', 'asd');
+
+        $this->repository->updateShop($shop);
 
         static::assertSame($shop, $this->repository->getShopFromId('1'));
 

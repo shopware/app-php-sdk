@@ -12,10 +12,10 @@ use Shopware\App\SDK\Shop\ShopInterface;
 class TaxProviderAction
 {
     public function __construct(
-        public readonly ShopInterface       $shop,
-        public readonly ActionSource        $source,
+        public readonly ShopInterface $shop,
+        public readonly ActionSource $source,
         public readonly SalesChannelContext $context,
-        public readonly Cart                $cart,
+        public readonly Cart $cart,
     ) {
     }
 }
