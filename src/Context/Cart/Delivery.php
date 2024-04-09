@@ -39,4 +39,10 @@ class Delivery extends ArrayStruct
         \assert(is_array($this->data['deliveryDate']));
         return new DeliveryDate($this->data['deliveryDate']);
     }
+
+    public function getShippingCosts(): CalculatedPrice
+    {
+        \assert(is_array($this->data['shippingCosts']));
+        return new CalculatedPrice($this->data['shippingCosts']);
+    }
 }

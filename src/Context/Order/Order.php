@@ -7,7 +7,6 @@ namespace Shopware\App\SDK\Context\Order;
 use Shopware\App\SDK\Context\ArrayStruct;
 use Shopware\App\SDK\Context\Cart\CartPrice;
 use Shopware\App\SDK\Context\Cart\CalculatedPrice;
-use Shopware\App\SDK\Context\Cart\LineItem;
 use Shopware\App\SDK\Context\SalesChannelContext\Address;
 use Shopware\App\SDK\Context\SalesChannelContext\Currency;
 use Shopware\App\SDK\Context\SalesChannelContext\RoundingConfig;
@@ -102,13 +101,13 @@ class Order extends ArrayStruct
     }
 
     /**
-     * @return array<LineItem>
+     * @return array<OrderLineItem>
      */
     public function getLineItems(): array
     {
         \assert(\is_array($this->data['lineItems']));
-        return array_map(static function (array $lineItem): LineItem {
-            return new LineItem($lineItem);
+        return array_map(static function (array $lineItem): OrderLineItem {
+            return new OrderLineItem($lineItem);
         }, $this->data['lineItems']);
     }
 
