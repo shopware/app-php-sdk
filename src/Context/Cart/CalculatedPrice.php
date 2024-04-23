@@ -47,4 +47,18 @@ class CalculatedPrice extends ArrayStruct
             return new TaxRule($taxRule);
         }, $this->data['taxRules']);
     }
+
+    /**
+     * @param array<CalculatedPrice> $prices
+     */
+    public static function sum(array $prices): CalculatedPrice
+    {
+        return new CalculatedPrice([
+            'unitPrice' => array_sum(array_map(static fn (CalculatedPrice $price): float => $price->getUnitPrice(), $prices)),
+            'totalPrice' => array_sum(array_map(static fn (CalculatedPrice $price): float => $price->getTotalPrice(), $prices)),
+            'quantity' => 1,
+            'calculatedTaxes' => array_map(static fn (CalculatedTax $tax) => $tax->toArray(), CalculatedTax::sum(array_merge(...array_map(static fn (CalculatedPrice $price): array => $price->getCalculatedTaxes(), $prices)))),
+            'taxRules' => array_map(static fn (TaxRule $rule) => $rule->toArray(), array_merge(...array_map(static fn (CalculatedPrice $price): array => $price->getTaxRules(), $prices))),
+        ]);
+    }
 }

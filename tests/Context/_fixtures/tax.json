@@ -131,7 +131,7 @@
           "regulationPrice": null
         },
         "good": true,
-        "description": null,
+        "description": "A description",
         "cover": {
           "extensions": {
             "foreignKeys": {

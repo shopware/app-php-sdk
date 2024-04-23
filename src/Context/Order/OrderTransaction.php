@@ -36,4 +36,10 @@ class OrderTransaction extends ArrayStruct
         \assert(\is_array($this->data['stateMachineState']));
         return new StateMachineState($this->data['stateMachineState']);
     }
+
+    public function getOrder(): Order
+    {
+        \assert(\is_array($this->data['order']));
+        return new Order($this->data['order']);
+    }
 }

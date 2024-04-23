@@ -28,6 +28,7 @@ use Shopware\App\SDK\Context\Module\ModuleAction;
 use Shopware\App\SDK\Context\Order\Order;
 use Shopware\App\SDK\Context\Order\OrderCustomer;
 use Shopware\App\SDK\Context\Order\OrderDelivery;
+use Shopware\App\SDK\Context\Order\OrderLineItem;
 use Shopware\App\SDK\Context\Order\OrderTransaction;
 use Shopware\App\SDK\Context\Order\StateMachineState;
 use Shopware\App\SDK\Context\Payment\PaymentCaptureAction;
@@ -97,6 +98,7 @@ use Shopware\App\SDK\Test\MockShop;
 #[CoversClass(PaymentPayAction::class)]
 #[CoversClass(Order::class)]
 #[CoversClass(OrderDelivery::class)]
+#[CoversClass(OrderLineItem::class)]
 #[CoversClass(OrderTransaction::class)]
 #[CoversClass(StateMachineState::class)]
 #[CoversClass(PaymentFinalizeAction::class)]
@@ -260,6 +262,7 @@ class ContextResolverTest extends TestCase
         static::assertSame(['is-physical'], $lineItems['0']->getStates());
         static::assertSame('91298e263c5b4bb88c3f51c873d7e76e', $lineItems['0']->getReferencedId());
         static::assertSame(true, $lineItems['0']->isGood());
+        static::assertSame("A description", $lineItems['0']->getDescription());
         static::assertSame([], $lineItems['0']->getChildren());
 
         $price = $lineItems['0']->getPrice();
@@ -339,6 +342,27 @@ class ContextResolverTest extends TestCase
         $location = $delivery->getLocation();
 
         static::assertSame('US', $location->getCountry()->getIso());
+
+        $shippingCosts = $delivery->getShippingCosts();
+
+        static::assertSame(0.0, $shippingCosts->getTotalPrice());
+        static::assertSame(0.0, $shippingCosts->getUnitPrice());
+        static::assertSame(1, $shippingCosts->getQuantity());
+
+        $calculatedTaxes = $shippingCosts->getCalculatedTaxes();
+        static::assertCount(1, $calculatedTaxes);
+        static::assertArrayHasKey('0', $calculatedTaxes);
+        static::assertSame(0.0, $calculatedTaxes['0']->getTaxRate());
+        static::assertSame(0.0, $calculatedTaxes['0']->getTax());
+        static::assertSame(0.0, $calculatedTaxes['0']->getPrice());
+
+        $taxRules = $shippingCosts->getTaxRules();
+        static::assertCount(1, $taxRules);
+        static::assertArrayHasKey('0', $taxRules);
+
+        $taxRule = $taxRules['0'];
+        static::assertSame(0.0, $taxRule->getTaxRate());
+        static::assertSame(100.0, $taxRule->getPercentage());
 
         $transactions = $tax->cart->getTransactions();
 
@@ -701,6 +725,8 @@ class ContextResolverTest extends TestCase
         static::assertCount(1, $lineItems);
         static::assertSame('5567f5758b414a2686afa1c6492c63a1', $lineItems[0]->getId());
         static::assertSame('Aerodynamic Bronze Slo-Cooked Prawns', $lineItems[0]->getLabel());
+        static::assertSame(1, $lineItems[0]->getPosition());
+        static::assertSame(null, $lineItems[0]->getParentId());
 
         $deliveries = $order->getDeliveries();
 

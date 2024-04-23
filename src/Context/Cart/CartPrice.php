@@ -8,6 +8,10 @@ use Shopware\App\SDK\Context\ArrayStruct;
 
 class CartPrice extends ArrayStruct
 {
+    final public const TAX_STATE_GROSS = 'gross';
+    final public const TAX_STATE_NET = 'net';
+    final public const TAX_STATE_FREE = 'tax-free';
+
     public function getNetPrice(): float
     {
         \assert(is_float($this->data['netPrice']));
