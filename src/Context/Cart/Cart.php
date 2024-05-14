@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Context\Cart;
 
 use Shopware\App\SDK\Context\ArrayStruct;
+use Shopware\App\SDK\Framework\Collection;
 
 class Cart extends ArrayStruct
 {
@@ -33,39 +34,42 @@ class Cart extends ArrayStruct
     }
 
     /**
-     * @return array<LineItem>
+     * @return Collection<LineItem>
      */
-    public function getLineItems(): array
+    public function getLineItems(): Collection
     {
-        \assert(is_array($this->data['lineItems']));
-        return array_map(
+        \assert(\is_array($this->data['lineItems']));
+
+        return new Collection(\array_map(
             static fn (array $lineItem) => new LineItem($lineItem),
             $this->data['lineItems']
-        );
+        ));
     }
 
     /**
-     * @return array<Delivery>
+     * @return Collection<Delivery>
      */
-    public function getDeliveries(): array
+    public function getDeliveries(): Collection
     {
-        \assert(is_array($this->data['deliveries']));
-        return array_map(
+        \assert(\is_array($this->data['deliveries']));
+
+        return new Collection(\array_map(
             static fn (array $delivery) => new Delivery($delivery),
             $this->data['deliveries']
-        );
+        ));
     }
 
     /**
-     * @return array<CartTransaction>
+     * @return Collection<CartTransaction>
      */
-    public function getTransactions(): array
+    public function getTransactions(): Collection
     {
-        \assert(is_array($this->data['transactions']));
-        return array_map(
+        \assert(\is_array($this->data['transactions']));
+
+        return new Collection(\array_map(
             static fn (array $transaction) => new CartTransaction($transaction),
             $this->data['transactions']
-        );
+        ));
     }
 
     public function getPrice(): CartPrice

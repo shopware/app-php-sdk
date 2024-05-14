@@ -6,52 +6,58 @@ namespace Shopware\App\SDK\TaxProvider;
 
 use Http\Discovery\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
+use Shopware\App\SDK\Framework\Collection;
 
 class TaxProviderResponseBuilder
 {
     /**
-     * @var array<string, array<CalculatedTax>>
+     * @var Collection<CalculatedTax>
      */
-    protected array $lineItemTaxes = [];
+    protected Collection $lineItemTaxes;
 
     /**
-     * @var array<string, array<CalculatedTax>>
+     * @var Collection<CalculatedTax>
      */
-    protected array $deliveryTaxes = [];
+    protected Collection $deliveryTaxes;
 
     /**
-     * @var array<CalculatedTax>
+     * @var Collection<CalculatedTax>
      */
-    protected array $cartPriceTaxes = [];
+    protected Collection $cartPriceTaxes;
 
     public function __construct()
     {
+        $this->cartPriceTaxes = new Collection();
+        $this->deliveryTaxes = new Collection();
+        $this->lineItemTaxes = new Collection();
     }
 
     public function addLineItemTax(string $uniqueIdentifier, CalculatedTax $tax): self
     {
-        $this->lineItemTaxes[$uniqueIdentifier][] = $tax;
+        $this->lineItemTaxes->set($uniqueIdentifier, $tax);
         return $this;
     }
 
     public function addDeliveryTax(string $uniqueIdentifier, CalculatedTax $tax): self
     {
-        $this->deliveryTaxes[$uniqueIdentifier][] = $tax;
+        $this->deliveryTaxes->set($uniqueIdentifier, $tax);
         return $this;
     }
 
     public function addCartTax(CalculatedTax $tax): self
     {
-        $this->cartPriceTaxes[] = $tax;
-
+        $this->cartPriceTaxes->add($tax);
         return $this;
     }
 
     public function buildPayload(): string
     {
-        return \json_encode(get_object_vars($this), JSON_THROW_ON_ERROR);
+        return \json_encode(\get_object_vars($this), \JSON_THROW_ON_ERROR);
     }
 
+    /**
+     * @throws \JsonException
+     */
     public function build(): ResponseInterface
     {
         $psrFactory = new Psr17Factory();

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Shopware\App\SDK\Context;
 
-abstract class ArrayStruct
+abstract class ArrayStruct implements \JsonSerializable
 {
     /**
      * @param array<mixed> $data
@@ -19,5 +19,13 @@ abstract class ArrayStruct
     public function toArray(): array
     {
         return $this->data;
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

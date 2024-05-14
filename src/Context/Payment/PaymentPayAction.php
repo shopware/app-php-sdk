@@ -23,7 +23,7 @@ class PaymentPayAction
         public readonly ActionSource $source,
         public readonly Order $order,
         public readonly OrderTransaction $orderTransaction,
-        public readonly ?string $returnUrl,
+        public readonly ?string $returnUrl = null,
         public readonly ?RecurringData $recurring = null,
         public readonly array $requestData = [],
     ) {

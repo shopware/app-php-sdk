@@ -7,19 +7,20 @@ namespace Shopware\App\SDK\Context\Cart;
 use Shopware\App\SDK\Context\ArrayStruct;
 use Shopware\App\SDK\Context\SalesChannelContext\ShippingLocation;
 use Shopware\App\SDK\Context\SalesChannelContext\ShippingMethod;
+use Shopware\App\SDK\Framework\Collection;
 
 class Delivery extends ArrayStruct
 {
     /**
-     * @return array<DeliveryPosition>
+     * @return Collection<DeliveryPosition>
      */
-    public function getPositions(): array
+    public function getPositions(): Collection
     {
         \assert(is_array($this->data['positions']));
 
-        return array_map(static function (array $position) {
+        return new Collection(\array_map(static function (array $position) {
             return new DeliveryPosition($position);
-        }, $this->data['positions']);
+        }, $this->data['positions']));
     }
 
     public function getLocation(): ShippingLocation

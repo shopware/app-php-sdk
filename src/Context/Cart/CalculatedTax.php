@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Context\Cart;
 
 use Shopware\App\SDK\Context\ArrayStruct;
+use Shopware\App\SDK\Framework\Collection;
 
 class CalculatedTax extends ArrayStruct
 {
@@ -27,10 +28,10 @@ class CalculatedTax extends ArrayStruct
     }
 
     /**
-     * @param array<CalculatedTax> $calculatedTaxes
-     * @return array<CalculatedTax>
+     * @param Collection<CalculatedTax> $calculatedTaxes
+     * @return Collection<CalculatedTax>
      */
-    public static function sum(array $calculatedTaxes): array
+    public static function sum(Collection $calculatedTaxes): Collection
     {
         $new = [];
 
@@ -49,6 +50,6 @@ class CalculatedTax extends ArrayStruct
             ]);
         }
 
-        return $new;
+        return new Collection($new);
     }
 }

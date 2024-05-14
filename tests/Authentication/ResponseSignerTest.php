@@ -13,8 +13,6 @@ use Shopware\App\SDK\Authentication\ResponseSigner;
 use Shopware\App\SDK\Test\MockShop;
 
 #[CoversClass(ResponseSigner::class)]
-#[CoversClass(AppConfiguration::class)]
-#[CoversClass(MockShop::class)]
 class ResponseSignerTest extends TestCase
 {
     private ResponseSigner $signer;

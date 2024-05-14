@@ -20,10 +20,6 @@ use Shopware\App\SDK\Test\MockClient;
 use Shopware\App\SDK\Test\MockShop;
 
 #[CoversClass(AuthenticatedClient::class)]
-#[CoversClass(MockShop::class)]
-#[CoversClass(NullCache::class)]
-#[CoversClass(AuthenticationFailedException::class)]
-#[CoversClass(MockClient::class)]
 class AuthenticatedClientTest extends TestCase
 {
     public function testAuthenticationFails(): void

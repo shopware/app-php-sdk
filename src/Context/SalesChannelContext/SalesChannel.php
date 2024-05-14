@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Context\SalesChannelContext;
 
 use Shopware\App\SDK\Context\ArrayStruct;
+use Shopware\App\SDK\Framework\Collection;
 
 class SalesChannel extends ArrayStruct
 {
@@ -39,13 +40,14 @@ class SalesChannel extends ArrayStruct
     }
 
     /**
-     * @return array<SalesChannelDomain>
+     * @return Collection<SalesChannelDomain>
      */
-    public function getDomains(): array
+    public function getDomains(): Collection
     {
         \assert(is_array($this->data['domains']));
-        return array_map(static function (array $domain): SalesChannelDomain {
+
+        return new Collection(\array_map(static function (array $domain): SalesChannelDomain {
             return new SalesChannelDomain($domain);
-        }, $this->data['domains']);
+        }, $this->data['domains']));
     }
 }

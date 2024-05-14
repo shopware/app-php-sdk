@@ -11,6 +11,7 @@ use Shopware\App\SDK\Context\SalesChannelContext\Address;
 use Shopware\App\SDK\Context\SalesChannelContext\Currency;
 use Shopware\App\SDK\Context\SalesChannelContext\RoundingConfig;
 use Shopware\App\SDK\Context\Trait\CustomFieldsAware;
+use Shopware\App\SDK\Framework\Collection;
 
 class Order extends ArrayStruct
 {
@@ -101,14 +102,15 @@ class Order extends ArrayStruct
     }
 
     /**
-     * @return array<OrderLineItem>
+     * @return Collection<OrderLineItem>
      */
-    public function getLineItems(): array
+    public function getLineItems(): Collection
     {
         \assert(\is_array($this->data['lineItems']));
-        return array_map(static function (array $lineItem): OrderLineItem {
+
+        return new Collection(\array_map(static function (array $lineItem): OrderLineItem {
             return new OrderLineItem($lineItem);
-        }, $this->data['lineItems']);
+        }, $this->data['lineItems']));
     }
 
     public function getItemRounding(): RoundingConfig
@@ -136,24 +138,26 @@ class Order extends ArrayStruct
     }
 
     /**
-     * @return array<OrderDelivery>
+     * @return Collection<OrderDelivery>
      */
-    public function getDeliveries(): array
+    public function getDeliveries(): Collection
     {
         \assert(\is_array($this->data['deliveries']));
-        return array_map(static function (array $delivery): OrderDelivery {
+
+        return new Collection(\array_map(static function (array $delivery): OrderDelivery {
             return new OrderDelivery($delivery);
-        }, $this->data['deliveries']);
+        }, $this->data['deliveries']));
     }
 
     /**
-     * @return array<OrderTransaction>
+     * @return Collection<OrderTransaction>
      */
-    public function getTransactions(): array
+    public function getTransactions(): Collection
     {
         \assert(\is_array($this->data['transactions']));
-        return array_map(static function (array $transaction): OrderTransaction {
+
+        return new Collection(\array_map(static function (array $transaction): OrderTransaction {
             return new OrderTransaction($transaction);
-        }, $this->data['transactions']);
+        }, $this->data['transactions']));
     }
 }

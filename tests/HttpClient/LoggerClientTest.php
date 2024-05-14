@@ -15,7 +15,6 @@ use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Test\MockClient;
 
 #[CoversClass(LoggerClient::class)]
-#[CoversClass(MockClient::class)]
 class LoggerClientTest extends TestCase
 {
     public function testRequestGetsLogged(): void
@@ -81,7 +80,7 @@ class LoggerClientTest extends TestCase
 
         $body = static::createMock(StreamInterface::class);
         $body
-            ->expects(static::once())
+            ->expects(static::exactly(2))
             ->method('rewind');
 
         $body
@@ -91,7 +90,7 @@ class LoggerClientTest extends TestCase
         $request = $request->withBody($body);
 
         $client = new LoggerClient(new MockClient([
-            new Response(200, [], '{"foo": "bar"}')
+            new Response(200, [], $body)
         ]), static::createMock(LoggerInterface::class));
 
         $client->sendRequest($request);

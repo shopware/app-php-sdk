@@ -5,17 +5,10 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Tests\Context\Order;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Shopware\App\SDK\Context\ArrayStruct;
 use Shopware\App\SDK\Context\Order\OrderCustomer;
-use Shopware\App\SDK\Context\SalesChannelContext\Customer;
-use Shopware\App\SDK\Context\SalesChannelContext\Salutation;
 
 #[CoversClass(OrderCustomer::class)]
-#[UsesClass(ArrayStruct::class)]
-#[UsesClass(Customer::class)]
-#[UsesClass(Salutation::class)]
 class OrderCustomerTest extends TestCase
 {
     public function testGetId(): void
@@ -69,9 +62,13 @@ class OrderCustomerTest extends TestCase
     public function testGetSalutation(): void
     {
         $customer = new OrderCustomer(['salutation' => ['id' => 'foo']]);
-        $salutation = $customer->getSalutation();
+        static::assertSame('foo', $customer->getSalutation()?->getId());
+    }
 
-        static::assertSame('foo', $customer->getSalutation()->getId());
+    public function testNullSalutation(): void
+    {
+        $customer = new OrderCustomer(['salutation' => null]);
+        static::assertNull($customer->getSalutation());
     }
 
     public function testGetCustomer(): void

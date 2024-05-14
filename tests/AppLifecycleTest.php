@@ -13,31 +13,18 @@ use Psr\Log\NullLogger;
 use Shopware\App\SDK\AppLifecycle;
 use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Authentication\RequestVerifier;
-use Shopware\App\SDK\Event\AbstractAppLifecycleEvent;
 use Shopware\App\SDK\Event\BeforeShopActivateEvent;
 use Shopware\App\SDK\Event\BeforeShopDeactivatedEvent;
 use Shopware\App\SDK\Event\BeforeShopDeletionEvent;
 use Shopware\App\SDK\Event\ShopActivatedEvent;
 use Shopware\App\SDK\Event\ShopDeactivatedEvent;
 use Shopware\App\SDK\Event\ShopDeletedEvent;
-use Shopware\App\SDK\Exception\ShopNotFoundException;
 use Shopware\App\SDK\Registration\RegistrationService;
 use Shopware\App\SDK\Shop\ShopResolver;
 use Shopware\App\SDK\Test\MockShop;
 use Shopware\App\SDK\Test\MockShopRepository;
 
 #[CoversClass(AppLifecycle::class)]
-#[CoversClass(ShopNotFoundException::class)]
-#[CoversClass(AbstractAppLifecycleEvent::class)]
-#[CoversClass(BeforeShopDeletionEvent::class)]
-#[CoversClass(ShopDeletedEvent::class)]
-#[CoversClass(BeforeShopActivateEvent::class)]
-#[CoversClass(BeforeShopDeactivatedEvent::class)]
-#[CoversClass(ShopDeactivatedEvent::class)]
-#[CoversClass(ShopActivatedEvent::class)]
-#[CoversClass(ShopResolver::class)]
-#[CoversClass(MockShop::class)]
-#[CoversClass(MockShopRepository::class)]
 class AppLifecycleTest extends TestCase
 {
     private MockShopRepository $shopRepository;

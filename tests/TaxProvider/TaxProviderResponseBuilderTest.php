@@ -10,7 +10,6 @@ use Shopware\App\SDK\TaxProvider\TaxProviderResponseBuilder;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(TaxProviderResponseBuilder::class)]
-#[CoversClass(CalculatedTax::class)]
 class TaxProviderResponseBuilderTest extends TestCase
 {
     public function testGlobalTax(): void
@@ -36,7 +35,7 @@ class TaxProviderResponseBuilderTest extends TestCase
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame(
-            '{"lineItemTaxes":{"lineItem1":[{"tax":19,"taxRate":100,"price":19}]},"deliveryTaxes":[],"cartPriceTaxes":[]}',
+            '{"lineItemTaxes":{"lineItem1":{"tax":19,"taxRate":100,"price":19}},"deliveryTaxes":[],"cartPriceTaxes":[]}',
             $response->getBody()->getContents()
         );
     }
@@ -50,7 +49,7 @@ class TaxProviderResponseBuilderTest extends TestCase
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame(
-            '{"lineItemTaxes":[],"deliveryTaxes":{"delivery1":[{"tax":19,"taxRate":100,"price":19}]},"cartPriceTaxes":[]}',
+            '{"lineItemTaxes":[],"deliveryTaxes":{"delivery1":{"tax":19,"taxRate":100,"price":19}},"cartPriceTaxes":[]}',
             $response->getBody()->getContents()
         );
     }

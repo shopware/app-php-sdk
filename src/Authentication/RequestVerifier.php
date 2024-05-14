@@ -115,18 +115,14 @@ class RequestVerifier
      */
     private function getSignatureFromQuery(RequestInterface $request): string
     {
-        parse_str($request->getUri()->getQuery(), $queries);
+        \parse_str($request->getUri()->getQuery(), $queries);
 
         if (!isset($queries[self::SHOPWARE_SHOP_SIGNATURE_HEADER])) {
             throw new SignatureNotFoundException($request);
         }
 
+        /** @var string $header */
         $header = $queries[self::SHOPWARE_SHOP_SIGNATURE_HEADER];
-
-        if (!is_string($header)) {
-            /** @infection-ignore-all */
-            throw new SignatureNotFoundException($request);
-        }
 
         return $header;
     }
