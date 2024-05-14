@@ -17,7 +17,7 @@ class RefundResponseTest extends TestCase
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('application/json', $response->getHeaderLine('Content-Type'));
-        static::assertSame('{"status":"open"}', $response->getBody()->getContents());
+        static::assertSame('{"status":"reopen"}', $response->getBody()->getContents());
     }
 
     public function testInProgress(): void
@@ -26,7 +26,7 @@ class RefundResponseTest extends TestCase
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('application/json', $response->getHeaderLine('Content-Type'));
-        static::assertSame('{"status":"in_progress"}', $response->getBody()->getContents());
+        static::assertSame('{"status":"process"}', $response->getBody()->getContents());
     }
 
     public function testCancelled(): void
@@ -35,7 +35,7 @@ class RefundResponseTest extends TestCase
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('application/json', $response->getHeaderLine('Content-Type'));
-        static::assertSame('{"status":"cancelled"}', $response->getBody()->getContents());
+        static::assertSame('{"status":"cancel"}', $response->getBody()->getContents());
     }
 
     public function testFailed(): void
@@ -44,7 +44,7 @@ class RefundResponseTest extends TestCase
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('application/json', $response->getHeaderLine('Content-Type'));
-        static::assertSame('{"status":"failed"}', $response->getBody()->getContents());
+        static::assertSame('{"status":"fail"}', $response->getBody()->getContents());
     }
 
     public function testCompleted(): void
@@ -53,6 +53,6 @@ class RefundResponseTest extends TestCase
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('application/json', $response->getHeaderLine('Content-Type'));
-        static::assertSame('{"status":"completed"}', $response->getBody()->getContents());
+        static::assertSame('{"status":"complete"}', $response->getBody()->getContents());
     }
 }

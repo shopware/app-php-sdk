@@ -32,7 +32,7 @@ class PaymentResponseTest extends TestCase
         $response = PaymentResponse::cancelled();
 
         static::assertSame(200, $response->getStatusCode());
-        static::assertSame('{"status":"cancelled"}', $response->getBody()->getContents());
+        static::assertSame('{"status":"cancel"}', $response->getBody()->getContents());
     }
 
     public function testFailed(): void
@@ -40,7 +40,7 @@ class PaymentResponseTest extends TestCase
         $response = PaymentResponse::failed();
 
         static::assertSame(200, $response->getStatusCode());
-        static::assertSame('{"status":"failed"}', $response->getBody()->getContents());
+        static::assertSame('{"status":"fail"}', $response->getBody()->getContents());
     }
 
     public function testAuthorize(): void
@@ -56,7 +56,7 @@ class PaymentResponseTest extends TestCase
         $response = PaymentResponse::unconfirmed();
 
         static::assertSame(200, $response->getStatusCode());
-        static::assertSame('{"status":"unconfirmed"}', $response->getBody()->getContents());
+        static::assertSame('{"status":"process_unconfirmed"}', $response->getBody()->getContents());
     }
 
     public function testInProgress(): void
@@ -64,7 +64,7 @@ class PaymentResponseTest extends TestCase
         $response = PaymentResponse::inProgress();
 
         static::assertSame(200, $response->getStatusCode());
-        static::assertSame('{"status":"in_progress"}', $response->getBody()->getContents());
+        static::assertSame('{"status":"process"}', $response->getBody()->getContents());
     }
 
     public function testRefunded(): void
@@ -72,7 +72,7 @@ class PaymentResponseTest extends TestCase
         $response = PaymentResponse::refunded();
 
         static::assertSame(200, $response->getStatusCode());
-        static::assertSame('{"status":"refunded"}', $response->getBody()->getContents());
+        static::assertSame('{"status":"refund"}', $response->getBody()->getContents());
     }
 
     public function testReminded(): void
@@ -80,7 +80,7 @@ class PaymentResponseTest extends TestCase
         $response = PaymentResponse::reminded();
 
         static::assertSame(200, $response->getStatusCode());
-        static::assertSame('{"status":"reminded"}', $response->getBody()->getContents());
+        static::assertSame('{"status":"remind"}', $response->getBody()->getContents());
     }
 
     public function testChargeback(): void
