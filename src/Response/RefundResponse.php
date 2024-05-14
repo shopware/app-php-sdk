@@ -9,29 +9,35 @@ use Psr\Http\Message\ResponseInterface;
 
 class RefundResponse
 {
+    public const ACTION_CANCEL = 'cancel';
+    public const ACTION_COMPLETE = 'complete';
+    public const ACTION_FAIL = 'fail';
+    public const ACTION_PROCESS = 'process';
+    public const ACTION_REOPEN = 'reopen';
+
     public static function open(): ResponseInterface
     {
-        return self::createStatusResponse('open');
+        return self::createStatusResponse(self::ACTION_REOPEN);
     }
 
     public static function inProgress(): ResponseInterface
     {
-        return self::createStatusResponse('in_progress');
+        return self::createStatusResponse(self::ACTION_PROCESS);
     }
 
     public static function cancelled(): ResponseInterface
     {
-        return self::createStatusResponse('cancelled');
+        return self::createStatusResponse(self::ACTION_CANCEL);
     }
 
     public static function failed(): ResponseInterface
     {
-        return self::createStatusResponse('failed');
+        return self::createStatusResponse(self::ACTION_FAIL);
     }
 
     public static function completed(): ResponseInterface
     {
-        return self::createStatusResponse('completed');
+        return self::createStatusResponse(self::ACTION_COMPLETE);
     }
 
     private static function createStatusResponse(string $status): ResponseInterface
