@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Psr\Http\Message\RequestInterface;
 use Shopware\App\SDK\Context\ActionButton\ActionButtonAction;
 use Shopware\App\SDK\Context\Cart\Cart;
+use Shopware\App\SDK\Context\Gateway\Checkout\CheckoutGatewayAction;
 use Shopware\App\SDK\Context\Module\ModuleAction;
 use Shopware\App\SDK\Context\Order\Order;
 use Shopware\App\SDK\Context\Order\OrderTransaction;
@@ -25,6 +26,7 @@ use Shopware\App\SDK\Context\Storefront\StorefrontClaims;
 use Shopware\App\SDK\Context\TaxProvider\TaxProviderAction;
 use Shopware\App\SDK\Context\Webhook\WebhookAction;
 use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
+use Shopware\App\SDK\Framework\Collection;
 use Shopware\App\SDK\Shop\ShopInterface;
 
 class ContextResolver
@@ -231,6 +233,25 @@ class ContextResolver
         return new StorefrontAction(
             $shop,
             new StorefrontClaims($claims)
+        );
+    }
+
+    public function assembleCheckoutGatewayRequest(RequestInterface $request, ShopInterface $shop): CheckoutGatewayAction
+    {
+        $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        return new CheckoutGatewayAction(
+            $shop,
+            $this->parseSource($body['source']),
+            new Cart($body['cart']),
+            new SalesChannelContext($body['salesChannelContext']),
+            new Collection(\array_flip($body['paymentMethods'])),
+            new Collection(\array_flip($body['shippingMethods'])),
         );
     }
 

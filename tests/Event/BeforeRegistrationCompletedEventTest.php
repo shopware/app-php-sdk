@@ -2,18 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Shopware\App\SDK\Tests\Events;
+namespace Shopware\App\SDK\Tests\Event;
 
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
-use Shopware\App\SDK\Event\AbstractAppLifecycleEvent;
 use Shopware\App\SDK\Event\BeforeRegistrationCompletedEvent;
 use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Test\MockShop;
 
 #[CoversClass(BeforeRegistrationCompletedEvent::class)]
-#[CoversClass(AbstractAppLifecycleEvent::class)]
-#[CoversClass(MockShop::class)]
 class BeforeRegistrationCompletedEventTest extends TestCase
 {
     public function testEvent(): void

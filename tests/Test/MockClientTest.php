@@ -39,4 +39,20 @@ class MockClientTest extends TestCase
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('{"baz": "qux"}', $response->getBody()->getContents());
     }
+
+    public function testIsEmpty(): void
+    {
+        $client = new MockClient([]);
+
+        static::assertTrue($client->isEmpty());
+    }
+
+    public function testIsNotEmpty(): void
+    {
+        $client = new MockClient([
+            new Response(200, [], '{"foo": "bar"}'),
+        ]);
+
+        static::assertFalse($client->isEmpty());
+    }
 }

@@ -30,6 +30,6 @@
                 'Shopware\\App\\SDK\\Registration\\RegistrationService::registerConfirm',
                 'Shopware\\App\\SDK\\Shop\\ShopResolver::resolveFromSource'
             ]
-        }
+        },
     }
 }

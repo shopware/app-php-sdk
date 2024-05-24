@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Context\Cart;
 
 use Shopware\App\SDK\Context\ArrayStruct;
+use Shopware\App\SDK\Framework\Collection;
 
 class LineItem extends ArrayStruct
 {
@@ -82,12 +83,12 @@ class LineItem extends ArrayStruct
     }
 
     /**
-     * @return array<LineItem>
+     * @return Collection<LineItem>
      */
-    public function getChildren(): array
+    public function getChildren(): Collection
     {
         \assert(is_array($this->data['children']));
 
-        return array_map(static fn (array $child): LineItem => new LineItem($child), $this->data['children']);
+        return new Collection(\array_map(static fn (array $child): LineItem => new LineItem($child), $this->data['children']));
     }
 }

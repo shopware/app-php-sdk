@@ -5,23 +5,31 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Tests\Context\SalesChannelContext;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use Shopware\App\SDK\Context\ArrayStruct;
 use Shopware\App\SDK\Context\SalesChannelContext\ShippingLocation;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @internal
- *
- * @covers \Shopware\App\SDK\Context\SalesChannelContext\ShippingLocation
- */
 #[CoversClass(ShippingLocation::class)]
-#[CoversClass(ArrayStruct::class)]
 class ShippingLocationTest extends TestCase
 {
-    public function testFilledState(): void
+    public function testConstruct(): void
     {
-        $location = new ShippingLocation(['countryState' => []]);
+        $shippingLocation = new ShippingLocation([
+            'country' => ['iso3' => 'FOO'],
+            'countryState' => ['id' => 'state-id'],
+            'address' => ['id' => 'address-id'],
+        ]);
 
-        static::assertNotNull($location->getCountryState());
+        static::assertSame('FOO', $shippingLocation->getCountry()->getIso3());
+        static::assertSame('state-id', $shippingLocation->getCountryState()->getId());
+        static::assertSame('address-id', $shippingLocation->getAddress()->getId());
+    }
+
+    public function testConstructNullable(): void
+    {
+        $shippingLocation = new ShippingLocation([
+            'countryState' => null,
+        ]);
+
+        static::assertNull($shippingLocation->getCountryState());
     }
 }

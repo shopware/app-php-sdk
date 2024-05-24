@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Context\Cart;
 
 use Shopware\App\SDK\Context\ArrayStruct;
+use Shopware\App\SDK\Framework\Collection;
 
 class CalculatedPrice extends ArrayStruct
 {
@@ -27,38 +28,57 @@ class CalculatedPrice extends ArrayStruct
     }
 
     /**
-     * @return array<CalculatedTax>
+     * @return Collection<CalculatedTax>
      */
-    public function getCalculatedTaxes(): array
+    public function getCalculatedTaxes(): Collection
     {
         \assert(is_array($this->data['calculatedTaxes']));
-        return array_map(static function (array $calculatedTax): CalculatedTax {
-            return new CalculatedTax($calculatedTax);
-        }, $this->data['calculatedTaxes']);
+
+        return new Collection(
+            \array_map(
+                static fn (array $tax) => new CalculatedTax($tax),
+                $this->data['calculatedTaxes']
+            )
+        );
     }
 
     /**
-     * @return array<TaxRule>
+     * @return Collection<TaxRule>
      */
-    public function getTaxRules(): array
+    public function getTaxRules(): Collection
     {
         \assert(is_array($this->data['taxRules']));
-        return array_map(static function (array $taxRule): TaxRule {
-            return new TaxRule($taxRule);
-        }, $this->data['taxRules']);
+
+        return new Collection(
+            \array_map(
+                static fn (array $rule) => new TaxRule($rule),
+                $this->data['taxRules']
+            )
+        );
     }
 
     /**
-     * @param array<CalculatedPrice> $prices
+     * @param Collection<CalculatedPrice> $prices
      */
-    public static function sum(array $prices): CalculatedPrice
+    public static function sum(Collection $prices): CalculatedPrice
     {
+        /** @var array<array<CalculatedTax>> $allTaxes */
+        $allTaxes = $prices->map(static fn (CalculatedPrice $price) => $price->getCalculatedTaxes()->all());
+
+        $taxSum = CalculatedTax::sum(new Collection(array_merge(...$allTaxes)));
+
+        $rules = [];
+
+        foreach ($prices as $price) {
+            $rules = array_merge($rules, $price->getTaxRules()->jsonSerialize());
+        }
+
         return new CalculatedPrice([
-            'unitPrice' => array_sum(array_map(static fn (CalculatedPrice $price): float => $price->getUnitPrice(), $prices)),
-            'totalPrice' => array_sum(array_map(static fn (CalculatedPrice $price): float => $price->getTotalPrice(), $prices)),
+            'unitPrice' => \array_sum($prices->map(static fn (CalculatedPrice $price): float => $price->getUnitPrice())),
+            'totalPrice' => \array_sum($prices->map(static fn (CalculatedPrice $price): float => $price->getTotalPrice())),
             'quantity' => 1,
-            'calculatedTaxes' => array_map(static fn (CalculatedTax $tax) => $tax->toArray(), CalculatedTax::sum(array_merge(...array_map(static fn (CalculatedPrice $price): array => $price->getCalculatedTaxes(), $prices)))),
-            'taxRules' => array_map(static fn (TaxRule $rule) => $rule->toArray(), array_merge(...array_map(static fn (CalculatedPrice $price): array => $price->getTaxRules(), $prices))),
+            'calculatedTaxes' => $taxSum->map(static fn (CalculatedTax $tax) => $tax->toArray()),
+            'taxRules' => $rules,
         ]);
     }
 }

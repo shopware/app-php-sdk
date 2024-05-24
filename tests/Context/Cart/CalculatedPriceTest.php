@@ -5,15 +5,11 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Tests\Context\Cart;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Shopware\App\SDK\Context\ArrayStruct;
 use Shopware\App\SDK\Context\Cart\CalculatedPrice;
-use Shopware\App\SDK\Context\Cart\CalculatedTax;
+use Shopware\App\SDK\Framework\Collection;
 
 #[CoversClass(CalculatedPrice::class)]
-#[CoversClass(CalculatedTax::class)]
-#[UsesClass(ArrayStruct::class)]
 class CalculatedPriceTest extends TestCase
 {
     public function testSum(): void
@@ -66,22 +62,28 @@ class CalculatedPriceTest extends TestCase
             ]
         ]);
 
-
-        $sum = CalculatedPrice::sum([
+        $sum = CalculatedPrice::sum(new Collection([
             $calculatedPrice1,
             $calculatedPrice2,
-        ]);
+        ]));
 
         static::assertSame(25.0, $sum->getUnitPrice());
         static::assertSame(65.0, $sum->getTotalPrice());
         static::assertSame(1, $sum->getQuantity());
         static::assertCount(2, $sum->getCalculatedTaxes());
-        static::assertSame(19.0, $sum->getCalculatedTaxes()[19.0]->getTaxRate());
-        static::assertSame(2.75, $sum->getCalculatedTaxes()[19.0]->getTax());
-        static::assertSame(15.0, $sum->getCalculatedTaxes()[19.0]->getPrice());
-        static::assertSame(7.0, $sum->getCalculatedTaxes()[7.0]->getTaxRate());
-        static::assertSame(0.7, $sum->getCalculatedTaxes()[7.0]->getTax());
-        static::assertSame(10.0, $sum->getCalculatedTaxes()[7.0]->getPrice());
+        static::assertSame(19.0, $sum->getCalculatedTaxes()->get('19')?->getTaxRate());
+        static::assertSame(2.75, $sum->getCalculatedTaxes()->get('19')?->getTax());
+        static::assertSame(15.0, $sum->getCalculatedTaxes()->get('19')?->getPrice());
+        static::assertSame(7.0, $sum->getCalculatedTaxes()->get('7')?->getTaxRate());
+        static::assertSame(0.7, $sum->getCalculatedTaxes()->get('7')?->getTax());
+        static::assertSame(10.0, $sum->getCalculatedTaxes()->get('7')?->getPrice());
+
         static::assertCount(3, $sum->getTaxRules());
+        static::assertSame(19.0, $sum->getTaxRules()->get(0)?->getTaxRate());
+        static::assertSame(100.0, $sum->getTaxRules()->get(0)?->getPercentage());
+        static::assertSame(19.0, $sum->getTaxRules()->get(1)?->getTaxRate());
+        static::assertSame(33.3, $sum->getTaxRules()->get(1)?->getPercentage());
+        static::assertSame(7.0, $sum->getTaxRules()->get(2)?->getTaxRate());
+        static::assertSame(66.7, $sum->getTaxRules()->get(2)?->getPercentage());
     }
 }

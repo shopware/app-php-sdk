@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Context\Cart;
 
 use Shopware\App\SDK\Context\ArrayStruct;
+use Shopware\App\SDK\Framework\Collection;
 
 class CartPrice extends ArrayStruct
 {
@@ -25,14 +26,15 @@ class CartPrice extends ArrayStruct
     }
 
     /**
-     * @return array<CalculatedTax>
+     * @return Collection<CalculatedTax>
      */
-    public function getCalculatedTaxes(): array
+    public function getCalculatedTaxes(): Collection
     {
         \assert(is_array($this->data['calculatedTaxes']));
-        return array_map(static function (array $calculatedTax): CalculatedTax {
+
+        return new Collection(\array_map(static function (array $calculatedTax): CalculatedTax {
             return new CalculatedTax($calculatedTax);
-        }, $this->data['calculatedTaxes']);
+        }, $this->data['calculatedTaxes']));
     }
 
     public function getTaxStatus(): string
@@ -42,15 +44,15 @@ class CartPrice extends ArrayStruct
     }
 
     /**
-     * @return array<TaxRule>
+     * @return Collection<TaxRule>
      */
-    public function getTaxRules(): array
+    public function getTaxRules(): Collection
     {
-        \assert(is_array($this->data['taxRules']));
+        \assert(\is_array($this->data['taxRules']));
 
-        return array_map(static function (array $taxRule): TaxRule {
+        return new Collection(\array_map(static function (array $taxRule): TaxRule {
             return new TaxRule($taxRule);
-        }, $this->data['taxRules']);
+        }, $this->data['taxRules']));
     }
 
     public function getPositionPrice(): float

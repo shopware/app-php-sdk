@@ -91,6 +91,14 @@ class PaymentResponseTest extends TestCase
         static::assertSame('{"status":"chargeback"}', $response->getBody()->getContents());
     }
 
+    public function testReopen(): void
+    {
+        $response = PaymentResponse::reopen();
+
+        static::assertSame(200, $response->getStatusCode());
+        static::assertSame('{"status":"reopen"}', $response->getBody()->getContents());
+    }
+
     public function testValidateSuccess(): void
     {
         $response = PaymentResponse::validateSuccess(['foo' => 'bar']);

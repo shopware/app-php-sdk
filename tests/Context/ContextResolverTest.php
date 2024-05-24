@@ -9,109 +9,17 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
-use Shopware\App\SDK\Context\ActionButton\ActionButtonAction;
-use Shopware\App\SDK\Context\ActionSource;
-use Shopware\App\SDK\Context\ArrayStruct;
-use Shopware\App\SDK\Context\Cart\CalculatedTax;
-use Shopware\App\SDK\Context\Cart\Cart;
-use Shopware\App\SDK\Context\Cart\CartPrice;
-use Shopware\App\SDK\Context\Cart\CartTransaction;
-use Shopware\App\SDK\Context\Cart\Delivery;
-use Shopware\App\SDK\Context\Cart\DeliveryDate;
-use Shopware\App\SDK\Context\Cart\DeliveryPosition;
-use Shopware\App\SDK\Context\Cart\LineItem;
-use Shopware\App\SDK\Context\Cart\CalculatedPrice;
-use Shopware\App\SDK\Context\Cart\TaxRule;
 use Shopware\App\SDK\Context\ContextResolver;
 use PHPUnit\Framework\TestCase;
-use Shopware\App\SDK\Context\Module\ModuleAction;
-use Shopware\App\SDK\Context\Order\Order;
-use Shopware\App\SDK\Context\Order\OrderCustomer;
-use Shopware\App\SDK\Context\Order\OrderDelivery;
-use Shopware\App\SDK\Context\Order\OrderLineItem;
-use Shopware\App\SDK\Context\Order\OrderTransaction;
-use Shopware\App\SDK\Context\Order\StateMachineState;
 use Shopware\App\SDK\Context\Payment\PaymentCaptureAction;
 use Shopware\App\SDK\Context\Payment\PaymentFinalizeAction;
 use Shopware\App\SDK\Context\Payment\PaymentPayAction;
 use Shopware\App\SDK\Context\Payment\PaymentRecurringAction;
-use Shopware\App\SDK\Context\Payment\PaymentValidateAction;
-use Shopware\App\SDK\Context\Payment\RecurringData;
-use Shopware\App\SDK\Context\Payment\Refund;
-use Shopware\App\SDK\Context\Payment\RefundAction;
-use Shopware\App\SDK\Context\Payment\RefundTransactionCapture;
-use Shopware\App\SDK\Context\SalesChannelContext\Address;
-use Shopware\App\SDK\Context\SalesChannelContext\Country;
-use Shopware\App\SDK\Context\SalesChannelContext\CountryState;
-use Shopware\App\SDK\Context\SalesChannelContext\Currency;
-use Shopware\App\SDK\Context\SalesChannelContext\Customer;
-use Shopware\App\SDK\Context\SalesChannelContext\PaymentMethod;
-use Shopware\App\SDK\Context\SalesChannelContext\RoundingConfig;
-use Shopware\App\SDK\Context\SalesChannelContext\SalesChannel;
-use Shopware\App\SDK\Context\SalesChannelContext\SalesChannelContext;
-use Shopware\App\SDK\Context\SalesChannelContext\SalesChannelDomain;
-use Shopware\App\SDK\Context\SalesChannelContext\Salutation;
-use Shopware\App\SDK\Context\SalesChannelContext\ShippingLocation;
-use Shopware\App\SDK\Context\SalesChannelContext\ShippingMethod;
-use Shopware\App\SDK\Context\SalesChannelContext\TaxInfo;
-use Shopware\App\SDK\Context\Storefront\StorefrontAction;
-use Shopware\App\SDK\Context\Storefront\StorefrontClaims;
-use Shopware\App\SDK\Context\TaxProvider\TaxProviderAction;
-use Shopware\App\SDK\Context\Webhook\WebhookAction;
 use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
 use Shopware\App\SDK\Shop\ShopInterface;
 use Shopware\App\SDK\Test\MockShop;
 
 #[CoversClass(ContextResolver::class)]
-#[CoversClass(ActionSource::class)]
-#[CoversClass(WebhookAction::class)]
-#[CoversClass(ActionButtonAction::class)]
-#[CoversClass(ModuleAction::class)]
-#[CoversClass(MockShop::class)]
-#[CoversClass(MalformedWebhookBodyException::class)]
-#[CoversClass(ArrayStruct::class)]
-#[CoversClass(Cart::class)]
-#[CoversClass(LineItem::class)]
-#[CoversClass(CalculatedPrice::class)]
-#[CoversClass(TaxProviderAction::class)]
-#[CoversClass(CalculatedTax::class)]
-#[CoversClass(TaxRule::class)]
-#[CoversClass(CartPrice::class)]
-#[CoversClass(Delivery::class)]
-#[CoversClass(ShippingMethod::class)]
-#[CoversClass(DeliveryDate::class)]
-#[CoversClass(DeliveryPosition::class)]
-#[CoversClass(Country::class)]
-#[CoversClass(ShippingLocation::class)]
-#[CoversClass(CartTransaction::class)]
-#[CoversClass(SalesChannelContext::class)]
-#[CoversClass(Currency::class)]
-#[CoversClass(RoundingConfig::class)]
-#[CoversClass(PaymentMethod::class)]
-#[CoversClass(Customer::class)]
-#[CoversClass(Salutation::class)]
-#[CoversClass(Address::class)]
-#[CoversClass(CountryState::class)]
-#[CoversClass(TaxInfo::class)]
-#[CoversClass(SalesChannel::class)]
-#[CoversClass(SalesChannelDomain::class)]
-#[CoversClass(PaymentPayAction::class)]
-#[CoversClass(Order::class)]
-#[CoversClass(OrderDelivery::class)]
-#[CoversClass(OrderLineItem::class)]
-#[CoversClass(OrderTransaction::class)]
-#[CoversClass(StateMachineState::class)]
-#[CoversClass(PaymentFinalizeAction::class)]
-#[CoversClass(PaymentCaptureAction::class)]
-#[CoversClass(PaymentValidateAction::class)]
-#[CoversClass(PaymentRecurringAction::class)]
-#[CoversClass(RefundAction::class)]
-#[CoversClass(Refund::class)]
-#[CoversClass(RefundTransactionCapture::class)]
-#[CoversClass(RecurringData::class)]
-#[CoversClass(StorefrontAction::class)]
-#[CoversClass(StorefrontClaims::class)]
-#[CoversClass(OrderCustomer::class)]
 class ContextResolverTest extends TestCase
 {
     public function testAssembleWebhookMalformed(): void
@@ -252,20 +160,19 @@ class ContextResolverTest extends TestCase
 
         $lineItems = $tax->cart->getLineItems();
         static::assertCount(1, $lineItems);
-        static::assertArrayHasKey('0', $lineItems);
-        static::assertSame('91298e263c5b4bb88c3f51c873d7e76e', $lineItems['0']->getId());
-        static::assertSame('a5209fb05f4f473f9702c3868ea2deac', $lineItems['0']->getUniqueIdentifier());
-        static::assertSame('product', $lineItems['0']->getType());
-        static::assertIsArray($lineItems['0']->getPayload());
-        static::assertSame(1, $lineItems['0']->getQuantity());
-        static::assertSame('Aerodynamic Bronze Resorcerer', $lineItems['0']->getLabel());
-        static::assertSame(['is-physical'], $lineItems['0']->getStates());
-        static::assertSame('91298e263c5b4bb88c3f51c873d7e76e', $lineItems['0']->getReferencedId());
-        static::assertSame(true, $lineItems['0']->isGood());
-        static::assertSame("A description", $lineItems['0']->getDescription());
-        static::assertSame([], $lineItems['0']->getChildren());
+        static::assertSame('91298e263c5b4bb88c3f51c873d7e76e', $lineItems->first()?->getId());
+        static::assertSame('a5209fb05f4f473f9702c3868ea2deac', $lineItems->first()?->getUniqueIdentifier());
+        static::assertSame('product', $lineItems->first()?->getType());
+        static::assertIsArray($lineItems->first()?->getPayload());
+        static::assertSame(1, $lineItems->first()?->getQuantity());
+        static::assertSame('Aerodynamic Bronze Resorcerer', $lineItems->first()?->getLabel());
+        static::assertSame(['is-physical'], $lineItems->first()?->getStates());
+        static::assertSame('91298e263c5b4bb88c3f51c873d7e76e', $lineItems->first()?->getReferencedId());
+        static::assertSame(true, $lineItems->first()?->isGood());
+        static::assertSame("A description", $lineItems->first()?->getDescription());
+        static::assertEmpty($lineItems->first()?->getChildren());
 
-        $price = $lineItems['0']->getPrice();
+        $price = $lineItems->first()?->getPrice();
 
         static::assertSame(623.53, $price->getTotalPrice());
         static::assertSame(623.53, $price->getUnitPrice());
@@ -273,18 +180,16 @@ class ContextResolverTest extends TestCase
 
         $calculatedTaxes = $price->getCalculatedTaxes();
         static::assertCount(1, $calculatedTaxes);
-        static::assertArrayHasKey('0', $calculatedTaxes);
-        static::assertSame(0.0, $calculatedTaxes['0']->getTaxRate());
-        static::assertSame(0.0, $calculatedTaxes['0']->getTax());
-        static::assertSame(623.53, $calculatedTaxes['0']->getPrice());
+        static::assertSame(0.0, $calculatedTaxes->first()?->getTaxRate());
+        static::assertSame(0.0, $calculatedTaxes->first()?->getTax());
+        static::assertSame(623.53, $calculatedTaxes->first()?->getPrice());
 
         $taxRules = $price->getTaxRules();
         static::assertCount(1, $taxRules);
-        static::assertArrayHasKey('0', $taxRules);
 
-        $taxRule = $taxRules['0'];
-        static::assertSame(0.0, $taxRule->getTaxRate());
-        static::assertSame(100.0, $taxRule->getPercentage());
+        $taxRule = $taxRules->first();
+        static::assertSame(0.0, $taxRule?->getTaxRate());
+        static::assertSame(100.0, $taxRule?->getPercentage());
 
         $price = $tax->cart->getPrice();
 
@@ -296,48 +201,45 @@ class ContextResolverTest extends TestCase
 
         $taxRules = $price->getTaxRules();
         static::assertCount(1, $taxRules);
-        static::assertArrayHasKey('0', $taxRules);
 
-        $taxRule = $taxRules['0'];
-        static::assertSame(0.0, $taxRule->getTaxRate());
-        static::assertSame(100.0, $taxRule->getPercentage());
+        $taxRule = $taxRules->first();
+
+        static::assertSame(0.0, $taxRule?->getTaxRate());
+        static::assertSame(100.0, $taxRule?->getPercentage());
 
         $taxRules = $price->getCalculatedTaxes();
         static::assertCount(1, $taxRules);
-        static::assertArrayHasKey('0', $taxRules);
 
-        $taxRule = $taxRules['0'];
+        $taxRule = $taxRules->first();
 
-        static::assertSame(0.0, $taxRule->getTaxRate());
-        static::assertSame(0.0, $taxRule->getTax());
-        static::assertSame(623.53, $taxRule->getPrice());
+        static::assertSame(0.0, $taxRule?->getTaxRate());
+        static::assertSame(0.0, $taxRule?->getTax());
+        static::assertSame(623.53, $taxRule?->getPrice());
 
         $deliveries = $tax->cart->getDeliveries();
         static::assertCount(1, $deliveries);
-        static::assertArrayHasKey('0', $deliveries);
 
-        $delivery = $deliveries['0'];
+        $delivery = $deliveries->first();
 
-        static::assertSame('Standard', $delivery->getShippingMethod()->getName());
+        static::assertSame('Standard', $delivery?->getShippingMethod()->getName());
 
-        $deliveryDate = $delivery->getDeliveryDate();
-        static::assertSame('2023-05-03T16:00:00+00:00', $deliveryDate->getEarliest()->format(\DATE_ATOM));
-        static::assertSame('2023-05-05T16:00:00+00:00', $deliveryDate->getLatest()->format(\DATE_ATOM));
+        $deliveryDate = $delivery?->getDeliveryDate();
+        static::assertSame('2023-05-03T16:00:00+00:00', $deliveryDate?->getEarliest()->format(\DATE_ATOM));
+        static::assertSame('2023-05-05T16:00:00+00:00', $deliveryDate?->getLatest()->format(\DATE_ATOM));
 
         $positions = $delivery->getPositions();
 
         static::assertCount(1, $positions);
-        static::assertArrayHasKey('0', $positions);
 
-        $position = $positions['0'];
+        $position = $positions->first();
 
-        static::assertSame('91298e263c5b4bb88c3f51c873d7e76e', $position->getIdentifier());
-        static::assertSame(1, $position->getQuantity());
-        static::assertSame(1683129600, $position->getDeliveryDate()->getEarliest()->getTimestamp());
-        static::assertSame(1683302400, $position->getDeliveryDate()->getLatest()->getTimestamp());
+        static::assertSame('91298e263c5b4bb88c3f51c873d7e76e', $position?->getIdentifier());
+        static::assertSame(1, $position?->getQuantity());
+        static::assertSame(1683129600, $position?->getDeliveryDate()->getEarliest()->getTimestamp());
+        static::assertSame(1683302400, $position?->getDeliveryDate()->getLatest()->getTimestamp());
 
-        static::assertSame('Aerodynamic Bronze Resorcerer', $position->getLineItem()->getLabel());
-        static::assertSame(1, $position->getPrice()->getQuantity());
+        static::assertSame('Aerodynamic Bronze Resorcerer', $position?->getLineItem()->getLabel());
+        static::assertSame(1, $position?->getPrice()->getQuantity());
 
         $location = $delivery->getLocation();
 
@@ -351,28 +253,26 @@ class ContextResolverTest extends TestCase
 
         $calculatedTaxes = $shippingCosts->getCalculatedTaxes();
         static::assertCount(1, $calculatedTaxes);
-        static::assertArrayHasKey('0', $calculatedTaxes);
-        static::assertSame(0.0, $calculatedTaxes['0']->getTaxRate());
-        static::assertSame(0.0, $calculatedTaxes['0']->getTax());
-        static::assertSame(0.0, $calculatedTaxes['0']->getPrice());
+
+        static::assertSame(0.0, $calculatedTaxes->first()?->getTaxRate());
+        static::assertSame(0.0, $calculatedTaxes->first()?->getTax());
+        static::assertSame(0.0, $calculatedTaxes->first()?->getPrice());
 
         $taxRules = $shippingCosts->getTaxRules();
         static::assertCount(1, $taxRules);
-        static::assertArrayHasKey('0', $taxRules);
 
-        $taxRule = $taxRules['0'];
-        static::assertSame(0.0, $taxRule->getTaxRate());
-        static::assertSame(100.0, $taxRule->getPercentage());
+        $taxRule = $taxRules->first();
+        static::assertSame(0.0, $taxRule?->getTaxRate());
+        static::assertSame(100.0, $taxRule?->getPercentage());
 
         $transactions = $tax->cart->getTransactions();
 
         static::assertCount(1, $transactions);
-        static::assertArrayHasKey('0', $transactions);
 
-        $transaction = $transactions['0'];
+        $transaction = $transactions->first();
 
-        static::assertSame(623.53, $transaction->getAmount()->getTotalPrice());
-        static::assertSame('20c5b5b9ec9d4f39b36816488cd58133', $transaction->getPaymentMethodId());
+        static::assertSame(623.53, $transaction?->getAmount()->getTotalPrice());
+        static::assertSame('20c5b5b9ec9d4f39b36816488cd58133', $transaction?->getPaymentMethodId());
 
         $context = $tax->context;
 
@@ -424,6 +324,7 @@ class ContextResolverTest extends TestCase
         static::assertSame('::', $customer->getRemoteAddress());
         static::assertSame('Max', $customer->getFirstName());
         static::assertSame('Mustermann', $customer->getLastName());
+        static::assertNotNull($customer->getSalutation());
         static::assertSame('c0928c9d2c264e3aade1fab28a9262dd', $customer->getSalutation()->getId());
         static::assertSame('mr', $customer->getSalutation()->getSalutationKey());
         static::assertSame('Mr.', $customer->getSalutation()->getDisplayName());
@@ -461,6 +362,7 @@ class ContextResolverTest extends TestCase
         static::assertSame(false, $billingAddress->getCountry()->getCustomerTax()->isEnabled());
         static::assertSame(false, $billingAddress->getCountry()->getCompanyTax()->isEnabled());
         static::assertSame('040cbcada23440ebb4f6e1bebc62e421', $billingAddress->getCountryState()?->getId());
+        static::assertNotNull($billingAddress->getCountryState());
         static::assertSame('Pennsylvania', $billingAddress->getCountryState()?->getName());
         static::assertSame([], $billingAddress->getCountryState()?->getCustomFields());
         static::assertSame(1, $billingAddress->getCountryState()?->getPosition());
@@ -475,12 +377,12 @@ class ContextResolverTest extends TestCase
 
         $domains = $salesChannel->getDomains();
         static::assertCount(1, $domains);
-        static::assertSame('ef8e67662fdb4b0fb9241d7bd75fe8bb', $domains[0]->getId());
-        static::assertSame('http://localhost:8000', $domains[0]->getUrl());
-        static::assertSame('b7d2554b0ce847cd82f3ac9bd1c0dfca', $domains[0]->getCurrencyId());
-        static::assertSame([], $domains[0]->getCustomFields());
-        static::assertSame('2fbb5fe2e29a4d70aa5854ce7ce3e20b', $domains[0]->getLanguageId());
-        static::assertSame('684f9a80c59846228223cb76d7cb3577', $domains[0]->getSnippetSetId());
+        static::assertSame('ef8e67662fdb4b0fb9241d7bd75fe8bb', $domains->first()?->getId());
+        static::assertSame('http://localhost:8000', $domains->first()?->getUrl());
+        static::assertSame('b7d2554b0ce847cd82f3ac9bd1c0dfca', $domains->first()?->getCurrencyId());
+        static::assertSame([], $domains->first()?->getCustomFields());
+        static::assertSame('2fbb5fe2e29a4d70aa5854ce7ce3e20b', $domains->first()?->getLanguageId());
+        static::assertSame('684f9a80c59846228223cb76d7cb3577', $domains->first()?->getSnippetSetId());
 
         $rounding = $context->getRounding();
         static::assertSame(2, $rounding->getDecimals());
@@ -723,16 +625,17 @@ class ContextResolverTest extends TestCase
         $lineItems = $order->getLineItems();
 
         static::assertCount(1, $lineItems);
-        static::assertSame('5567f5758b414a2686afa1c6492c63a1', $lineItems[0]->getId());
-        static::assertSame('Aerodynamic Bronze Slo-Cooked Prawns', $lineItems[0]->getLabel());
-        static::assertSame(1, $lineItems[0]->getPosition());
-        static::assertSame(null, $lineItems[0]->getParentId());
+        static::assertSame('5567f5758b414a2686afa1c6492c63a1', $lineItems->first()?->getId());
+        static::assertSame('Aerodynamic Bronze Slo-Cooked Prawns', $lineItems->first()?->getLabel());
+        static::assertSame(1, $lineItems->first()?->getPosition());
+        static::assertSame(null, $lineItems->first()?->getParentId());
 
         $deliveries = $order->getDeliveries();
 
         static::assertCount(1, $deliveries);
 
-        $delivery = $deliveries[0];
+        $delivery = $deliveries->first();
+        static::assertNotNull($delivery);
         static::assertSame([], $delivery->getTrackingCodes());
         static::assertSame(0.0, $delivery->getShippingCosts()->getTotalPrice());
         static::assertSame('Max', $delivery->getShippingOrderAddress()->getFirstName());
@@ -744,8 +647,9 @@ class ContextResolverTest extends TestCase
         $transactions = $order->getTransactions();
         static::assertCount(1, $transactions);
 
-        $transaction = $transactions[0];
+        $transaction = $transactions->first();
 
+        static::assertNotNull($transaction);
         static::assertSame('55e858b413b54f8a97c64a040610b359', $transaction->getId());
         static::assertSame(395.01, $transaction->getAmount()->getTotalPrice());
         static::assertSame('open', $transaction->getStateMachineState()->getTechnicalName());
@@ -906,6 +810,54 @@ class ContextResolverTest extends TestCase
         );
     }
 
+    public function testAssembleCheckoutGatewayRequest(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+            ],
+            'cart' => [
+                'token' => 'cart-token',
+            ],
+            'salesChannelContext' => [
+                'salesChannel' => [
+                    'id' => 'sales-channel-id'
+                ],
+            ],
+            'paymentMethods' => [
+                'id1' => 'technicalName1',
+                'id2' => 'technicalName2',
+            ],
+            'shippingMethods' => [
+                'id1' => 'technicalName1',
+                'id2' => 'technicalName2',
+            ],
+        ];
+
+        $request = new Request('POST', '/', [], \json_encode($body, \JSON_THROW_ON_ERROR));
+        $request = $request->withHeader('shopware-app-token', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJGcWFIV1VzQ1JOc3JaOWtRIiwiaWF0IjoxNjg5ODM3MDkyLjI3ODMyOSwibmJmIjoxNjg5ODM3MDkyLjI3ODMyOSwiZXhwIjoxNjg5ODQwNjkyLjI3ODI0Mywic2FsZXNDaGFubmVsSWQiOiIwMTg5NjQwNTU0YjU3MDBjODBjMmM0YTIwMmUyNDAxZCJ9.g8Da0bN3bkkmEdzMeXmI8wlDQEZMCDiKJvqS288B4JI');
+
+        $action = $contextResolver->assembleCheckoutGatewayRequest($request, $this->getShop());
+
+        static::assertSame('https://example.com', $action->source->url);
+        static::assertSame('foo', $action->source->appVersion);
+        static::assertSame('cart-token', $action->cart->getToken());
+        static::assertSame('sales-channel-id', $action->context->getSalesChannel()->getId());
+
+        $paymentMethods = $action->paymentMethods;
+        static::assertCount(2, $paymentMethods);
+        static::assertSame('id1', $paymentMethods->get('technicalName1'));
+        static::assertSame('id2', $paymentMethods->get('technicalName2'));
+
+        $shippingMethods = $action->shippingMethods;
+        static::assertCount(2, $shippingMethods);
+        static::assertSame('id1', $shippingMethods->get('technicalName1'));
+        static::assertSame('id2', $shippingMethods->get('technicalName2'));
+    }
+
     /**
      * @dataProvider methodsProvider
      */
@@ -976,6 +928,7 @@ class ContextResolverTest extends TestCase
         yield ['assemblePaymentValidate'];
         yield ['assemblePaymentRefund'];
         yield ['assemblePaymentRecurringCapture'];
+        yield ['assembleCheckoutGatewayRequest'];
     }
 
     /**
