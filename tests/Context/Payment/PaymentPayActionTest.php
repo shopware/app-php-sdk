@@ -7,10 +7,12 @@ namespace Shopware\App\SDK\Tests\Context\Payment;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Context\ActionSource;
+use Shopware\App\SDK\Context\InAppPurchase\InAppPurchase;
 use Shopware\App\SDK\Context\Order\Order;
 use Shopware\App\SDK\Context\Order\OrderTransaction;
 use Shopware\App\SDK\Context\Payment\PaymentPayAction;
 use Shopware\App\SDK\Context\Payment\RecurringData;
+use Shopware\App\SDK\Framework\Collection;
 use Shopware\App\SDK\Test\MockShop;
 
 #[CoversClass(PaymentPayAction::class)]
@@ -19,7 +21,8 @@ class PaymentPayActionTest extends TestCase
     public function testConstructDefault(): void
     {
         $shop = new MockShop('shop-id', 'https://shop-url.com', 'shop-secret');
-        $source = new ActionSource('https://shop-url.com', '1.0.0');
+        $IAPs = new Collection([new InAppPurchase('id', 1)]);
+        $source = new ActionSource('https://shop-url.com', '1.0.0', $IAPs);
         $order = new Order(['id' => 'order-id']);
         $orderTransaction = new OrderTransaction(['id' => 'order-transaction-id']);
 
@@ -37,7 +40,8 @@ class PaymentPayActionTest extends TestCase
     public function testConstruct(): void
     {
         $shop = new MockShop('shop-id', 'https://shop-url.com', 'shop-secret');
-        $source = new ActionSource('https://shop-url.com', '1.0.0');
+        $IAPs = new Collection([new InAppPurchase('id', 1)]);
+        $source = new ActionSource('https://shop-url.com', '1.0.0', $IAPs);
         $order = new Order(['id' => 'order-id']);
         $orderTransaction = new OrderTransaction(['id' => 'order-transaction-id']);
         $returnUrl = 'https://return-url.com';
@@ -53,5 +57,6 @@ class PaymentPayActionTest extends TestCase
         static::assertSame($returnUrl, $action->returnUrl);
         static::assertSame($recurring, $action->recurring);
         static::assertSame($requestData, $action->requestData);
+        static::assertSame($IAPs, $action->source->inAppPurchases);
     }
 }

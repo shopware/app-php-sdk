@@ -19,6 +19,7 @@
     "php": "^8.1",
     "lcobucci/clock": "^3",
     "lcobucci/jwt": "^4.0 || ^5.0",
+    "phpseclib/phpseclib": "3.0.42",
     "php-http/discovery": "^1.17",
     "psr/clock-implementation": "*",
     "psr/event-dispatcher": "^1.0",
@@ -27,11 +28,12 @@
     "psr/http-factory": "^1.0",
     "psr/http-factory-implementation": "*",
     "psr/http-message": "^1.0 || ^2.0",
-    "psr/simple-cache": "^3.0"
+    "psr/simple-cache": "^3.0",
+    "strobotti/php-jwk": "^1.4"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^3.16",
-    "infection/infection": "^0.26.21",
+    "infection/infection": "^0.29",
     "nyholm/psr7": "^1.7.0",
     "nyholm/psr7-server": "^1.0",
     "php-http/curl-client": "^2.2",

@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Context\ActionSource;
 use Shopware\App\SDK\Context\Cart\Cart;
 use Shopware\App\SDK\Context\Gateway\Checkout\CheckoutGatewayAction;
+use Shopware\App\SDK\Context\InAppPurchase\InAppPurchase;
 use Shopware\App\SDK\Context\SalesChannelContext\SalesChannelContext;
 use Shopware\App\SDK\Framework\Collection;
 use Shopware\App\SDK\Test\MockShop;
@@ -19,7 +20,8 @@ class CheckoutGatewayActionTest extends TestCase
     public function testConstruct(): void
     {
         $shop = new MockShop('foo', 'https://example.com', 'secret');
-        $source = new ActionSource('https://example.com', '1.0.0');
+        $IAPs = new Collection([new InAppPurchase('id', 1)]);
+        $source = new ActionSource('https://example.com', '1.0.0', $IAPs);
         $cart = new Cart([]);
         $context = new SalesChannelContext([]);
         $paymentMethods = new Collection(['foo' => 'bar']);
@@ -33,5 +35,6 @@ class CheckoutGatewayActionTest extends TestCase
         static::assertSame($context, $action->context);
         static::assertSame($paymentMethods, $action->paymentMethods);
         static::assertSame($shippingMethods, $action->shippingMethods);
+        static::assertSame($IAPs, $action->source->inAppPurchases);
     }
 }

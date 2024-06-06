@@ -10,12 +10,16 @@ use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\AppLifecycle;
 use Shopware\App\SDK\Authentication\ResponseSigner;
 use Shopware\App\SDK\Context\ContextResolver;
+use Shopware\App\SDK\Context\InAppPurchase\InAppPurchaseProvider;
+use Shopware\App\SDK\Context\InAppPurchase\SBPStoreKeyFetcher;
+use Shopware\App\SDK\HttpClient\ClientFactory;
 use Shopware\App\SDK\Response\ActionButtonResponse;
 use Shopware\App\SDK\Response\PaymentResponse;
 use Shopware\App\SDK\Registration\RegistrationService;
 use Shopware\App\SDK\Shop\ShopResolver;
 use Shopware\App\SDK\TaxProvider\CalculatedTax;
 use Shopware\App\SDK\TaxProvider\TaxProviderResponseBuilder;
+use Shopware\App\SDK\Test\MockShop;
 
 require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/helper.php';
@@ -38,7 +42,10 @@ $fileShopRepository = new FileShopRepository();
 $registrationService = new RegistrationService($app, $fileShopRepository);
 $shopResolver = new ShopResolver($fileShopRepository);
 $appLifecycle = new AppLifecycle($registrationService, $shopResolver, $fileShopRepository);
-$contextResolver = new ContextResolver();
+$inAppPurchaseProvider = new InAppPurchaseProvider(new SBPStoreKeyFetcher(
+    (new ClientFactory())->createClient(new MockShop('shopId', 'shopUrl', 'shopSecret'))
+));
+$contextResolver = new ContextResolver($inAppPurchaseProvider);
 $signer = new ResponseSigner();
 
 if (str_starts_with($serverRequest->getUri()->getPath(), '/register/authorize')) {
@@ -116,7 +123,7 @@ if (str_starts_with($serverRequest->getUri()->getPath(), '/register/authorize'))
     $signer = new ResponseSigner();
 
     send($signer->signResponse(PaymentResponse::paid(), $shop));
-} elseif(str_starts_with($serverRequest->getUri()->getPath(), '/module/test')) {
+} elseif (str_starts_with($serverRequest->getUri()->getPath(), '/module/test')) {
     $shop = $shopResolver->resolveShop($serverRequest);
     $module = $contextResolver->assembleModule($serverRequest, $shop);
 
