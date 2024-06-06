@@ -29,6 +29,9 @@ use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
 use Shopware\App\SDK\Framework\Collection;
 use Shopware\App\SDK\Shop\ShopInterface;
 
+/**
+ * @psalm-import-type StorefrontClaimsArray from StorefrontClaims
+ */
 class ContextResolver
 {
     public function assembleWebhook(RequestInterface $request, ShopInterface $shop): WebhookAction
@@ -69,17 +72,28 @@ class ContextResolver
 
     public function assembleModule(RequestInterface $request, ShopInterface $shop): ModuleAction
     {
-        parse_str($request->getUri()->getQuery(), $params);
+        \parse_str($request->getUri()->getQuery(), $params);
 
-        if (!isset($params['sw-version'], $params['sw-context-language']) || !is_string($params['sw-version']) || !is_string($params['sw-context-language']) || !isset($params['sw-user-language']) || !is_string($params['sw-user-language'])) {
+        if (!isset($params['sw-version'], $params['sw-context-language'], $params['sw-user-language'])
+            || !is_string($params['sw-version'])
+            || !is_string($params['sw-context-language'])
+            || !is_string($params['sw-user-language'])
+            || (isset($params['in-app-purchases']) && !is_string($params['in-app-purchases']))
+        ) {
             throw new MalformedWebhookBodyException();
         }
+
+        $inAppPurchaseString = $params['in-app-purchases'] ?? '';
+        \assert(\is_string($inAppPurchaseString));
+
+        $inAppPurchases = \explode(',', $inAppPurchaseString);
 
         return new ModuleAction(
             $shop,
             $params['sw-version'],
             $params['sw-context-language'],
-            $params['sw-user-language']
+            $params['sw-user-language'],
+            $inAppPurchases,
         );
     }
 
@@ -227,8 +241,8 @@ class ContextResolver
             throw new MalformedWebhookBodyException();
         }
 
-        /** @var array<string, string> $claims */
-        $claims = json_decode(base64_decode($parts[1]), true, flags: JSON_THROW_ON_ERROR);
+        /** @var StorefrontClaimsArray $claims */
+        $claims = \json_decode(\base64_decode($parts[1]), true, flags: JSON_THROW_ON_ERROR);
 
         return new StorefrontAction(
             $shop,
@@ -261,13 +275,21 @@ class ContextResolver
      */
     private function parseSource(array $source): ActionSource
     {
-        if (!isset($source['url'], $source['appVersion']) || !is_string($source['url']) || !is_string($source['appVersion'])) {
+        if (!isset($source['url'], $source['appVersion']) || !\is_string($source['url']) || !\is_string($source['appVersion'])) {
             throw new MalformedWebhookBodyException();
         }
 
+        if (isset($source['inAppPurchases']) && !\is_array($source['inAppPurchases'])) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        /** @var string[] $inAppPurchase */
+        $inAppPurchase = $source['inAppPurchases'] ?? [];
+
         return new ActionSource(
             $source['url'],
-            $source['appVersion']
+            $source['appVersion'],
+            $inAppPurchase,
         );
     }
 }
