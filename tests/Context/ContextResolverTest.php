@@ -42,6 +42,7 @@ class ContextResolverTest extends TestCase
                 'source' => [
                     'url' => 'https://example.com',
                     'appVersion' => '1.0.0',
+                    'inAppPurchases' => ['foo', 'bar'],
                 ],
                 'data' => [
                     'event' => 'order.placed',
@@ -53,6 +54,11 @@ class ContextResolverTest extends TestCase
             ]),
             $this->getShop()
         );
+
+        static::assertSame(['foo', 'bar'], $webhook->source->inAppPurchases);
+        static::assertTrue($webhook->source->hasInAppPurchase('foo'));
+        static::assertTrue($webhook->source->hasInAppPurchase('bar'));
+        static::assertFalse($webhook->source->hasInAppPurchase('baz'));
 
         static::assertSame('123', $webhook->payload['orderId']);
         static::assertSame('order.placed', $webhook->eventName);
@@ -80,6 +86,7 @@ class ContextResolverTest extends TestCase
                 'source' => [
                     'url' => 'https://example.com',
                     'appVersion' => '1.0.0',
+                    'inAppPurchases' => ['foo', 'bar'],
                 ],
                 'data' => [
                     'ids' => ['123'],
@@ -96,6 +103,9 @@ class ContextResolverTest extends TestCase
 
         static::assertSame('https://example.com', $actionButton->source->url);
         static::assertSame('1.0.0', $actionButton->source->appVersion);
+        static::assertSame(['foo', 'bar'], $actionButton->source->inAppPurchases);
+        static::assertTrue($actionButton->source->hasInAppPurchase('foo'));
+        static::assertTrue($actionButton->source->hasInAppPurchase('bar'));
     }
 
     public function testMalformedSource(): void
@@ -118,13 +128,14 @@ class ContextResolverTest extends TestCase
         $contextResolver = new ContextResolver();
 
         $module = $contextResolver->assembleModule(
-            new Request('GET', 'http://localhost:6001/module/test?shop-id=vvRy7Nv3Bo8mAVda&shop-url=http://localhost:8000&timestamp=1683015472&sw-version=6.5.9999999.9999999-dev&sw-context-language=2fbb5fe2e29a4d70aa5854ce7ce3e20b&sw-user-language=en-GB&shopware-shop-signature=650455d43eda4eeb4c9a12ee0eb15b46ce88776abaf9beb1ffac31be136e1d9b'),
+            new Request('GET', 'http://localhost:6001/module/test?shop-id=vvRy7Nv3Bo8mAVda&shop-url=http://localhost:8000&timestamp=1683015472&sw-version=6.5.9999999.9999999-dev&sw-context-language=2fbb5fe2e29a4d70aa5854ce7ce3e20b&sw-user-language=en-GB&in-app-purchases=foo,bar&shopware-shop-signature=650455d43eda4eeb4c9a12ee0eb15b46ce88776abaf9beb1ffac31be136e1d9b'),
             $this->getShop()
         );
 
         static::assertSame('6.5.9999999.9999999-dev', $module->shopwareVersion);
         static::assertSame('2fbb5fe2e29a4d70aa5854ce7ce3e20b', $module->contentLanguage);
         static::assertSame('en-GB', $module->userLanguage);
+        static::assertSame(['foo', 'bar'], $module->inAppPurchases);
     }
 
     /**
@@ -152,6 +163,13 @@ class ContextResolverTest extends TestCase
     {
         $contextResolver = new ContextResolver();
         $tax = $contextResolver->assembleTaxProvider(new Request('GET', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/tax.json')), $this->getShop());
+
+        static::assertSame('http://localhost:8000', $tax->source->url);
+        static::assertSame('1.0.0', $tax->source->appVersion);
+        static::assertSame(['foo', 'bar'], $tax->source->inAppPurchases);
+        static::assertTrue($tax->source->hasInAppPurchase('foo'));
+        static::assertTrue($tax->source->hasInAppPurchase('bar'));
+        static::assertFalse($tax->source->hasInAppPurchase('baz'));
 
         static::assertSame('W4K2OUeCshirU015lWDfche9vymD4cUt', $tax->cart->getToken());
         static::assertNull($tax->cart->getAffiliateCode());
@@ -401,6 +419,7 @@ class ContextResolverTest extends TestCase
             'source' => [
                 'url' => 'https://example.com',
                 'appVersion' => 'foo',
+                'inAppPurchases' => ['foo', 'bar'],
             ],
             'order' => [
                 'id' => 'foo',
@@ -426,6 +445,10 @@ class ContextResolverTest extends TestCase
         static::assertInstanceOf(PaymentPayAction::class, $paymentPayResponse);
         static::assertSame('https://example.com', $paymentPayResponse->source->url);
         static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame(['foo', 'bar'], $paymentPayResponse->source->inAppPurchases);
+        static::assertTrue($paymentPayResponse->source->hasInAppPurchase('foo'));
+        static::assertTrue($paymentPayResponse->source->hasInAppPurchase('bar'));
+        static::assertFalse($paymentPayResponse->source->hasInAppPurchase('baz'));
         static::assertSame('foo', $paymentPayResponse->order->getId());
         static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
         static::assertSame('https://example.com/return', $paymentPayResponse->returnUrl);
@@ -443,6 +466,7 @@ class ContextResolverTest extends TestCase
             'source' => [
                 'url' => 'https://example.com',
                 'appVersion' => 'foo',
+                'inAppPurchases' => ['foo', 'bar'],
             ],
             'order' => [
                 'id' => 'foo',
@@ -464,6 +488,10 @@ class ContextResolverTest extends TestCase
         static::assertInstanceOf(PaymentPayAction::class, $paymentPayResponse);
         static::assertSame('https://example.com', $paymentPayResponse->source->url);
         static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame(['foo', 'bar'], $paymentPayResponse->source->inAppPurchases);
+        static::assertTrue($paymentPayResponse->source->hasInAppPurchase('foo'));
+        static::assertTrue($paymentPayResponse->source->hasInAppPurchase('bar'));
+        static::assertFalse($paymentPayResponse->source->hasInAppPurchase('baz'));
         static::assertSame('foo', $paymentPayResponse->order->getId());
         static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
         static::assertSame('https://example.com/return', $paymentPayResponse->returnUrl);
@@ -479,6 +507,7 @@ class ContextResolverTest extends TestCase
             'source' => [
                 'url' => 'https://example.com',
                 'appVersion' => 'foo',
+                'inAppPurchases' => ['foo', 'bar'],
             ],
             'order' => [
                 'id' => 'foo',
@@ -500,6 +529,10 @@ class ContextResolverTest extends TestCase
         static::assertInstanceOf(PaymentRecurringAction::class, $paymentPayResponse);
         static::assertSame('https://example.com', $paymentPayResponse->source->url);
         static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame(['foo', 'bar'], $paymentPayResponse->source->inAppPurchases);
+        static::assertTrue($paymentPayResponse->source->hasInAppPurchase('foo'));
+        static::assertTrue($paymentPayResponse->source->hasInAppPurchase('bar'));
+        static::assertFalse($paymentPayResponse->source->hasInAppPurchase('baz'));
         static::assertSame('foo', $paymentPayResponse->order->getId());
         static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
     }
@@ -512,6 +545,7 @@ class ContextResolverTest extends TestCase
             'source' => [
                 'url' => 'https://example.com',
                 'appVersion' => 'foo',
+                'inAppPurchases' => ['foo', 'bar'],
             ],
             'orderTransaction' => [
                 'id' => 'bar',
@@ -533,6 +567,10 @@ class ContextResolverTest extends TestCase
         static::assertInstanceOf(PaymentFinalizeAction::class, $paymentPayResponse);
         static::assertSame('https://example.com', $paymentPayResponse->source->url);
         static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame(['foo', 'bar'], $paymentPayResponse->source->inAppPurchases);
+        static::assertTrue($paymentPayResponse->source->hasInAppPurchase('foo'));
+        static::assertTrue($paymentPayResponse->source->hasInAppPurchase('bar'));
+        static::assertFalse($paymentPayResponse->source->hasInAppPurchase('baz'));
         static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
         static::assertSame(['returnId' => '123'], $paymentPayResponse->queryParameters);
         static::assertNotNull($paymentPayResponse->recurring);
@@ -548,6 +586,7 @@ class ContextResolverTest extends TestCase
             'source' => [
                 'url' => 'https://example.com',
                 'appVersion' => 'foo',
+                'inAppPurchases' => ['foo', 'bar'],
             ],
             'order' => [
                 'id' => 'foo',
@@ -572,6 +611,10 @@ class ContextResolverTest extends TestCase
         static::assertInstanceOf(PaymentCaptureAction::class, $paymentPayResponse);
         static::assertSame('https://example.com', $paymentPayResponse->source->url);
         static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame(['foo', 'bar'], $paymentPayResponse->source->inAppPurchases);
+        static::assertTrue($paymentPayResponse->source->hasInAppPurchase('foo'));
+        static::assertTrue($paymentPayResponse->source->hasInAppPurchase('bar'));
+        static::assertFalse($paymentPayResponse->source->hasInAppPurchase('baz'));
         static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
         static::assertSame(['returnId' => '123'], $paymentPayResponse->requestData);
         static::assertNotNull($paymentPayResponse->recurring);
@@ -598,6 +641,13 @@ class ContextResolverTest extends TestCase
             new Request('POST', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/payment.json')),
             $this->getShop()
         );
+
+        static::assertSame('1.0.0', $action->source->appVersion);
+        static::assertSame('http://localhost:8000', $action->source->url);
+        static::assertSame(['foo', 'bar'], $action->source->inAppPurchases);
+        static::assertTrue($action->source->hasInAppPurchase('foo'));
+        static::assertTrue($action->source->hasInAppPurchase('bar'));
+        static::assertFalse($action->source->hasInAppPurchase('baz'));
 
         static::assertSame([], $action->requestData);
 
@@ -676,6 +726,12 @@ class ContextResolverTest extends TestCase
             $this->getShop()
         );
 
+        static::assertSame('1.0.0', $action->source->appVersion);
+        static::assertSame('http://localhost:8000', $action->source->url);
+        static::assertSame(['foo', 'bar'], $action->source->inAppPurchases);
+        static::assertTrue($action->source->hasInAppPurchase('foo'));
+        static::assertTrue($action->source->hasInAppPurchase('bar'));
+        static::assertFalse($action->source->hasInAppPurchase('baz'));
         static::assertSame(395.01, $action->orderTransaction->getAmount()->getTotalPrice());
     }
 
@@ -699,6 +755,12 @@ class ContextResolverTest extends TestCase
             $this->getShop()
         );
 
+        static::assertSame('1.0.0', $action->source->appVersion);
+        static::assertSame('http://localhost:8000', $action->source->url);
+        static::assertSame(['foo', 'bar'], $action->source->inAppPurchases);
+        static::assertTrue($action->source->hasInAppPurchase('foo'));
+        static::assertTrue($action->source->hasInAppPurchase('bar'));
+        static::assertFalse($action->source->hasInAppPurchase('baz'));
         static::assertSame(395.01, $action->orderTransaction->getAmount()->getTotalPrice());
     }
 
@@ -733,6 +795,13 @@ class ContextResolverTest extends TestCase
             $this->getShop()
         );
 
+        static::assertSame('1.0.0', $action->source->appVersion);
+        static::assertSame('http://localhost:8000', $action->source->url);
+        static::assertSame(['foo', 'bar'], $action->source->inAppPurchases);
+        static::assertTrue($action->source->hasInAppPurchase('foo'));
+        static::assertTrue($action->source->hasInAppPurchase('bar'));
+        static::assertFalse($action->source->hasInAppPurchase('baz'));
+
         static::assertSame(['tos' => 'on'], $action->requestData);
     }
 
@@ -755,6 +824,13 @@ class ContextResolverTest extends TestCase
             new Request('POST', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/refund.json')),
             $this->getShop()
         );
+
+        static::assertSame('1.0.0', $action->source->appVersion);
+        static::assertSame('http://localhost:8000', $action->source->url);
+        static::assertSame(['foo', 'bar'], $action->source->inAppPurchases);
+        static::assertTrue($action->source->hasInAppPurchase('foo'));
+        static::assertTrue($action->source->hasInAppPurchase('bar'));
+        static::assertFalse($action->source->hasInAppPurchase('baz'));
 
         static::assertSame('70d9f8c7b9074445b9dd84b7b179374b', $action->refund->getId());
         static::assertSame([], $action->refund->getCustomFields());
@@ -785,12 +861,17 @@ class ContextResolverTest extends TestCase
         $contextResolver = new ContextResolver();
 
         $request = new Request('POST', '/', [], '{}');
-        $request = $request->withHeader('shopware-app-token', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJGcWFIV1VzQ1JOc3JaOWtRIiwiaWF0IjoxNjg5ODM3MDkyLjI3ODMyOSwibmJmIjoxNjg5ODM3MDkyLjI3ODMyOSwiZXhwIjoxNjg5ODQwNjkyLjI3ODI0Mywic2FsZXNDaGFubmVsSWQiOiIwMTg5NjQwNTU0YjU3MDBjODBjMmM0YTIwMmUyNDAxZCJ9.g8Da0bN3bkkmEdzMeXmI8wlDQEZMCDiKJvqS288B4JI');
+        $request = $request->withHeader('shopware-app-token', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJGcWFIV1VzQ1JOc3JaOWtRIiwiaWF0IjoxNjg5ODM3MDkyLjI3ODMyOSwibmJmIjoxNjg5ODM3MDkyLjI3ODMyOSwiZXhwIjoxNjg5ODQwNjkyLjI3ODI0MywiaW5BcHBQdXJjaGFzZXMiOlsiZm9vIiwiYmFyIl0sInNhbGVzQ2hhbm5lbElkIjoiMDE4OTY0MDU1NGI1NzAwYzgwYzJjNGEyMDJlMjQwMWQifQ.DgWj0Shiiy33hstb2U4vwgqJeW4m4ODEVuzwDpOH2Os');
 
         $action = $contextResolver->assembleStorefrontRequest(
             $request,
             $this->getShop()
         );
+
+        static::assertSame(['foo', 'bar'], $action->claims->getInAppPurchases());
+        static::assertTrue($action->claims->hasInAppPurchase('foo'));
+        static::assertTrue($action->claims->hasInAppPurchase('bar'));
+        static::assertFalse($action->claims->hasInAppPurchase('baz'));
 
         static::assertSame('0189640554b5700c80c2c4a202e2401d', $action->claims->getSalesChannelId());
     }
@@ -818,6 +899,7 @@ class ContextResolverTest extends TestCase
             'source' => [
                 'url' => 'https://example.com',
                 'appVersion' => 'foo',
+                'inAppPurchases' => ['foo', 'bar'],
             ],
             'cart' => [
                 'token' => 'cart-token',
@@ -844,6 +926,11 @@ class ContextResolverTest extends TestCase
 
         static::assertSame('https://example.com', $action->source->url);
         static::assertSame('foo', $action->source->appVersion);
+        static::assertSame(['foo', 'bar'], $action->source->inAppPurchases);
+        static::assertTrue($action->source->hasInAppPurchase('foo'));
+        static::assertTrue($action->source->hasInAppPurchase('bar'));
+        static::assertFalse($action->source->hasInAppPurchase('baz'));
+
         static::assertSame('cart-token', $action->cart->getToken());
         static::assertSame('sales-channel-id', $action->context->getSalesChannel()->getId());
 
@@ -887,6 +974,15 @@ class ContextResolverTest extends TestCase
     public function testParseSourceInvalid(string $source): void
     {
         $request = new Request('POST', '/', [], $source);
+
+        $contextResolver = new ContextResolver();
+        static::expectException(MalformedWebhookBodyException::class);
+        $contextResolver->assembleWebhook($request, $this->getShop());
+    }
+
+    public function testParseInAppPurchasesInvalid(): void
+    {
+        $request = new Request('POST', '/', [], '{"source":{"url":"https://example.com","appVersion":"foo","inAppPurchases":1}}');
 
         $contextResolver = new ContextResolver();
         static::expectException(MalformedWebhookBodyException::class);

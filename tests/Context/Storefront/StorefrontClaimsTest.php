@@ -20,6 +20,7 @@ class StorefrontClaimsTest extends TestCase
             'languageId' => 'languageId',
             'paymentMethodId' => 'paymentMethodId',
             'shippingMethodId' => 'shippingMethodId',
+            'inAppPurchases' => ['foo', 'bar'],
         ]);
 
         static::assertSame('salesChannelId', $claims->getSalesChannelId());
@@ -28,6 +29,21 @@ class StorefrontClaimsTest extends TestCase
         static::assertSame('languageId', $claims->getLanguageId());
         static::assertSame('paymentMethodId', $claims->getPaymentMethodId());
         static::assertSame('shippingMethodId', $claims->getShippingMethodId());
+
+        static::assertSame(['foo','bar'], $claims->getInAppPurchases());
+        static::assertTrue($claims->hasInAppPurchase('foo'));
+        static::assertTrue($claims->hasInAppPurchase('bar'));
+        static::assertFalse($claims->hasInAppPurchase('baz'));
+    }
+
+    public function testWithNonInAppPurchaseArray(): void
+    {
+        $claims = new StorefrontClaims([
+            'inAppPurchases' => 'this-is-wrong',
+        ]);
+
+        $this->expectExceptionMessage('Missing claim "inAppPurchases", did you forgot to add permissions in your app to this?');
+        $claims->getInAppPurchases();
     }
 
     public function testMissingSalesChannelId(): void
@@ -76,5 +92,12 @@ class StorefrontClaimsTest extends TestCase
 
         $this->expectExceptionMessage('Missing claim "shippingMethodId"');
         $claims->getShippingMethodId();
+    }
+
+    public function testMissingInAppPurchases(): void
+    {
+        $claims = new StorefrontClaims([]);
+
+        static::assertSame([], $claims->getInAppPurchases());
     }
 }
