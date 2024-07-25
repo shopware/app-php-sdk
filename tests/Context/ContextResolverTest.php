@@ -16,6 +16,7 @@ use Shopware\App\SDK\Context\Payment\PaymentFinalizeAction;
 use Shopware\App\SDK\Context\Payment\PaymentPayAction;
 use Shopware\App\SDK\Context\Payment\PaymentRecurringAction;
 use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
+use Shopware\App\SDK\Framework\Collection;
 use Shopware\App\SDK\Shop\ShopInterface;
 use Shopware\App\SDK\Test\MockShop;
 
@@ -856,6 +857,41 @@ class ContextResolverTest extends TestCase
         static::assertCount(2, $shippingMethods);
         static::assertSame('id1', $shippingMethods->get('technicalName1'));
         static::assertSame('id2', $shippingMethods->get('technicalName2'));
+    }
+
+    public function testAssembleInAppPurchasesFilterRequest(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+            ],
+            'purchases' => [
+                'identifier-1',
+                'identifier-2',
+                'identifier-3',
+            ]
+        ];
+
+        $expectedPurchases = new Collection([
+            'identifier-1',
+            'identifier-2',
+            'identifier-3',
+        ]);
+
+        $request = new Request('POST', '/', [], \json_encode($body, \JSON_THROW_ON_ERROR));
+
+        $action = $contextResolver->assembleInAppPurchasesFilterRequest($request, $this->getShop());
+
+        static::assertSame('https://example.com', $action->source->url);
+        static::assertSame('foo', $action->source->appVersion);
+
+        $purchases = $action->purchases;
+        static::assertCount(3, $purchases);
+        static::assertInstanceOf(Collection::class, $purchases);
+        static::assertEquals($expectedPurchases, $purchases);
     }
 
     /**

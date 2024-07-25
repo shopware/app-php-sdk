@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Context;
 
 use DateTimeImmutable;
-use JsonException;
 use Psr\Http\Message\RequestInterface;
 use Shopware\App\SDK\Context\ActionButton\ActionButtonAction;
 use Shopware\App\SDK\Context\Cart\Cart;
@@ -34,11 +33,16 @@ use Shopware\App\SDK\Shop\ShopInterface;
 class ContextResolver
 {
     /**
-     * @throws JsonException
+     * @throws \JsonException
      */
     public function assembleWebhook(RequestInterface $request, ShopInterface $shop): WebhookAction
     {
-        $body = $this->getRequestBody($request);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
 
         return new WebhookAction(
             $shop,
@@ -50,11 +54,16 @@ class ContextResolver
     }
 
     /**
-     * @throws JsonException
+     * @throws \JsonException
      */
     public function assembleActionButton(RequestInterface $request, ShopInterface $shop): ActionButtonAction
     {
-        $body = $this->getRequestBody($request);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
 
         return new ActionButtonAction(
             $shop,
@@ -82,11 +91,16 @@ class ContextResolver
     }
 
     /**
-     * @throws JsonException
+     * @throws \JsonException
      */
     public function assembleTaxProvider(RequestInterface $request, ShopInterface $shop): TaxProviderAction
     {
-        $body = $this->getRequestBody($request);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
 
         return new TaxProviderAction(
             $shop,
@@ -97,11 +111,16 @@ class ContextResolver
     }
 
     /**
-     * @throws JsonException
+     * @throws \JsonException
      */
     public function assemblePaymentPay(RequestInterface $request, ShopInterface $shop): PaymentPayAction
     {
-        $body = $this->getRequestBody($request);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
 
         return new PaymentPayAction(
             $shop,
@@ -115,11 +134,16 @@ class ContextResolver
     }
 
     /**
-     * @throws JsonException
+     * @throws \JsonException
      */
     public function assemblePaymentFinalize(RequestInterface $request, ShopInterface $shop): PaymentFinalizeAction
     {
-        $body = $this->getRequestBody($request);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
 
         return new PaymentFinalizeAction(
             $shop,
@@ -131,11 +155,16 @@ class ContextResolver
     }
 
     /**
-     * @throws JsonException
+     * @throws \JsonException
      */
     public function assemblePaymentCapture(RequestInterface $request, ShopInterface $shop): PaymentCaptureAction
     {
-        $body = $this->getRequestBody($request);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
 
         return new PaymentCaptureAction(
             $shop,
@@ -148,11 +177,16 @@ class ContextResolver
     }
 
     /**
-     * @throws JsonException
+     * @throws \JsonException
      */
     public function assemblePaymentRecurringCapture(RequestInterface $request, ShopInterface $shop): PaymentRecurringAction
     {
-        $body = $this->getRequestBody($request);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
 
         return new PaymentRecurringAction(
             $shop,
@@ -163,11 +197,16 @@ class ContextResolver
     }
 
     /**
-     * @throws JsonException
+     * @throws \JsonException
      */
     public function assemblePaymentValidate(RequestInterface $request, ShopInterface $shop): PaymentValidateAction
     {
-        $body = $this->getRequestBody($request);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
 
         return new PaymentValidateAction(
             $shop,
@@ -179,11 +218,16 @@ class ContextResolver
     }
 
     /**
-     * @throws JsonException
+     * @throws \JsonException
      */
     public function assemblePaymentRefund(RequestInterface $request, ShopInterface $shop): RefundAction
     {
-        $body = $this->getRequestBody($request);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
 
         return new RefundAction(
             $shop,
@@ -194,7 +238,7 @@ class ContextResolver
     }
 
     /**
-     * @throws MalformedWebhookBodyException|JsonException
+     * @throws MalformedWebhookBodyException|\JsonException
      */
     public function assembleStorefrontRequest(RequestInterface $request, ShopInterface $shop): StorefrontAction
     {
@@ -221,11 +265,16 @@ class ContextResolver
     }
 
     /**
-     * @throws JsonException
+     * @throws \JsonException
      */
     public function assembleCheckoutGatewayRequest(RequestInterface $request, ShopInterface $shop): CheckoutGatewayAction
     {
-        $body = $this->getRequestBody($request);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
 
         return new CheckoutGatewayAction(
             $shop,
@@ -238,15 +287,21 @@ class ContextResolver
     }
 
     /**
-     * @throws JsonException
+     * @throws \JsonException
      */
-    public function assembleInAppFeatureFilterRequest(RequestInterface $request, ShopInterface $shop): FilterAction
+    public function assembleInAppPurchasesFilterRequest(RequestInterface $request, ShopInterface $shop): FilterAction
     {
-        $body = $this->getRequestBody($request);
+        $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
 
         return new FilterAction(
             $shop,
-            $body['data']['features'],
+            $this->parseSource($body['source']),
+            new Collection($body['purchases']),
         );
     }
 
@@ -263,20 +318,5 @@ class ContextResolver
             $source['url'],
             $source['appVersion']
         );
-    }
-
-    /**
-     * @return array
-     * @throws JsonException
-     */
-    private function getRequestBody(RequestInterface $request): array
-    {
-        $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
-        $request->getBody()->rewind();
-
-        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
-            throw new MalformedWebhookBodyException();
-        }
-        return $body;
     }
 }
