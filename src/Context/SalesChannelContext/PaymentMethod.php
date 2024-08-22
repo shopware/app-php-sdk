@@ -20,6 +20,15 @@ class PaymentMethod extends ArrayStruct
         return $this->data['name'];
     }
 
+    /**
+     * @since Shopware v6.7.0.0
+     */
+    public function getTechnicalName(): string
+    {
+        \assert(is_string($this->data['technicalName']) || is_null($this->data['technicalName']));
+        return $this->data['technicalName'] ?? '';
+    }
+
     public function getDescription(): string
     {
         \assert(is_string($this->data['description']));
