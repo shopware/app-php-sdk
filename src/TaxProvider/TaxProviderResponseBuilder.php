@@ -11,12 +11,12 @@ use Shopware\App\SDK\Framework\Collection;
 class TaxProviderResponseBuilder
 {
     /**
-     * @var Collection<CalculatedTax>
+     * @var Collection<Collection<CalculatedTax>>
      */
     protected Collection $lineItemTaxes;
 
     /**
-     * @var Collection<CalculatedTax>
+     * @var Collection<Collection<CalculatedTax>>
      */
     protected Collection $deliveryTaxes;
 
@@ -34,19 +34,34 @@ class TaxProviderResponseBuilder
 
     public function addLineItemTax(string $uniqueIdentifier, CalculatedTax $tax): self
     {
-        $this->lineItemTaxes->set($uniqueIdentifier, $tax);
+        if (!$this->lineItemTaxes->has($uniqueIdentifier)) {
+            $this->lineItemTaxes->set($uniqueIdentifier, new Collection());
+        }
+
+        /** @phpstan-ignore-next-line is always set at this point */
+        $this->lineItemTaxes->get($uniqueIdentifier)->set((string) $tax->taxRate, $tax);
         return $this;
     }
 
     public function addDeliveryTax(string $uniqueIdentifier, CalculatedTax $tax): self
     {
-        $this->deliveryTaxes->set($uniqueIdentifier, $tax);
+        if (!$this->deliveryTaxes->has($uniqueIdentifier)) {
+            $this->deliveryTaxes->set($uniqueIdentifier, new Collection());
+        }
+
+        /** @phpstan-ignore-next-line is always set at this point */
+        $this->deliveryTaxes->get($uniqueIdentifier)->set((string) $tax->taxRate, $tax);
         return $this;
     }
 
     public function addCartTax(CalculatedTax $tax): self
     {
-        $this->cartPriceTaxes->add($tax);
+        if ($this->cartPriceTaxes->has((string) $tax->taxRate)) {
+            /** @phpstan-ignore-next-line is always set at this point */
+            $tax = $this->cartPriceTaxes->get((string) $tax->taxRate)->add($tax);
+        }
+
+        $this->cartPriceTaxes->set((string) $tax->taxRate, $tax);
         return $this;
     }
 
