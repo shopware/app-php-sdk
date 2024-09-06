@@ -20,6 +20,18 @@ class CalculatedTaxTest extends TestCase
         static::assertEquals(19.0, $tax->price);
     }
 
+    public function testAdd(): void
+    {
+        $tax1 = new CalculatedTax(19.0, 100.0, 19.0);
+        $tax2 = new CalculatedTax(19.0, 100.0, 19.0);
+
+        $tax = $tax1->add($tax2);
+
+        static::assertEquals(38.0, $tax->tax);
+        static::assertEquals(100.0, $tax->taxRate);
+        static::assertEquals(38.0, $tax->price);
+    }
+
     public function testJsonSerialize(): void
     {
         $tax = new CalculatedTax(19.0, 100.0, 19.0);

@@ -20,4 +20,13 @@ class CalculatedTax implements \JsonSerializable
     {
         return \get_object_vars($this);
     }
+
+    public function add(CalculatedTax $tax): self
+    {
+        return new self(
+            $this->tax + $tax->tax,
+            $this->taxRate,
+            $this->price + $tax->price,
+        );
+    }
 }
