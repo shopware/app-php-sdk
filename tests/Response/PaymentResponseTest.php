@@ -11,6 +11,14 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(PaymentResponse::class)]
 class PaymentResponseTest extends TestCase
 {
+    public function testCreateStatusResponse(): void
+    {
+        $response = PaymentResponse::createStatusResponse('status');
+
+        static::assertSame(200, $response->getStatusCode());
+        static::assertSame('{"status":"status"}', $response->getBody()->getContents());
+    }
+
     public function testPaid(): void
     {
         $response = PaymentResponse::paid();
