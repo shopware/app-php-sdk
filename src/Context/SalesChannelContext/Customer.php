@@ -117,13 +117,21 @@ class Customer extends ArrayStruct
 
     public function getActiveBillingAddress(): Address
     {
-        \assert(is_array($this->data['activeBillingAddress']));
-        return new Address($this->data['activeBillingAddress']);
+        if (\array_key_exists('activeBillingAddress', $this->data)) {
+            \assert(is_array($this->data['activeBillingAddress']));
+            return new Address($this->data['activeBillingAddress']);
+        }
+
+        return $this->getDefaultBillingAddress();
     }
 
     public function getActiveShippingAddress(): Address
     {
-        \assert(is_array($this->data['activeShippingAddress']));
-        return new Address($this->data['activeShippingAddress']);
+        if (\array_key_exists('activeShippingAddress', $this->data)) {
+            \assert(is_array($this->data['activeShippingAddress']));
+            return new Address($this->data['activeShippingAddress']);
+        }
+
+        return $this->getDefaultShippingAddress();
     }
 }

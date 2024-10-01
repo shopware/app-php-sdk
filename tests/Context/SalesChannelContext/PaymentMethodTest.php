@@ -16,6 +16,7 @@ class PaymentMethodTest extends TestCase
         $paymentMethod = new PaymentMethod([
             'id' => 'test',
             'name' => 'foo',
+            'technicalName' => 'payment_foo',
             'description' => 'FOO',
             'active' => true,
             'afterOrderEnabled' => true,
@@ -28,6 +29,7 @@ class PaymentMethodTest extends TestCase
 
         static::assertSame('test', $paymentMethod->getId());
         static::assertSame('foo', $paymentMethod->getName());
+        static::assertSame('payment_foo', $paymentMethod->getTechnicalName());
         static::assertSame('FOO', $paymentMethod->getDescription());
         static::assertTrue($paymentMethod->isActive());
         static::assertSame('rule-id', $paymentMethod->getAvailabilityRuleId());

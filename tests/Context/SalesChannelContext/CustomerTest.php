@@ -54,6 +54,17 @@ class CustomerTest extends TestCase
         static::assertSame('test', $customer->getActiveShippingAddress()->getId());
     }
 
+    public function testActiveAddresses(): void
+    {
+        $customer = new Customer([
+            'defaultBillingAddress' => ['id' => 'test'],
+            'defaultShippingAddress' => ['id' => 'test'],
+        ]);
+
+        static::assertSame('test', $customer->getActiveBillingAddress()->getId());
+        static::assertSame('test', $customer->getActiveShippingAddress()->getId());
+    }
+
     public function testConstructNullables(): void
     {
         $customer = new Customer([

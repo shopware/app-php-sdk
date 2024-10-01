@@ -122,4 +122,12 @@ class PaymentResponseTest extends TestCase
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('{"redirectUrl":"https:\/\/example.com"}', $response->getBody()->getContents());
     }
+
+    public function testCreateStatusResponse(): void
+    {
+        $response = PaymentResponse::createStatusResponse('status');
+
+        static::assertSame(200, $response->getStatusCode());
+        static::assertSame('{"status":"status"}', $response->getBody()->getContents());
+    }
 }

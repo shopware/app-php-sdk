@@ -36,7 +36,12 @@
     "nyholm/psr7-server": "^1.0",
     "php-http/curl-client": "^2.2",
     "phpstan/phpstan": "^1.10.14",
-    "phpunit/phpunit": "^10.1"
+    "phpunit/phpunit": "^10.1",
+    "async-aws/dynamo-db": "~3.2",
+    "symfony/polyfill-uuid": "^1.31"
+  },
+  "suggest": {
+    "async-aws/dynamo-db": "For using the DynamoDBRepository"
   },
   "autoload": {
     "psr-4": {

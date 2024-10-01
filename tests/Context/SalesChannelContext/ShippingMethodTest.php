@@ -16,11 +16,13 @@ class ShippingMethodTest extends TestCase
         $shippingMethod = new ShippingMethod([
             'id' => 'shipping-method-id',
             'name' => 'shipping-method-name',
+            'technicalName' => 'shipping_method_name',
             'taxType' => 'net',
         ]);
 
         static::assertSame('shipping-method-id', $shippingMethod->getId());
         static::assertSame('shipping-method-name', $shippingMethod->getName());
+        static::assertSame('shipping_method_name', $shippingMethod->getTechnicalName());
         static::assertSame('net', $shippingMethod->getTaxType());
     }
 }
