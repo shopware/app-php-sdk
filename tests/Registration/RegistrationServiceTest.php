@@ -352,7 +352,7 @@ class RegistrationServiceTest extends TestCase
 
         $shop = $this->shopRepository->getShopFromId('123');
 
-        $this->assertSame($expectedUrl, $shop->getShopUrl());
+        static::assertSame($expectedUrl, $shop->getShopUrl());
     }
 
     /**
@@ -386,64 +386,47 @@ class RegistrationServiceTest extends TestCase
         yield 'Valid URL without trailing slash' => [
             'shopUrl' => 'https://my-shop.com',
             'expectedUrl' => 'https://my-shop.com',
-            'expectedException' => null,
-            'expectedExceptionMessage' => null,
         ];
 
         yield 'Valid URL with trailing slash' => [
             'shopUrl' => 'https://my-shop.com/',
             'expectedUrl' => 'https://my-shop.com',
-            'expectedException' => null,
-            'expectedExceptionMessage' => null,
+
         ];
 
         yield 'Invalid URL with trailing slash' => [
             'shopUrl' => 'https://my-shop.com/test/',
             'expectedUrl' => 'https://my-shop.com/test',
-            'expectedException' => null,
-            'expectedExceptionMessage' => null,
         ];
 
         yield 'Invalid URL with double slashes' => [
             'shopUrl' => 'https://my-shop.com//test',
             'expectedUrl' => 'https://my-shop.com/test',
-            'expectedException' => null,
-            'expectedExceptionMessage' => null,
         ];
 
         yield 'Invalid URL with 2 slashes and trailing slash' => [
             'shopUrl' => 'https://my-shop.com//test/',
             'expectedUrl' => 'https://my-shop.com/test',
-            'expectedException' => null,
-            'expectedExceptionMessage' => null,
         ];
 
         yield 'Invalid URL with 3 slashes and trailing slash' => [
             'shopUrl' => 'https://my-shop.com///test/',
             'expectedUrl' => 'https://my-shop.com/test',
-            'expectedException' => null,
-            'expectedExceptionMessage' => null,
         ];
 
         yield 'Invalid URL with multiple slashes' => [
             'shopUrl' => 'https://my-shop.com///test/test1//test2',
             'expectedUrl' => 'https://my-shop.com/test/test1/test2',
-            'expectedException' => null,
-            'expectedExceptionMessage' => null,
         ];
 
         yield 'Invalid URL with multiple slashes and trailing slash' => [
             'shopUrl' => 'https://my-shop.com///test/test1//test2/',
             'expectedUrl' => 'https://my-shop.com/test/test1/test2',
-            'expectedException' => null,
-            'expectedExceptionMessage' => null,
         ];
 
         yield 'Invalid URL with multiple slashes and multplie trailing slash' => [
             'shopUrl' => 'https://my-shop.com///test/test1//test2//',
             'expectedUrl' => 'https://my-shop.com/test/test1/test2',
-            'expectedException' => null,
-            'expectedExceptionMessage' => null,
         ];
     }
 }
