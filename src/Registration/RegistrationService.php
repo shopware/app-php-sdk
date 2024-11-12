@@ -135,15 +135,17 @@ class RegistrationService
         $protocol = $parsedUrl['scheme'] ?? '';
         $host = $parsedUrl['host'] ?? '';
         $path = $parsedUrl['path'] ?? '';
+        $port = $parsedUrl['port'] ?? '';
 
         /** @var string $normalizedPath */
         $normalizedPath = preg_replace('#/{2,}#', '/', $path);
         $normalizedPath = rtrim($normalizedPath, '/');
 
         return sprintf(
-            '%s://%s%s',
+            '%s://%s%s%s',
             $protocol,
             $host,
+            $port ? ':' . $port : null,
             $normalizedPath
         );
     }

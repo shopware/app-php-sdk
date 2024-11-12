@@ -383,6 +383,21 @@ class RegistrationServiceTest extends TestCase
      */
     public static function shopUrlsProvider(): iterable
     {
+        yield 'Valid URL with port' => [
+            'shopUrl' => 'https://my-shop.com:80',
+            'expectedUrl' => 'https://my-shop.com:80',
+        ];
+
+        yield 'Valid URL with port and trailing slash' => [
+            'shopUrl' => 'https://my-shop.com:8080/',
+            'expectedUrl' => 'https://my-shop.com:8080',
+        ];
+
+        yield 'Valid URL with port, path and trailing slash' => [
+            'shopUrl' => 'https://my-shop.com:8080//test/',
+            'expectedUrl' => 'https://my-shop.com:8080/test',
+        ];
+
         yield 'Valid URL without trailing slash' => [
             'shopUrl' => 'https://my-shop.com',
             'expectedUrl' => 'https://my-shop.com',
@@ -391,7 +406,6 @@ class RegistrationServiceTest extends TestCase
         yield 'Valid URL with trailing slash' => [
             'shopUrl' => 'https://my-shop.com/',
             'expectedUrl' => 'https://my-shop.com',
-
         ];
 
         yield 'Invalid URL with trailing slash' => [
