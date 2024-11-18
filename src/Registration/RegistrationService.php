@@ -57,7 +57,7 @@ class RegistrationService
         if ($shop === null) {
             $shop = $this->shopRepository->createShopStruct(
                 $queries['shop-id'],
-                $queries['shop-url'],
+                $this->sanitizeShopUrl($queries['shop-url']),
                 $this->shopSecretGeneratorInterface->generate()
             );
 
@@ -126,5 +126,27 @@ class RegistrationService
         $this->eventDispatcher?->dispatch(new RegistrationCompletedEvent($request, $shop));
 
         return (new Psr17Factory())->createResponse(204);
+    }
+
+    private function sanitizeShopUrl(string $shopUrl): string
+    {
+        $parsedUrl = parse_url($shopUrl);
+
+        $protocol = $parsedUrl['scheme'] ?? '';
+        $host = $parsedUrl['host'] ?? '';
+        $path = $parsedUrl['path'] ?? '';
+        $port = $parsedUrl['port'] ?? '';
+
+        /** @var string $normalizedPath */
+        $normalizedPath = preg_replace('#/{2,}#', '/', $path);
+        $normalizedPath = rtrim($normalizedPath, '/');
+
+        return sprintf(
+            '%s://%s%s%s',
+            $protocol,
+            $host,
+            $port ? ':' . $port : null,
+            $normalizedPath
+        );
     }
 }

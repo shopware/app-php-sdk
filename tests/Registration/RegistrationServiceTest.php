@@ -6,6 +6,7 @@ namespace Shopware\App\SDK\Tests\Registration;
 
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
@@ -337,6 +338,23 @@ class RegistrationServiceTest extends TestCase
         $registrationService->registerConfirm($request);
     }
 
+    #[DataProvider('shopUrlsProvider')]
+    public function testRegisterShopUrlIsSanitized(
+        string $shopUrl,
+        string $expectedUrl,
+    ): void {
+        $request = new Request(
+            'GET',
+            sprintf('http://localhost?shop-id=123&shop-url=%s&timestamp=1234567890', $shopUrl)
+        );
+
+        $this->registerService->register($request);
+
+        $shop = $this->shopRepository->getShopFromId('123');
+
+        static::assertSame($expectedUrl, $shop->getShopUrl());
+    }
+
     /**
      * @return iterable<array<array<string, mixed>>>
      */
@@ -358,5 +376,71 @@ class RegistrationServiceTest extends TestCase
         yield [['apiKey' => '123', 'secretKey' => 123]];
         yield [['shop-id' => '123', 'apiKey' => '123']];
         yield [['shop-id' => '123', 'apiKey' => '123', 'secretKey' => 123]];
+    }
+
+    /**
+     * @return iterable<array<string, string|null>>
+     */
+    public static function shopUrlsProvider(): iterable
+    {
+        yield 'Valid URL with port' => [
+            'shopUrl' => 'https://my-shop.com:80',
+            'expectedUrl' => 'https://my-shop.com:80',
+        ];
+
+        yield 'Valid URL with port and trailing slash' => [
+            'shopUrl' => 'https://my-shop.com:8080/',
+            'expectedUrl' => 'https://my-shop.com:8080',
+        ];
+
+        yield 'Valid URL with port, path and trailing slash' => [
+            'shopUrl' => 'https://my-shop.com:8080//test/',
+            'expectedUrl' => 'https://my-shop.com:8080/test',
+        ];
+
+        yield 'Valid URL without trailing slash' => [
+            'shopUrl' => 'https://my-shop.com',
+            'expectedUrl' => 'https://my-shop.com',
+        ];
+
+        yield 'Valid URL with trailing slash' => [
+            'shopUrl' => 'https://my-shop.com/',
+            'expectedUrl' => 'https://my-shop.com',
+        ];
+
+        yield 'Invalid URL with trailing slash' => [
+            'shopUrl' => 'https://my-shop.com/test/',
+            'expectedUrl' => 'https://my-shop.com/test',
+        ];
+
+        yield 'Invalid URL with double slashes' => [
+            'shopUrl' => 'https://my-shop.com//test',
+            'expectedUrl' => 'https://my-shop.com/test',
+        ];
+
+        yield 'Invalid URL with 2 slashes and trailing slash' => [
+            'shopUrl' => 'https://my-shop.com//test/',
+            'expectedUrl' => 'https://my-shop.com/test',
+        ];
+
+        yield 'Invalid URL with 3 slashes and trailing slash' => [
+            'shopUrl' => 'https://my-shop.com///test/',
+            'expectedUrl' => 'https://my-shop.com/test',
+        ];
+
+        yield 'Invalid URL with multiple slashes' => [
+            'shopUrl' => 'https://my-shop.com///test/test1//test2',
+            'expectedUrl' => 'https://my-shop.com/test/test1/test2',
+        ];
+
+        yield 'Invalid URL with multiple slashes and trailing slash' => [
+            'shopUrl' => 'https://my-shop.com///test/test1//test2/',
+            'expectedUrl' => 'https://my-shop.com/test/test1/test2',
+        ];
+
+        yield 'Invalid URL with multiple slashes and multplie trailing slash' => [
+            'shopUrl' => 'https://my-shop.com///test/test1//test2//',
+            'expectedUrl' => 'https://my-shop.com/test/test1/test2',
+        ];
     }
 }
