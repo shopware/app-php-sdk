@@ -14,6 +14,7 @@ use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Authentication\RequestVerifier;
 use Shopware\App\SDK\Authentication\ResponseSigner;
 use Shopware\App\SDK\Event\BeforeRegistrationCompletedEvent;
+use Shopware\App\SDK\Event\BeforeRegistrationStartsEvent;
 use Shopware\App\SDK\Event\RegistrationCompletedEvent;
 use Shopware\App\SDK\Exception\MissingShopParameterException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
@@ -61,9 +62,15 @@ class RegistrationService
                 $this->shopSecretGeneratorInterface->generate()
             );
 
+            $this->eventDispatcher?->dispatch(new BeforeRegistrationStartsEvent($request, $shop));
+
             $this->shopRepository->createShop($shop);
         } else {
-            $this->shopRepository->updateShop($shop->setShopUrl($queries['shop-url']));
+            $shop->setShopUrl($queries['shop-url']);
+
+            $this->eventDispatcher?->dispatch(new BeforeRegistrationStartsEvent($request, $shop));
+
+            $this->shopRepository->updateShop($shop);
         }
 
         $this->logger->info('Shop registration request received', [

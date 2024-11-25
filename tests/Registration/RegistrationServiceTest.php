@@ -15,12 +15,14 @@ use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Authentication\RequestVerifier;
 use Shopware\App\SDK\Authentication\ResponseSigner;
 use Shopware\App\SDK\Event\BeforeRegistrationCompletedEvent;
+use Shopware\App\SDK\Event\BeforeRegistrationStartsEvent;
 use Shopware\App\SDK\Event\RegistrationCompletedEvent;
 use Shopware\App\SDK\Exception\MissingShopParameterException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
 use Shopware\App\SDK\Registration\RandomStringShopSecretGenerator;
 use Shopware\App\SDK\Registration\RegistrationService;
 use PHPUnit\Framework\TestCase;
+use Shopware\App\SDK\Shop\ShopRepositoryInterface;
 use Shopware\App\SDK\Test\MockShop;
 use Shopware\App\SDK\Test\MockShopRepository;
 
@@ -55,19 +57,53 @@ class RegistrationServiceTest extends TestCase
 
     public function testRegisterCreate(): void
     {
-        $request = new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890');
+        $events = [];
 
-        $response = $this->registerService->register($request);
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher
+            ->expects(static::once())
+            ->method('dispatch')
+            ->willReturnCallback(function ($event) use (&$events) {
+                $events[] = $event;
+            });
 
-        $shop = $this->shopRepository->getShopFromId('123');
-        static::assertNotNull($shop);
+        $shopRepository = $this->createMock(ShopRepositoryInterface::class);
 
-        static::assertEquals('123', $shop->getShopId());
-        static::assertEquals('https://my-shop.com', $shop->getShopUrl());
-        static::assertNotNull($shop->getShopSecret());
+        $registrationService = new RegistrationService(
+            $this->appConfiguration,
+            $shopRepository,
+            $this->createMock(RequestVerifier::class),
+            new ResponseSigner(),
+            new RandomStringShopSecretGenerator(),
+            new NullLogger(),
+            $eventDispatcher
+        );
+
+        $shopRepository
+            ->expects(static::once())
+            ->method('getShopFromId')
+            ->willReturn(null);
+
+        $shop = new MockShop('123', 'https://my-shop.com', '1234567890');
+
+        $shopRepository
+            ->expects(static::once())
+            ->method('createShopStruct')
+            ->willReturn($shop);
+
+        $eventDispatcher
+            ->expects(static::once())
+            ->method('dispatch');
+
+        $response = $registrationService->register(
+            new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890')
+        );
 
         static::assertSame(200, $response->getStatusCode());
         $json = json_decode((string) $response->getBody()->getContents(), true);
+
+        static::assertCount(1, $events);
+        static::assertInstanceOf(BeforeRegistrationStartsEvent::class, $events[0]);
 
         static::assertIsArray($json);
         static::assertArrayHasKey('proof', $json);
@@ -77,14 +113,37 @@ class RegistrationServiceTest extends TestCase
 
     public function testRegisterUpdate(): void
     {
+        $events = [];
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher
+            ->expects(static::once())
+            ->method('dispatch')
+            ->willReturnCallback(function ($event) use (&$events) {
+                $events[] = $event;
+            });
+
+        $registrationService = new RegistrationService(
+            $this->appConfiguration,
+            $this->shopRepository,
+            $this->createMock(RequestVerifier::class),
+            new ResponseSigner(),
+            new RandomStringShopSecretGenerator(),
+            new NullLogger(),
+            $eventDispatcher
+        );
+
         $request = new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890');
 
         $this->shopRepository->createShop(new MockShop('123', 'https://foo.com', '1234567890'));
 
-        $this->registerService->register($request);
+        $registrationService->register($request);
 
         $shop = $this->shopRepository->getShopFromId('123');
         static::assertNotNull($shop);
+
+        static::assertCount(1, $events);
+        static::assertInstanceOf(BeforeRegistrationStartsEvent::class, $events[0]);
 
         static::assertEquals('123', $shop->getShopId());
         static::assertEquals('https://my-shop.com', $shop->getShopUrl());
