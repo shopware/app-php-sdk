@@ -172,13 +172,14 @@ class RegistrationServiceTest extends TestCase
             $eventDispatcher
         );
 
-        $request = new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890');
-
-        $this->shopRepository->createShop(new MockShop('123', 'https://foo.com', '1234567890'));
-
-        $registrationService->register($request);
+        $registrationService->register(
+            new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890')
+        );
 
         $shop = $this->shopRepository->getShopFromId('123');
+
+        $this->shopRepository->updateShop($shop);
+
         static::assertNotNull($shop);
 
         static::assertCount(1, $events);
@@ -203,11 +204,12 @@ class RegistrationServiceTest extends TestCase
 
         $request = new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890');
 
-        $this->shopRepository->createShop(new MockShop('123', 'https://foo.com', '1234567890'));
-
         $registrationService->register($request);
 
         $shop = $this->shopRepository->getShopFromId('123');
+
+        $this->shopRepository->updateShop($shop);
+
         static::assertNotNull($shop);
 
         static::assertEquals('123', $shop->getShopId());
