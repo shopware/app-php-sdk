@@ -111,6 +111,45 @@ class RegistrationServiceTest extends TestCase
         static::assertArrayHasKey('secret', $json);
     }
 
+    public function testRegisterCreateMustNotDispatchBeforeRegistrationStartsEvent(): void
+    {
+        $shopRepository = $this->createMock(ShopRepositoryInterface::class);
+
+        $registrationService = new RegistrationService(
+            $this->appConfiguration,
+            $shopRepository,
+            $this->createMock(RequestVerifier::class),
+            new ResponseSigner(),
+            new RandomStringShopSecretGenerator(),
+            new NullLogger(),
+            null
+        );
+
+        $shopRepository
+            ->expects(static::once())
+            ->method('getShopFromId')
+            ->willReturn(null);
+
+        $shop = new MockShop('123', 'https://my-shop.com', '1234567890');
+
+        $shopRepository
+            ->expects(static::once())
+            ->method('createShopStruct')
+            ->willReturn($shop);
+
+        $response = $registrationService->register(
+            new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890')
+        );
+
+        static::assertSame(200, $response->getStatusCode());
+        $json = json_decode((string) $response->getBody()->getContents(), true);
+
+        static::assertIsArray($json);
+        static::assertArrayHasKey('proof', $json);
+        static::assertArrayHasKey('confirmation_url', $json);
+        static::assertArrayHasKey('secret', $json);
+    }
+
     public function testRegisterUpdate(): void
     {
         $events = [];
@@ -144,6 +183,32 @@ class RegistrationServiceTest extends TestCase
 
         static::assertCount(1, $events);
         static::assertInstanceOf(BeforeRegistrationStartsEvent::class, $events[0]);
+
+        static::assertEquals('123', $shop->getShopId());
+        static::assertEquals('https://my-shop.com', $shop->getShopUrl());
+        static::assertNotNull($shop->getShopSecret());
+    }
+
+    public function testRegisterUpdateMustNotDispatchBeforeRegistrationStartsEvent(): void
+    {
+        $registrationService = new RegistrationService(
+            $this->appConfiguration,
+            $this->shopRepository,
+            $this->createMock(RequestVerifier::class),
+            new ResponseSigner(),
+            new RandomStringShopSecretGenerator(),
+            new NullLogger(),
+            null
+        );
+
+        $request = new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890');
+
+        $this->shopRepository->createShop(new MockShop('123', 'https://foo.com', '1234567890'));
+
+        $registrationService->register($request);
+
+        $shop = $this->shopRepository->getShopFromId('123');
+        static::assertNotNull($shop);
 
         static::assertEquals('123', $shop->getShopId());
         static::assertEquals('https://my-shop.com', $shop->getShopUrl());
