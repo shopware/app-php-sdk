@@ -38,7 +38,8 @@
     "phpstan/phpstan": "^1.10.14",
     "phpunit/phpunit": "^10.5",
     "async-aws/dynamo-db": "~3.2",
-    "symfony/polyfill-uuid": "^1.31"
+    "symfony/polyfill-uuid": "^1.31",
+    "symfony/http-client": ">=6.4.16"
   },
   "suggest": {
     "async-aws/dynamo-db": "For using the DynamoDBRepository"
