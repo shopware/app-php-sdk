@@ -6,10 +6,21 @@ namespace Shopware\App\SDK\Context\Storefront;
 
 use Shopware\App\SDK\Exception\MissingClaimException;
 
+/**
+ * @psalm-type StorefrontClaimsArray = array{
+ *     salesChannelId?: string,
+ *     customerId?: string,
+ *     currencyId?: string,
+ *     languageId?: string,
+ *     paymentMethodId?: string,
+ *     shippingMethodId?: string,
+ *     inAppPurchases?: string,
+ * }
+ */
 class StorefrontClaims
 {
     /**
-     * @param array<string, string> $claims
+     * @param StorefrontClaimsArray $claims
      */
     public function __construct(private readonly array $claims)
     {
@@ -70,6 +81,16 @@ class StorefrontClaims
         $value = $this->claims['shippingMethodId'] ?? null;
         if (!is_string($value)) {
             throw new MissingClaimException('shippingMethodId');
+        }
+
+        return $value;
+    }
+
+    public function getInAppPurchases(): string
+    {
+        $value = $this->claims['inAppPurchases'] ?? null;
+        if (!is_string($value)) {
+            throw new MissingClaimException('inAppPurchases');
         }
 
         return $value;

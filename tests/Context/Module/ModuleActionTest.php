@@ -7,6 +7,7 @@ namespace Shopware\App\SDK\Tests\Context\Module;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Context\Module\ModuleAction;
+use Shopware\App\SDK\Framework\Collection;
 use Shopware\App\SDK\Test\MockShop;
 
 #[CoversClass(ModuleAction::class)]
@@ -18,7 +19,8 @@ class ModuleActionTest extends TestCase
             new MockShop('shop-id', 'https://example.com', 'secret'),
             '1.0.0',
             'de-DE',
-            'en-GB'
+            'en-GB',
+            new Collection()
         );
 
         static::assertSame('shop-id', $action->shop->getShopId());

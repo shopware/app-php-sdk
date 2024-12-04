@@ -14,7 +14,7 @@ use Traversable;
  *
  * @implements IteratorAggregate<array-key, TElement>
  */
-final class Collection implements Countable, IteratorAggregate, JsonSerializable
+class Collection implements Countable, IteratorAggregate, JsonSerializable
 {
     /**
      * @var array<array-key, TElement>
@@ -132,6 +132,14 @@ final class Collection implements Countable, IteratorAggregate, JsonSerializable
     public function count(): int
     {
         return \count($this->elements);
+    }
+
+    /**
+     * @return array<array-key>
+     */
+    public function keys(): array
+    {
+        return \array_keys($this->elements);
     }
 
     /**

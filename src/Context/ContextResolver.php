@@ -9,6 +9,7 @@ use Psr\Http\Message\RequestInterface;
 use Shopware\App\SDK\Context\ActionButton\ActionButtonAction;
 use Shopware\App\SDK\Context\Cart\Cart;
 use Shopware\App\SDK\Context\Gateway\Checkout\CheckoutGatewayAction;
+use Shopware\App\SDK\Context\InAppPurchase\InAppPurchaseProvider;
 use Shopware\App\SDK\Context\Module\ModuleAction;
 use Shopware\App\SDK\Context\Order\Order;
 use Shopware\App\SDK\Context\Order\OrderTransaction;
@@ -29,8 +30,15 @@ use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
 use Shopware\App\SDK\Framework\Collection;
 use Shopware\App\SDK\Shop\ShopInterface;
 
+/**
+ * @psalm-import-type StorefrontClaimsArray from StorefrontClaims
+ */
 class ContextResolver
 {
+    public function __construct(private readonly InAppPurchaseProvider $inAppPurchaseProvider)
+    {
+    }
+
     public function assembleWebhook(RequestInterface $request, ShopInterface $shop): WebhookAction
     {
         $body = json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
@@ -42,7 +50,7 @@ class ContextResolver
 
         return new WebhookAction(
             $shop,
-            $this->parseSource($body['source']),
+            $this->parseSource($body['source'], $shop),
             $body['data']['event'],
             $body['data']['payload'],
             new DateTimeImmutable('@' . $body['timestamp'])
@@ -60,7 +68,7 @@ class ContextResolver
 
         return new ActionButtonAction(
             $shop,
-            $this->parseSource($body['source']),
+            $this->parseSource($body['source'], $shop),
             $body['data']['ids'],
             $body['data']['entity'],
             $body['data']['action']
@@ -69,17 +77,32 @@ class ContextResolver
 
     public function assembleModule(RequestInterface $request, ShopInterface $shop): ModuleAction
     {
-        parse_str($request->getUri()->getQuery(), $params);
+        \parse_str($request->getUri()->getQuery(), $params);
 
-        if (!isset($params['sw-version'], $params['sw-context-language']) || !is_string($params['sw-version']) || !is_string($params['sw-context-language']) || !isset($params['sw-user-language']) || !is_string($params['sw-user-language'])) {
+        if (!isset($params['sw-version'], $params['sw-context-language'], $params['sw-user-language'])
+            || !is_string($params['sw-version'])
+            || !is_string($params['sw-context-language'])
+            || !is_string($params['sw-user-language'])
+        ) {
             throw new MalformedWebhookBodyException();
+        }
+
+        if (isset($params['in-app-purchases'])) {
+            if (empty($params['in-app-purchases'])) {
+                throw new MalformedWebhookBodyException();
+            }
+
+            /** @var non-empty-string $inAppPurchaseString */
+            $inAppPurchaseString = $params['in-app-purchases'];
+            $inAppPurchases = $this->inAppPurchaseProvider->decodePurchases($inAppPurchaseString, $shop);
         }
 
         return new ModuleAction(
             $shop,
             $params['sw-version'],
             $params['sw-context-language'],
-            $params['sw-user-language']
+            $params['sw-user-language'],
+            $inAppPurchases ?? new Collection(),
         );
     }
 
@@ -94,7 +117,7 @@ class ContextResolver
 
         return new TaxProviderAction(
             $shop,
-            $this->parseSource($body['source']),
+            $this->parseSource($body['source'], $shop),
             new SalesChannelContext($body['context']),
             new Cart($body['cart'])
         );
@@ -111,7 +134,7 @@ class ContextResolver
 
         return new PaymentPayAction(
             $shop,
-            $this->parseSource($body['source']),
+            $this->parseSource($body['source'], $shop),
             new Order($body['order']),
             new OrderTransaction($body['orderTransaction']),
             $body['returnUrl'] ?? null,
@@ -131,7 +154,7 @@ class ContextResolver
 
         return new PaymentFinalizeAction(
             $shop,
-            $this->parseSource($body['source']),
+            $this->parseSource($body['source'], $shop),
             new OrderTransaction($body['orderTransaction']),
             isset($body['recurring']) ? new RecurringData($body['recurring']) : null,
             $body['queryParameters'] ?? []
@@ -149,7 +172,7 @@ class ContextResolver
 
         return new PaymentCaptureAction(
             $shop,
-            $this->parseSource($body['source']),
+            $this->parseSource($body['source'], $shop),
             new Order($body['order']),
             new OrderTransaction($body['orderTransaction']),
             isset($body['recurring']) ? new RecurringData($body['recurring']) : null,
@@ -168,7 +191,7 @@ class ContextResolver
 
         return new PaymentRecurringAction(
             $shop,
-            $this->parseSource($body['source']),
+            $this->parseSource($body['source'], $shop),
             new Order($body['order']),
             new OrderTransaction($body['orderTransaction']),
         );
@@ -185,7 +208,7 @@ class ContextResolver
 
         return new PaymentValidateAction(
             $shop,
-            $this->parseSource($body['source']),
+            $this->parseSource($body['source'], $shop),
             new Cart($body['cart']),
             new SalesChannelContext($body['salesChannelContext']),
             $body['requestData'] ?? []
@@ -203,7 +226,7 @@ class ContextResolver
 
         return new RefundAction(
             $shop,
-            $this->parseSource($body['source']),
+            $this->parseSource($body['source'], $shop),
             new Order($body['order']),
             new Refund($body['refund']),
         );
@@ -227,12 +250,22 @@ class ContextResolver
             throw new MalformedWebhookBodyException();
         }
 
-        /** @var array<string, string> $claims */
-        $claims = json_decode(base64_decode($parts[1]), true, flags: JSON_THROW_ON_ERROR);
+        /** @var StorefrontClaimsArray $claims */
+        $claims = \json_decode(\base64_decode($parts[1]), true, flags: JSON_THROW_ON_ERROR);
+
+        if (isset($claims['inAppPurchases'])) {
+            /** @phpstan-ignore booleanNot.alwaysFalse(phpstan claims, that the InAppPurchases always are strings) */
+            if (!\is_string($claims['inAppPurchases']) || empty($claims['inAppPurchases'])) {
+                throw new MalformedWebhookBodyException();
+            }
+
+            $inAppPurchases = $this->inAppPurchaseProvider->decodePurchases($claims['inAppPurchases'], $shop);
+        }
 
         return new StorefrontAction(
             $shop,
-            new StorefrontClaims($claims)
+            new StorefrontClaims($claims),
+            $inAppPurchases ?? new Collection()
         );
     }
 
@@ -247,7 +280,7 @@ class ContextResolver
 
         return new CheckoutGatewayAction(
             $shop,
-            $this->parseSource($body['source']),
+            $this->parseSource($body['source'], $shop),
             new Cart($body['cart']),
             new SalesChannelContext($body['salesChannelContext']),
             new Collection(\array_flip($body['paymentMethods'])),
@@ -259,15 +292,25 @@ class ContextResolver
      * @param array<string, mixed> $source
      * @return ActionSource
      */
-    private function parseSource(array $source): ActionSource
+    private function parseSource(array $source, ShopInterface $shop): ActionSource
     {
-        if (!isset($source['url'], $source['appVersion']) || !is_string($source['url']) || !is_string($source['appVersion'])) {
+        if (!isset($source['url'], $source['appVersion']) || !\is_string($source['url']) || !\is_string($source['appVersion'])) {
             throw new MalformedWebhookBodyException();
         }
 
+        if (isset($source['inAppPurchases'])) {
+            if (!\is_string($source['inAppPurchases']) || empty($source['inAppPurchases'])) {
+                throw new MalformedWebhookBodyException();
+            }
+
+            $inAppPurchases = $this->inAppPurchaseProvider->decodePurchases($source['inAppPurchases'], $shop);
+        }
+
+
         return new ActionSource(
             $source['url'],
-            $source['appVersion']
+            $source['appVersion'],
+            $inAppPurchases ?? new Collection(),
         );
     }
 }

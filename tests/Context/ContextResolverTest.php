@@ -11,11 +11,14 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Shopware\App\SDK\Context\ContextResolver;
 use PHPUnit\Framework\TestCase;
+use Shopware\App\SDK\Context\InAppPurchase\InAppPurchase;
+use Shopware\App\SDK\Context\InAppPurchase\InAppPurchaseProvider;
 use Shopware\App\SDK\Context\Payment\PaymentCaptureAction;
 use Shopware\App\SDK\Context\Payment\PaymentFinalizeAction;
 use Shopware\App\SDK\Context\Payment\PaymentPayAction;
 use Shopware\App\SDK\Context\Payment\PaymentRecurringAction;
 use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
+use Shopware\App\SDK\Framework\Collection;
 use Shopware\App\SDK\Shop\ShopInterface;
 use Shopware\App\SDK\Test\MockShop;
 
@@ -24,7 +27,7 @@ class ContextResolverTest extends TestCase
 {
     public function testAssembleWebhookMalformed(): void
     {
-        $contextResolver = new ContextResolver();
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
 
         static::expectException(MalformedWebhookBodyException::class);
         $contextResolver->assembleWebhook(
@@ -35,13 +38,24 @@ class ContextResolverTest extends TestCase
 
     public function testAssembleWebhook(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
 
         $webhook = $contextResolver->assembleWebhook(
             $this->createApiRequest([
                 'source' => [
                     'url' => 'https://example.com',
                     'appVersion' => '1.0.0',
+                    'inAppPurchases' => 'ey',
                 ],
                 'data' => [
                     'event' => 'order.placed',
@@ -54,6 +68,11 @@ class ContextResolverTest extends TestCase
             $this->getShop()
         );
 
+        static::assertSame(['foo', 'bar'], $webhook->source->inAppPurchases->keys());
+        static::assertTrue($webhook->source->inAppPurchases->has('foo'));
+        static::assertTrue($webhook->source->inAppPurchases->has('bar'));
+        static::assertFalse($webhook->source->inAppPurchases->has('baz'));
+
         static::assertSame('123', $webhook->payload['orderId']);
         static::assertSame('order.placed', $webhook->eventName);
         static::assertSame('https://example.com', $webhook->source->url);
@@ -62,7 +81,7 @@ class ContextResolverTest extends TestCase
 
     public function testAssembleActionButtonMalformed(): void
     {
-        $contextResolver = new ContextResolver();
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
 
         static::expectException(MalformedWebhookBodyException::class);
         $contextResolver->assembleActionButton(
@@ -73,13 +92,24 @@ class ContextResolverTest extends TestCase
 
     public function testAssembleActionButton(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
 
         $actionButton = $contextResolver->assembleActionButton(
             $this->createApiRequest([
                 'source' => [
                     'url' => 'https://example.com',
                     'appVersion' => '1.0.0',
+                    'inAppPurchases' => 'ey',
                 ],
                 'data' => [
                     'ids' => ['123'],
@@ -96,11 +126,14 @@ class ContextResolverTest extends TestCase
 
         static::assertSame('https://example.com', $actionButton->source->url);
         static::assertSame('1.0.0', $actionButton->source->appVersion);
+        static::assertSame(['foo', 'bar'], $actionButton->source->inAppPurchases->keys());
+        static::assertTrue($actionButton->source->inAppPurchases->has('foo'));
+        static::assertTrue($actionButton->source->inAppPurchases->has('bar'));
     }
 
     public function testMalformedSource(): void
     {
-        $contextResolver = new ContextResolver();
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
 
         static::expectException(MalformedWebhookBodyException::class);
         $contextResolver->assembleActionButton(
@@ -115,24 +148,48 @@ class ContextResolverTest extends TestCase
 
     public function testAssembleModule(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
 
         $module = $contextResolver->assembleModule(
-            new Request('GET', 'http://localhost:6001/module/test?shop-id=vvRy7Nv3Bo8mAVda&shop-url=http://localhost:8000&timestamp=1683015472&sw-version=6.5.9999999.9999999-dev&sw-context-language=2fbb5fe2e29a4d70aa5854ce7ce3e20b&sw-user-language=en-GB&shopware-shop-signature=650455d43eda4eeb4c9a12ee0eb15b46ce88776abaf9beb1ffac31be136e1d9b'),
+            new Request('GET', 'http://localhost:6001/module/test?shop-id=vvRy7Nv3Bo8mAVda&shop-url=http://localhost:8000&timestamp=1683015472&sw-version=6.5.9999999.9999999-dev&sw-context-language=2fbb5fe2e29a4d70aa5854ce7ce3e20b&sw-user-language=en-GB&in-app-purchases=foo,bar&shopware-shop-signature=650455d43eda4eeb4c9a12ee0eb15b46ce88776abaf9beb1ffac31be136e1d9b'),
             $this->getShop()
         );
 
         static::assertSame('6.5.9999999.9999999-dev', $module->shopwareVersion);
         static::assertSame('2fbb5fe2e29a4d70aa5854ce7ce3e20b', $module->contentLanguage);
         static::assertSame('en-GB', $module->userLanguage);
+        static::assertSame(['foo', 'bar'], $module->inAppPurchases->keys());
+        static::assertTrue($module->inAppPurchases->has('foo'));
+        static::assertTrue($module->inAppPurchases->has('bar'));
+        static::assertFalse($module->inAppPurchases->has('baz'));
     }
 
-    /**
-     * @dataProvider assembleModuleInvalidRequestBodyProvider
-     */
+    public function testAssembleModuleWithEmptyInAppPurchasesThrows(): void
+    {
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+
+        static::expectException(MalformedWebhookBodyException::class);
+
+        $contextResolver->assembleModule(
+            new Request('GET', 'http://localhost:6001/module/test?shop-id=vvRy7Nv3Bo8mAVda&shop-url=http://localhost:8000&timestamp=1683015472&sw-version=6.5.9999999.9999999-dev&sw-context-language=2fbb5fe2e29a4d70aa5854ce7ce3e20b&sw-user-language=en-GB&in-app-purchases=&shopware-shop-signature=650455d43eda4eeb4c9a12ee0eb15b46ce88776abaf9beb1ffac31be136e1d9b'),
+            $this->getShop()
+        );
+    }
+
+    #[DataProvider('assembleModuleInvalidRequestBodyProvider')]
     public function testAssembleModuleInvalid(string $uri): void
     {
-        $contextResolver = new ContextResolver();
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
 
         $uri = '/?' . $uri;
 
@@ -142,7 +199,7 @@ class ContextResolverTest extends TestCase
 
     public function testAssembleTaxProviderInvalid(): void
     {
-        $contextResolver = new ContextResolver();
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
 
         static::expectException(MalformedWebhookBodyException::class);
         $contextResolver->assembleTaxProvider(new Request('POST', '/', [], '{}'), $this->getShop());
@@ -150,8 +207,26 @@ class ContextResolverTest extends TestCase
 
     public function testAssembleTaxProvider(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
+
         $tax = $contextResolver->assembleTaxProvider(new Request('GET', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/tax.json')), $this->getShop());
+
+        static::assertSame('http://localhost:8000', $tax->source->url);
+        static::assertSame('1.0.0', $tax->source->appVersion);
+        static::assertSame(['foo', 'bar'], $tax->source->inAppPurchases->keys());
+        static::assertTrue($tax->source->inAppPurchases->has('foo'));
+        static::assertTrue($tax->source->inAppPurchases->has('bar'));
+        static::assertFalse($tax->source->inAppPurchases->has('baz'));
 
         static::assertSame('W4K2OUeCshirU015lWDfche9vymD4cUt', $tax->cart->getToken());
         static::assertNull($tax->cart->getAffiliateCode());
@@ -161,18 +236,18 @@ class ContextResolverTest extends TestCase
         $lineItems = $tax->cart->getLineItems();
         static::assertCount(1, $lineItems);
         static::assertSame('91298e263c5b4bb88c3f51c873d7e76e', $lineItems->first()?->getId());
-        static::assertSame('a5209fb05f4f473f9702c3868ea2deac', $lineItems->first()?->getUniqueIdentifier());
-        static::assertSame('product', $lineItems->first()?->getType());
-        static::assertIsArray($lineItems->first()?->getPayload());
-        static::assertSame(1, $lineItems->first()?->getQuantity());
-        static::assertSame('Aerodynamic Bronze Resorcerer', $lineItems->first()?->getLabel());
-        static::assertSame(['is-physical'], $lineItems->first()?->getStates());
-        static::assertSame('91298e263c5b4bb88c3f51c873d7e76e', $lineItems->first()?->getReferencedId());
-        static::assertSame(true, $lineItems->first()?->isGood());
-        static::assertSame("A description", $lineItems->first()?->getDescription());
-        static::assertEmpty($lineItems->first()?->getChildren());
+        static::assertSame('a5209fb05f4f473f9702c3868ea2deac', $lineItems->first()->getUniqueIdentifier());
+        static::assertSame('product', $lineItems->first()->getType());
+        static::assertIsArray($lineItems->first()->getPayload());
+        static::assertSame(1, $lineItems->first()->getQuantity());
+        static::assertSame('Aerodynamic Bronze Resorcerer', $lineItems->first()->getLabel());
+        static::assertSame(['is-physical'], $lineItems->first()->getStates());
+        static::assertSame('91298e263c5b4bb88c3f51c873d7e76e', $lineItems->first()->getReferencedId());
+        static::assertSame(true, $lineItems->first()->isGood());
+        static::assertSame("A description", $lineItems->first()->getDescription());
+        static::assertEmpty($lineItems->first()->getChildren());
 
-        $price = $lineItems->first()?->getPrice();
+        $price = $lineItems->first()->getPrice();
 
         static::assertSame(623.53, $price->getTotalPrice());
         static::assertSame(623.53, $price->getUnitPrice());
@@ -181,15 +256,15 @@ class ContextResolverTest extends TestCase
         $calculatedTaxes = $price->getCalculatedTaxes();
         static::assertCount(1, $calculatedTaxes);
         static::assertSame(0.0, $calculatedTaxes->first()?->getTaxRate());
-        static::assertSame(0.0, $calculatedTaxes->first()?->getTax());
-        static::assertSame(623.53, $calculatedTaxes->first()?->getPrice());
+        static::assertSame(0.0, $calculatedTaxes->first()->getTax());
+        static::assertSame(623.53, $calculatedTaxes->first()->getPrice());
 
         $taxRules = $price->getTaxRules();
         static::assertCount(1, $taxRules);
 
         $taxRule = $taxRules->first();
         static::assertSame(0.0, $taxRule?->getTaxRate());
-        static::assertSame(100.0, $taxRule?->getPercentage());
+        static::assertSame(100.0, $taxRule->getPercentage());
 
         $price = $tax->cart->getPrice();
 
@@ -205,7 +280,7 @@ class ContextResolverTest extends TestCase
         $taxRule = $taxRules->first();
 
         static::assertSame(0.0, $taxRule?->getTaxRate());
-        static::assertSame(100.0, $taxRule?->getPercentage());
+        static::assertSame(100.0, $taxRule->getPercentage());
 
         $taxRules = $price->getCalculatedTaxes();
         static::assertCount(1, $taxRules);
@@ -213,8 +288,8 @@ class ContextResolverTest extends TestCase
         $taxRule = $taxRules->first();
 
         static::assertSame(0.0, $taxRule?->getTaxRate());
-        static::assertSame(0.0, $taxRule?->getTax());
-        static::assertSame(623.53, $taxRule?->getPrice());
+        static::assertSame(0.0, $taxRule->getTax());
+        static::assertSame(623.53, $taxRule->getPrice());
 
         $deliveries = $tax->cart->getDeliveries();
         static::assertCount(1, $deliveries);
@@ -223,9 +298,9 @@ class ContextResolverTest extends TestCase
 
         static::assertSame('Standard', $delivery?->getShippingMethod()->getName());
 
-        $deliveryDate = $delivery?->getDeliveryDate();
-        static::assertSame('2023-05-03T16:00:00+00:00', $deliveryDate?->getEarliest()->format(\DATE_ATOM));
-        static::assertSame('2023-05-05T16:00:00+00:00', $deliveryDate?->getLatest()->format(\DATE_ATOM));
+        $deliveryDate = $delivery->getDeliveryDate();
+        static::assertSame('2023-05-03T16:00:00+00:00', $deliveryDate->getEarliest()->format(\DATE_ATOM));
+        static::assertSame('2023-05-05T16:00:00+00:00', $deliveryDate->getLatest()->format(\DATE_ATOM));
 
         $positions = $delivery->getPositions();
 
@@ -234,12 +309,12 @@ class ContextResolverTest extends TestCase
         $position = $positions->first();
 
         static::assertSame('91298e263c5b4bb88c3f51c873d7e76e', $position?->getIdentifier());
-        static::assertSame(1, $position?->getQuantity());
-        static::assertSame(1683129600, $position?->getDeliveryDate()->getEarliest()->getTimestamp());
-        static::assertSame(1683302400, $position?->getDeliveryDate()->getLatest()->getTimestamp());
+        static::assertSame(1, $position->getQuantity());
+        static::assertSame(1683129600, $position->getDeliveryDate()->getEarliest()->getTimestamp());
+        static::assertSame(1683302400, $position->getDeliveryDate()->getLatest()->getTimestamp());
 
-        static::assertSame('Aerodynamic Bronze Resorcerer', $position?->getLineItem()->getLabel());
-        static::assertSame(1, $position?->getPrice()->getQuantity());
+        static::assertSame('Aerodynamic Bronze Resorcerer', $position->getLineItem()->getLabel());
+        static::assertSame(1, $position->getPrice()->getQuantity());
 
         $location = $delivery->getLocation();
 
@@ -255,15 +330,15 @@ class ContextResolverTest extends TestCase
         static::assertCount(1, $calculatedTaxes);
 
         static::assertSame(0.0, $calculatedTaxes->first()?->getTaxRate());
-        static::assertSame(0.0, $calculatedTaxes->first()?->getTax());
-        static::assertSame(0.0, $calculatedTaxes->first()?->getPrice());
+        static::assertSame(0.0, $calculatedTaxes->first()->getTax());
+        static::assertSame(0.0, $calculatedTaxes->first()->getPrice());
 
         $taxRules = $shippingCosts->getTaxRules();
         static::assertCount(1, $taxRules);
 
         $taxRule = $taxRules->first();
         static::assertSame(0.0, $taxRule?->getTaxRate());
-        static::assertSame(100.0, $taxRule?->getPercentage());
+        static::assertSame(100.0, $taxRule->getPercentage());
 
         $transactions = $tax->cart->getTransactions();
 
@@ -272,7 +347,7 @@ class ContextResolverTest extends TestCase
         $transaction = $transactions->first();
 
         static::assertSame(623.53, $transaction?->getAmount()->getTotalPrice());
-        static::assertSame('20c5b5b9ec9d4f39b36816488cd58133', $transaction?->getPaymentMethodId());
+        static::assertSame('20c5b5b9ec9d4f39b36816488cd58133', $transaction->getPaymentMethodId());
 
         $context = $tax->context;
 
@@ -363,10 +438,10 @@ class ContextResolverTest extends TestCase
         static::assertSame(false, $billingAddress->getCountry()->getCompanyTax()->isEnabled());
         static::assertSame('040cbcada23440ebb4f6e1bebc62e421', $billingAddress->getCountryState()?->getId());
         static::assertNotNull($billingAddress->getCountryState());
-        static::assertSame('Pennsylvania', $billingAddress->getCountryState()?->getName());
-        static::assertSame([], $billingAddress->getCountryState()?->getCustomFields());
-        static::assertSame(1, $billingAddress->getCountryState()?->getPosition());
-        static::assertSame('US-PA', $billingAddress->getCountryState()?->getShortCode());
+        static::assertSame('Pennsylvania', $billingAddress->getCountryState()->getName());
+        static::assertSame([], $billingAddress->getCountryState()->getCustomFields());
+        static::assertSame(1, $billingAddress->getCountryState()->getPosition());
+        static::assertSame('US-PA', $billingAddress->getCountryState()->getShortCode());
 
         $salesChannel = $context->getSalesChannel();
         static::assertSame('1092ea436e764c8a97ec195fd284ad34', $salesChannel->getId());
@@ -378,11 +453,11 @@ class ContextResolverTest extends TestCase
         $domains = $salesChannel->getDomains();
         static::assertCount(1, $domains);
         static::assertSame('ef8e67662fdb4b0fb9241d7bd75fe8bb', $domains->first()?->getId());
-        static::assertSame('http://localhost:8000', $domains->first()?->getUrl());
-        static::assertSame('b7d2554b0ce847cd82f3ac9bd1c0dfca', $domains->first()?->getCurrencyId());
-        static::assertSame([], $domains->first()?->getCustomFields());
-        static::assertSame('2fbb5fe2e29a4d70aa5854ce7ce3e20b', $domains->first()?->getLanguageId());
-        static::assertSame('684f9a80c59846228223cb76d7cb3577', $domains->first()?->getSnippetSetId());
+        static::assertSame('http://localhost:8000', $domains->first()->getUrl());
+        static::assertSame('b7d2554b0ce847cd82f3ac9bd1c0dfca', $domains->first()->getCurrencyId());
+        static::assertSame([], $domains->first()->getCustomFields());
+        static::assertSame('2fbb5fe2e29a4d70aa5854ce7ce3e20b', $domains->first()->getLanguageId());
+        static::assertSame('684f9a80c59846228223cb76d7cb3577', $domains->first()->getSnippetSetId());
 
         $rounding = $context->getRounding();
         static::assertSame(2, $rounding->getDecimals());
@@ -395,12 +470,23 @@ class ContextResolverTest extends TestCase
 
     public function testAssemblePay(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
 
         $body = [
             'source' => [
                 'url' => 'https://example.com',
                 'appVersion' => 'foo',
+                'inAppPurchases' => 'ey',
             ],
             'order' => [
                 'id' => 'foo',
@@ -426,6 +512,10 @@ class ContextResolverTest extends TestCase
         static::assertInstanceOf(PaymentPayAction::class, $paymentPayResponse);
         static::assertSame('https://example.com', $paymentPayResponse->source->url);
         static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame(['foo', 'bar'], $paymentPayResponse->source->inAppPurchases->keys());
+        static::assertTrue($paymentPayResponse->source->inAppPurchases->has('foo'));
+        static::assertTrue($paymentPayResponse->source->inAppPurchases->has('bar'));
+        static::assertFalse($paymentPayResponse->source->inAppPurchases->has('baz'));
         static::assertSame('foo', $paymentPayResponse->order->getId());
         static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
         static::assertSame('https://example.com/return', $paymentPayResponse->returnUrl);
@@ -437,12 +527,23 @@ class ContextResolverTest extends TestCase
 
     public function testAssemblePayWithoutRecurringData(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
 
         $body = [
             'source' => [
                 'url' => 'https://example.com',
                 'appVersion' => 'foo',
+                'inAppPurchases' => 'ey',
             ],
             'order' => [
                 'id' => 'foo',
@@ -464,6 +565,10 @@ class ContextResolverTest extends TestCase
         static::assertInstanceOf(PaymentPayAction::class, $paymentPayResponse);
         static::assertSame('https://example.com', $paymentPayResponse->source->url);
         static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame(['foo', 'bar'], $paymentPayResponse->source->inAppPurchases->keys());
+        static::assertTrue($paymentPayResponse->source->inAppPurchases->has('foo'));
+        static::assertTrue($paymentPayResponse->source->inAppPurchases->has('bar'));
+        static::assertFalse($paymentPayResponse->source->inAppPurchases->has('baz'));
         static::assertSame('foo', $paymentPayResponse->order->getId());
         static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
         static::assertSame('https://example.com/return', $paymentPayResponse->returnUrl);
@@ -473,12 +578,23 @@ class ContextResolverTest extends TestCase
 
     public function testAssemblePayCaptureRecurring(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
 
         $body = [
             'source' => [
                 'url' => 'https://example.com',
                 'appVersion' => 'foo',
+                'inAppPurchases' => 'ey',
             ],
             'order' => [
                 'id' => 'foo',
@@ -500,18 +616,33 @@ class ContextResolverTest extends TestCase
         static::assertInstanceOf(PaymentRecurringAction::class, $paymentPayResponse);
         static::assertSame('https://example.com', $paymentPayResponse->source->url);
         static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame(['foo', 'bar'], $paymentPayResponse->source->inAppPurchases->keys());
+        static::assertTrue($paymentPayResponse->source->inAppPurchases->has('foo'));
+        static::assertTrue($paymentPayResponse->source->inAppPurchases->has('bar'));
+        static::assertFalse($paymentPayResponse->source->inAppPurchases->has('baz'));
         static::assertSame('foo', $paymentPayResponse->order->getId());
         static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
     }
 
     public function testAssemblePayFinalize(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
 
         $body = [
             'source' => [
                 'url' => 'https://example.com',
                 'appVersion' => 'foo',
+                'inAppPurchases' => 'ey',
             ],
             'orderTransaction' => [
                 'id' => 'bar',
@@ -533,6 +664,10 @@ class ContextResolverTest extends TestCase
         static::assertInstanceOf(PaymentFinalizeAction::class, $paymentPayResponse);
         static::assertSame('https://example.com', $paymentPayResponse->source->url);
         static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame(['foo', 'bar'], $paymentPayResponse->source->inAppPurchases->keys());
+        static::assertTrue($paymentPayResponse->source->inAppPurchases->has('foo'));
+        static::assertTrue($paymentPayResponse->source->inAppPurchases->has('bar'));
+        static::assertFalse($paymentPayResponse->source->inAppPurchases->has('baz'));
         static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
         static::assertSame(['returnId' => '123'], $paymentPayResponse->queryParameters);
         static::assertNotNull($paymentPayResponse->recurring);
@@ -542,12 +677,23 @@ class ContextResolverTest extends TestCase
 
     public function testPaymentPayCapture(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
 
         $body = [
             'source' => [
                 'url' => 'https://example.com',
                 'appVersion' => 'foo',
+                'inAppPurchases' => 'ey',
             ],
             'order' => [
                 'id' => 'foo',
@@ -572,6 +718,10 @@ class ContextResolverTest extends TestCase
         static::assertInstanceOf(PaymentCaptureAction::class, $paymentPayResponse);
         static::assertSame('https://example.com', $paymentPayResponse->source->url);
         static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame(['foo', 'bar'], $paymentPayResponse->source->inAppPurchases->keys());
+        static::assertTrue($paymentPayResponse->source->inAppPurchases->has('foo'));
+        static::assertTrue($paymentPayResponse->source->inAppPurchases->has('bar'));
+        static::assertFalse($paymentPayResponse->source->inAppPurchases->has('baz'));
         static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
         static::assertSame(['returnId' => '123'], $paymentPayResponse->requestData);
         static::assertNotNull($paymentPayResponse->recurring);
@@ -581,7 +731,7 @@ class ContextResolverTest extends TestCase
 
     public function testAssemblePayInvalid(): void
     {
-        $contextResolver = new ContextResolver();
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
 
         static::expectException(MalformedWebhookBodyException::class);
         $contextResolver->assemblePaymentPay(
@@ -592,12 +742,29 @@ class ContextResolverTest extends TestCase
 
     public function testResolvePay(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
 
         $action = $contextResolver->assemblePaymentPay(
             new Request('POST', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/payment.json')),
             $this->getShop()
         );
+
+        static::assertSame('1.0.0', $action->source->appVersion);
+        static::assertSame('http://localhost:8000', $action->source->url);
+        static::assertSame(['foo', 'bar'], $action->source->inAppPurchases->keys());
+        static::assertTrue($action->source->inAppPurchases->has('foo'));
+        static::assertTrue($action->source->inAppPurchases->has('bar'));
+        static::assertFalse($action->source->inAppPurchases->has('baz'));
 
         static::assertSame([], $action->requestData);
 
@@ -626,9 +793,9 @@ class ContextResolverTest extends TestCase
 
         static::assertCount(1, $lineItems);
         static::assertSame('5567f5758b414a2686afa1c6492c63a1', $lineItems->first()?->getId());
-        static::assertSame('Aerodynamic Bronze Slo-Cooked Prawns', $lineItems->first()?->getLabel());
-        static::assertSame(1, $lineItems->first()?->getPosition());
-        static::assertSame(null, $lineItems->first()?->getParentId());
+        static::assertSame('Aerodynamic Bronze Slo-Cooked Prawns', $lineItems->first()->getLabel());
+        static::assertSame(1, $lineItems->first()->getPosition());
+        static::assertSame(null, $lineItems->first()->getParentId());
 
         $deliveries = $order->getDeliveries();
 
@@ -658,7 +825,7 @@ class ContextResolverTest extends TestCase
 
     public function testAssembleFinalizeInvalid(): void
     {
-        $contextResolver = new ContextResolver();
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
 
         static::expectException(MalformedWebhookBodyException::class);
         $contextResolver->assemblePaymentFinalize(
@@ -669,19 +836,35 @@ class ContextResolverTest extends TestCase
 
     public function testAssembleFinalize(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
 
         $action = $contextResolver->assemblePaymentFinalize(
             new Request('POST', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/payment.json')),
             $this->getShop()
         );
 
+        static::assertSame('1.0.0', $action->source->appVersion);
+        static::assertSame('http://localhost:8000', $action->source->url);
+        static::assertSame(['foo', 'bar'], $action->source->inAppPurchases->keys());
+        static::assertTrue($action->source->inAppPurchases->has('foo'));
+        static::assertTrue($action->source->inAppPurchases->has('bar'));
+        static::assertFalse($action->source->inAppPurchases->has('baz'));
         static::assertSame(395.01, $action->orderTransaction->getAmount()->getTotalPrice());
     }
 
     public function testAssembleCaptureInvalid(): void
     {
-        $contextResolver = new ContextResolver();
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
 
         static::expectException(MalformedWebhookBodyException::class);
         $contextResolver->assemblePaymentCapture(
@@ -692,19 +875,35 @@ class ContextResolverTest extends TestCase
 
     public function testAssembleCapture(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
 
         $action = $contextResolver->assemblePaymentCapture(
             new Request('POST', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/payment.json')),
             $this->getShop()
         );
 
+        static::assertSame('1.0.0', $action->source->appVersion);
+        static::assertSame('http://localhost:8000', $action->source->url);
+        static::assertSame(['foo', 'bar'], $action->source->inAppPurchases->keys());
+        static::assertTrue($action->source->inAppPurchases->has('foo'));
+        static::assertTrue($action->source->inAppPurchases->has('bar'));
+        static::assertFalse($action->source->inAppPurchases->has('baz'));
         static::assertSame(395.01, $action->orderTransaction->getAmount()->getTotalPrice());
     }
 
     public function testAssembleCaptureRecurringInvalid(): void
     {
-        $contextResolver = new ContextResolver();
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
 
         static::expectException(MalformedWebhookBodyException::class);
         $contextResolver->assemblePaymentRecurringCapture(
@@ -715,7 +914,7 @@ class ContextResolverTest extends TestCase
 
     public function testAssembleValidationInvalid(): void
     {
-        $contextResolver = new ContextResolver();
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
 
         static::expectException(MalformedWebhookBodyException::class);
         $contextResolver->assemblePaymentValidate(
@@ -726,19 +925,36 @@ class ContextResolverTest extends TestCase
 
     public function testAssembleValidate(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
 
         $action = $contextResolver->assemblePaymentValidate(
             new Request('POST', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/payment-validation.json')),
             $this->getShop()
         );
 
+        static::assertSame('1.0.0', $action->source->appVersion);
+        static::assertSame('http://localhost:8000', $action->source->url);
+        static::assertSame(['foo', 'bar'], $action->source->inAppPurchases->keys());
+        static::assertTrue($action->source->inAppPurchases->has('foo'));
+        static::assertTrue($action->source->inAppPurchases->has('bar'));
+        static::assertFalse($action->source->inAppPurchases->has('baz'));
+
         static::assertSame(['tos' => 'on'], $action->requestData);
     }
 
     public function testAssembleRefundInvalid(): void
     {
-        $contextResolver = new ContextResolver();
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
 
         static::expectException(MalformedWebhookBodyException::class);
         $contextResolver->assemblePaymentRefund(
@@ -749,12 +965,29 @@ class ContextResolverTest extends TestCase
 
     public function testRefund(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
 
         $action = $contextResolver->assemblePaymentRefund(
             new Request('POST', '/', [], (string) file_get_contents(__DIR__ . '/_fixtures/refund.json')),
             $this->getShop()
         );
+
+        static::assertSame('1.0.0', $action->source->appVersion);
+        static::assertSame('http://localhost:8000', $action->source->url);
+        static::assertSame(['foo', 'bar'], $action->source->inAppPurchases->keys());
+        static::assertTrue($action->source->inAppPurchases->has('foo'));
+        static::assertTrue($action->source->inAppPurchases->has('bar'));
+        static::assertFalse($action->source->inAppPurchases->has('baz'));
 
         static::assertSame('70d9f8c7b9074445b9dd84b7b179374b', $action->refund->getId());
         static::assertSame([], $action->refund->getCustomFields());
@@ -769,7 +1002,7 @@ class ContextResolverTest extends TestCase
     #[DataProvider('assembleStorefrontInvalidHeaders')]
     public function testStorefrontRequestMalformed(string $header): void
     {
-        $contextResolver = new ContextResolver();
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
 
         $this->expectException(MalformedWebhookBodyException::class);
         $request = new Request('POST', '/', [], '{}');
@@ -782,22 +1015,38 @@ class ContextResolverTest extends TestCase
 
     public function testAssembleStorefrontRequest(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
 
         $request = new Request('POST', '/', [], '{}');
-        $request = $request->withHeader('shopware-app-token', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJGcWFIV1VzQ1JOc3JaOWtRIiwiaWF0IjoxNjg5ODM3MDkyLjI3ODMyOSwibmJmIjoxNjg5ODM3MDkyLjI3ODMyOSwiZXhwIjoxNjg5ODQwNjkyLjI3ODI0Mywic2FsZXNDaGFubmVsSWQiOiIwMTg5NjQwNTU0YjU3MDBjODBjMmM0YTIwMmUyNDAxZCJ9.g8Da0bN3bkkmEdzMeXmI8wlDQEZMCDiKJvqS288B4JI');
+        $request = $request->withHeader('shopware-app-token', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJGcWFIV1VzQ1JOc3JaOWtRIiwiaWF0IjoxNjg5ODM3MDkyLjI3ODMyOSwibmJmIjoxNjg5ODM3MDkyLjI3ODMyOSwiZXhwIjoxNjg5ODQwNjkyLjI3ODI0MywiaW5BcHBQdXJjaGFzZXMiOiJleSIsInNhbGVzQ2hhbm5lbElkIjoiMDE4OTY0MDU1NGI1NzAwYzgwYzJjNGEyMDJlMjQwMWQifQ.0Juj24bUHvprTz_7CHItgrcFCZaWVd4DZfzjMjSD2-A');
 
         $action = $contextResolver->assembleStorefrontRequest(
             $request,
             $this->getShop()
         );
 
+        static::assertSame(['foo', 'bar'], $action->inAppPurchases->keys());
+        static::assertTrue($action->inAppPurchases->has('foo'));
+        static::assertTrue($action->inAppPurchases->has('bar'));
+        static::assertFalse($action->inAppPurchases->has('baz'));
+
         static::assertSame('0189640554b5700c80c2c4a202e2401d', $action->claims->getSalesChannelId());
+        static::assertSame('ey', $action->claims->getInAppPurchases());
     }
 
     public function testAssembleStorefrontRequestWithEmptyTokenThrows(): void
     {
-        $contextResolver = new ContextResolver();
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
 
         $request = new Request('POST', '/', [], '{}');
         $request = $request->withHeader('shopware-app-token', '');
@@ -810,14 +1059,40 @@ class ContextResolverTest extends TestCase
         );
     }
 
+    public function testAssembleStorefrontWithEmptyInAppPurchasesClaimThrows(): void
+    {
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+
+        $request = new Request('POST', '/', [], '{}');
+        $request = $request->withHeader('shopware-app-token', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJGcWFIV1VzQ1JOc3JaOWtRIiwiaWF0IjoxNjg5ODM3MDkyLjI3ODMyOSwibmJmIjoxNjg5ODM3MDkyLjI3ODMyOSwiZXhwIjoxNjg5ODQwNjkyLjI3ODI0MywiaW5BcHBQdXJjaGFzZXMiOiIiLCJzYWxlc0NoYW5uZWxJZCI6IjAxODk2NDA1NTRiNTcwMGM4MGMyYzRhMjAyZTI0MDFkIn0.xB_x4jpEGSRK4B9o_8ZISDvjA2oCF3QWTthQ1eJYx2g');
+
+        static::expectException(MalformedWebhookBodyException::class);
+
+        $contextResolver->assembleStorefrontRequest(
+            $request,
+            $this->getShop()
+        );
+    }
+
     public function testAssembleCheckoutGatewayRequest(): void
     {
-        $contextResolver = new ContextResolver();
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
 
         $body = [
             'source' => [
                 'url' => 'https://example.com',
                 'appVersion' => 'foo',
+                'inAppPurchases' => 'ey',
             ],
             'cart' => [
                 'token' => 'cart-token',
@@ -844,6 +1119,11 @@ class ContextResolverTest extends TestCase
 
         static::assertSame('https://example.com', $action->source->url);
         static::assertSame('foo', $action->source->appVersion);
+        static::assertSame(['foo', 'bar'], $action->source->inAppPurchases->keys());
+        static::assertTrue($action->source->inAppPurchases->has('foo'));
+        static::assertTrue($action->source->inAppPurchases->has('bar'));
+        static::assertFalse($action->source->inAppPurchases->has('baz'));
+
         static::assertSame('cart-token', $action->cart->getToken());
         static::assertSame('sales-channel-id', $action->context->getSalesChannel()->getId());
 
@@ -877,18 +1157,25 @@ class ContextResolverTest extends TestCase
 
         static::expectException(MalformedWebhookBodyException::class);
 
-        $contextResolver = new ContextResolver();
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
         $contextResolver->$method($request, $this->getShop());
     }
 
-    /**
-     * @dataProvider invalidSourceProvider
-     */
+    #[DataProvider('invalidSourceProvider')]
     public function testParseSourceInvalid(string $source): void
     {
         $request = new Request('POST', '/', [], $source);
 
-        $contextResolver = new ContextResolver();
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+        static::expectException(MalformedWebhookBodyException::class);
+        $contextResolver->assembleWebhook($request, $this->getShop());
+    }
+
+    public function testParseInAppPurchasesInvalid(): void
+    {
+        $request = new Request('POST', '/', [], '{"source":{"url":"https://example.com","appVersion":"foo","inAppPurchases":1}}');
+
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
         static::expectException(MalformedWebhookBodyException::class);
         $contextResolver->assembleWebhook($request, $this->getShop());
     }

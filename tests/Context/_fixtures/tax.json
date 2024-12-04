@@ -2,7 +2,8 @@
   "source": {
     "url": "http:\/\/localhost:8000",
     "shopId": "vvRy7Nv3Bo8mAVda",
-    "appVersion": "1.0.0"
+    "appVersion": "1.0.0",
+    "inAppPurchases": "ey"
   },
   "cart": {
     "extensions": {
