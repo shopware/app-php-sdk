@@ -66,7 +66,7 @@ class RegistrationService
 
             $this->shopRepository->createShop($shop);
         } else {
-            $shop->setShopUrl($queries['shop-url']);
+            $shop->setShopUrl($this->sanitizeShopUrl($queries['shop-url']));
 
             $this->eventDispatcher?->dispatch(new BeforeRegistrationStartsEvent($request, $shop));
 
@@ -77,7 +77,6 @@ class RegistrationService
             'shop-id' => $shop->getShopId(),
             'shop-url' => $shop->getShopUrl(),
         ]);
-
 
         $psrFactory = new Psr17Factory();
 
