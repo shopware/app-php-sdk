@@ -169,6 +169,7 @@ class RegistrationService
     {
         $sanitizedShopUrl = $this->sanitizeShopUrl($shop->getShopUrl());
 
+
         if ($shop->getShopUrl() !== $sanitizedShopUrl) {
             $shop->setShopUrl($sanitizedShopUrl);
             $this->shopRepository->updateShop($shop);

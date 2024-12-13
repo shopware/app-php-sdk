@@ -50,7 +50,7 @@ class RegistrationServiceTest extends TestCase
     {
         $request = new Request('GET', 'http://localhost');
 
-        static::expectException(MissingShopParameterException::class);
+        $this->expectException(MissingShopParameterException::class);
 
         $this->registerService->register($request);
     }
@@ -105,6 +105,8 @@ class RegistrationServiceTest extends TestCase
         );
 
         static::assertSame(200, $response->getStatusCode());
+        static::assertSame('https://my-shop.com', $shop->getShopUrl());
+
         $json = json_decode((string) $response->getBody()->getContents(), true);
 
         static::assertCount(1, $events);
@@ -152,6 +154,8 @@ class RegistrationServiceTest extends TestCase
         );
 
         static::assertSame(200, $response->getStatusCode());
+        static::assertSame('https://my-shop.com', $shop->getShopUrl());
+
         $json = json_decode((string) $response->getBody()->getContents(), true);
 
         static::assertIsArray($json);
@@ -188,7 +192,9 @@ class RegistrationServiceTest extends TestCase
         $shopRepository
             ->expects(static::once())
             ->method('updateShop')
-            ->with($shop);
+            ->with($this->callback(function (MockShop $shop) {
+                return $shop->getShopUrl() === 'https://my-shop.com';
+            }));
 
         $registrationService = new RegistrationService(
             $this->appConfiguration,
@@ -245,7 +251,7 @@ class RegistrationServiceTest extends TestCase
     {
         $request = new Request('POST', 'http://localhost', [], '{}');
 
-        static::expectException(MissingShopParameterException::class);
+        $this->expectException(MissingShopParameterException::class);
         $this->registerService->registerConfirm($request);
     }
 
@@ -253,7 +259,7 @@ class RegistrationServiceTest extends TestCase
     {
         $request = new Request('POST', 'http://localhost', [], '{"shopId": "123", "apiKey": "1", "secretKey": "1"}');
 
-        static::expectException(ShopNotFoundException::class);
+        $this->expectException(ShopNotFoundException::class);
         $this->registerService->registerConfirm($request);
     }
 
@@ -464,7 +470,7 @@ class RegistrationServiceTest extends TestCase
             new NullLogger()
         );
 
-        static::expectException(MissingShopParameterException::class);
+        $this->expectException(MissingShopParameterException::class);
         $registrationService->register($request);
     }
 
@@ -484,11 +490,11 @@ class RegistrationServiceTest extends TestCase
             new NullLogger()
         );
 
-        static::expectException(MissingShopParameterException::class);
+        $this->expectException(MissingShopParameterException::class);
         $registrationService->registerConfirm($request);
     }
 
-    #[DataProvider('shopUrlsProvider')]
+    #[DataProvider('shopUrlsProviderForCreation')]
     public function testRegisterCreateShopUrlIsSanitized(
         string $shopUrl,
         string $expectedUrl,
@@ -536,9 +542,11 @@ class RegistrationServiceTest extends TestCase
         static::assertSame($expectedUrl, $shop->getShopUrl());
     }
 
-    #[DataProvider('shopUrlsProvider')]
+
+    #[DataProvider('shopUrlsProviderForUpdate')]
     public function testRegisterUpdateShopUrlIsSanitized(
         string $shopUrl,
+        string $newShopUrl,
         string $expectedUrl,
         bool $sanitizeShopUrlInDatabase
     ): void {
@@ -553,19 +561,32 @@ class RegistrationServiceTest extends TestCase
 
         $shopRepository
             ->expects(static::never())
-            ->method('createShopStruct')
-            ->willReturn($shop);
+            ->method('createShopStruct');
+
+        $expectedUrls = [
+            $newShopUrl,
+            $expectedUrl,
+        ];
+
+        $callCount = 0;
 
         if ($sanitizeShopUrlInDatabase) {
             $shopRepository
                 ->expects(static::exactly(2))
                 ->method('updateShop')
-                ->with($shop);
+                ->with($this->callback(function (MockShop $shop) use (&$callCount, $expectedUrls) {
+                    $expectedUrl = $expectedUrls[$callCount] ?? null;
+                    $result = $shop->getShopUrl() === $expectedUrl;
+                    $callCount++;
+                    return $result;
+                }));
         } else {
             $shopRepository
                 ->expects(static::once())
                 ->method('updateShop')
-                ->with($shop);
+                ->with($this->callback(function (MockShop $shop) use ($newShopUrl) {
+                    return $shop->getShopUrl() === $newShopUrl;
+                }));
         }
 
         $registrationService = new RegistrationService(
@@ -580,7 +601,7 @@ class RegistrationServiceTest extends TestCase
 
         $request = new Request(
             'GET',
-            sprintf('http://localhost?shop-id=123&shop-url=%s&timestamp=1234567890', $shopUrl)
+            sprintf('http://localhost?shop-id=123&shop-url=%s&timestamp=1234567890', $newShopUrl)
         );
 
         $registrationService->register($request);
@@ -635,7 +656,7 @@ class RegistrationServiceTest extends TestCase
     /**
      * @return iterable<array<string, string|bool>>
      */
-    public static function shopUrlsProvider(): iterable
+    public function shopUrlsProviderForCreation(): iterable
     {
         yield 'Valid URL with port' => [
             'shopUrl' => 'https://my-shop.com:80',
@@ -703,9 +724,99 @@ class RegistrationServiceTest extends TestCase
             'sanitizeShopUrlInDatabase' => true,
         ];
 
-        yield 'Invalid URL with multiple slashes and multplie trailing slash' => [
+        yield 'Invalid URL with multiple slashes and multiple trailing slash' => [
             'shopUrl' => 'https://my-shop.com///test/test1//test2//',
             'expectedUrl' => 'https://my-shop.com/test/test1/test2',
+            'sanitizeShopUrlInDatabase' => true,
+        ];
+    }
+
+    /**
+     * @return iterable<array<string, string|bool>>
+     */
+    public static function shopUrlsProviderForUpdate(): iterable
+    {
+        yield 'Valid URL with port' => [
+           'shopUrl' => 'https://my-shop.com:80',
+           'newShopUrl' => 'https://my-changed-shop.de:80',
+           'expectedUrl' => 'https://my-changed-shop.de:80',
+           'sanitizeShopUrlInDatabase' => false,
+        ];
+
+        yield 'Valid URL with port and trailing slash' => [
+            'shopUrl' => 'https://my-shop.com:8080/',
+            'newShopUrl' => 'https://my-changed-shop.com:8080/',
+            'expectedUrl' => 'https://my-changed-shop.com:8080',
+            'sanitizeShopUrlInDatabase' => true,
+        ];
+
+        yield 'Valid URL with port, path and trailing slash' => [
+            'shopUrl' => 'https://my-shop.com:8080//test/',
+            'newShopUrl' => 'https://my-changed-shop.com:8080//test/',
+            'expectedUrl' => 'https://my-changed-shop.com:8080/test',
+            'sanitizeShopUrlInDatabase' => true,
+        ];
+
+        yield 'Valid URL without trailing slash' => [
+            'shopUrl' => 'https://my-shop.com',
+            'newShopUrl' => 'https://my-changed-shop.com',
+            'expectedUrl' => 'https://my-changed-shop.com',
+            'sanitizeShopUrlInDatabase' => false,
+        ];
+
+        yield 'Valid URL with trailing slash' => [
+            'shopUrl' => 'https://my-shop.com/',
+            'newShopUrl' => 'https://my-changed-shop.com/',
+            'expectedUrl' => 'https://my-changed-shop.com',
+            'sanitizeShopUrlInDatabase' => true,
+        ];
+
+        yield 'Invalid URL with trailing slash' => [
+            'shopUrl' => 'https://my-shop.com/test/',
+            'newShopUrl' => 'https://my-changed-shop.com/test/',
+            'expectedUrl' => 'https://my-changed-shop.com/test',
+            'sanitizeShopUrlInDatabase' => true,
+        ];
+
+        yield 'Invalid URL with double slashes' => [
+            'shopUrl' => 'https://my-shop.com//test',
+            'newShopUrl' => 'https://my-changed-shop.com//test',
+            'expectedUrl' => 'https://my-changed-shop.com/test',
+            'sanitizeShopUrlInDatabase' => true,
+        ];
+
+        yield 'Invalid URL with 2 slashes and trailing slash' => [
+            'shopUrl' => 'https://my-shop.com//test/',
+            'newShopUrl' => 'https://my-changed-shop.com//test/',
+            'expectedUrl' => 'https://my-changed-shop.com/test',
+            'sanitizeShopUrlInDatabase' => true,
+        ];
+
+        yield 'Invalid URL with 3 slashes and trailing slash' => [
+            'shopUrl' => 'https://my-shop.com///test/',
+            'newShopUrl' => 'https://my-changed-shop.com///test/',
+            'expectedUrl' => 'https://my-changed-shop.com/test',
+            'sanitizeShopUrlInDatabase' => true,
+        ];
+
+        yield 'Invalid URL with multiple slashes' => [
+            'shopUrl' => 'https://my-shop.com///test/test1//test2',
+            'newShopUrl' => 'https://my-changed-shop.com///test/test1//test2',
+            'expectedUrl' => 'https://my-changed-shop.com/test/test1/test2',
+            'sanitizeShopUrlInDatabase' => true,
+        ];
+
+        yield 'Invalid URL with multiple slashes and trailing slash' => [
+            'shopUrl' => 'https://my-shop.com///test/test1//test2/',
+            'newShopUrl' => 'https://my-changed-shop.com///test/test1//test2/',
+            'expectedUrl' => 'https://my-changed-shop.com/test/test1/test2',
+            'sanitizeShopUrlInDatabase' => true,
+        ];
+
+        yield 'Invalid URL with multiple slashes and multiple trailing slash' => [
+            'shopUrl' => 'https://my-shop.com///test/test1//test2//',
+            'newShopUrl' => 'https://my-changed-shop.com///test/test1//test2//',
+            'expectedUrl' => 'https://my-changed-shop.com/test/test1/test2',
             'sanitizeShopUrlInDatabase' => true,
         ];
     }
