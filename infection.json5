@@ -15,6 +15,8 @@
     },
     "mutators": {
         "@default": true,
+        "LogicalOrAllSubExprNegation": false, // these mutants are false friends
+        "LogicalOrSingleSubExprNegation": false, // these mutants are false friends
         "CastFloat": {
             ignore: [
                 'Shopware\\App\\SDK\\Context\\SalesChannelContext\\Currency::getTaxFreeFrom'
@@ -31,5 +33,11 @@
                 'Shopware\\App\\SDK\\Shop\\ShopResolver::resolveFromSource'
             ]
         },
+        "TrueValue": {
+            ignore: [
+                // The retry mechanism is tested, the mutation is a false friend
+                'Shopware\\App\\SDK\\Context\\InAppPurchase\\InAppPurchaseProvider::decodePurchases',
+            ]
+        }
     }
 }

@@ -20,6 +20,7 @@ class StorefrontClaimsTest extends TestCase
             'languageId' => 'languageId',
             'paymentMethodId' => 'paymentMethodId',
             'shippingMethodId' => 'shippingMethodId',
+            'inAppPurchases' => 'inAppPurchases',
         ]);
 
         static::assertSame('salesChannelId', $claims->getSalesChannelId());
@@ -28,6 +29,7 @@ class StorefrontClaimsTest extends TestCase
         static::assertSame('languageId', $claims->getLanguageId());
         static::assertSame('paymentMethodId', $claims->getPaymentMethodId());
         static::assertSame('shippingMethodId', $claims->getShippingMethodId());
+        static::assertSame('inAppPurchases', $claims->getInAppPurchases());
     }
 
     public function testMissingSalesChannelId(): void
@@ -76,5 +78,13 @@ class StorefrontClaimsTest extends TestCase
 
         $this->expectExceptionMessage('Missing claim "shippingMethodId"');
         $claims->getShippingMethodId();
+    }
+
+    public function testMissingInAppPurchases(): void
+    {
+        $claims = new StorefrontClaims([]);
+
+        $this->expectExceptionMessage('Missing claim "inAppPurchases"');
+        $claims->getInAppPurchases();
     }
 }

@@ -140,6 +140,13 @@ class CollectionTest extends TestCase
         static::assertEquals(3, $collection->count());
     }
 
+    public function testKeys(): void
+    {
+        $collection = new Collection(['foo', 'bar', 'baz' => 'qux', 'bak' => new \stdClass()]);
+
+        static::assertEquals([0, 1, 'baz', 'bak'], $collection->keys());
+    }
+
     public function testJsonSerialize(): void
     {
         $jsonSerialize = new class () implements \JsonSerializable {
