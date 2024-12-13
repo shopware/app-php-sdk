@@ -91,6 +91,11 @@ class RegistrationServiceTest extends TestCase
             ->method('createShopStruct')
             ->willReturn($shop);
 
+        $shopRepository
+            ->expects(static::never())
+            ->method('updateShop')
+            ->with($shop);
+
         $eventDispatcher
             ->expects(static::once())
             ->method('dispatch');
@@ -137,6 +142,11 @@ class RegistrationServiceTest extends TestCase
             ->method('createShopStruct')
             ->willReturn($shop);
 
+        $shopRepository
+            ->expects(static::never())
+            ->method('updateShop')
+            ->with($shop);
+
         $response = $registrationService->register(
             new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890')
         );
@@ -162,9 +172,27 @@ class RegistrationServiceTest extends TestCase
                 $events[] = $event;
             });
 
+        $shopRepository = $this->createMock(ShopRepositoryInterface::class);
+
+        $shop = new MockShop('123', 'https://my-shop.com', '1234567890');
+
+        $shopRepository
+            ->expects(static::once())
+            ->method('getShopFromId')
+            ->willReturn($shop);
+
+        $shopRepository
+            ->expects(static::never())
+            ->method('createShopStruct');
+
+        $shopRepository
+            ->expects(static::once())
+            ->method('updateShop')
+            ->with($shop);
+
         $registrationService = new RegistrationService(
             $this->appConfiguration,
-            $this->shopRepository,
+            $shopRepository,
             $this->createMock(RequestVerifier::class),
             new ResponseSigner(),
             new RandomStringShopSecretGenerator(),
@@ -175,10 +203,6 @@ class RegistrationServiceTest extends TestCase
         $registrationService->register(
             new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890')
         );
-
-        $shop = $this->shopRepository->getShopFromId('123');
-
-        $this->shopRepository->updateShop($shop);
 
         static::assertNotNull($shop);
 
@@ -465,18 +489,101 @@ class RegistrationServiceTest extends TestCase
     }
 
     #[DataProvider('shopUrlsProvider')]
-    public function testRegisterShopUrlIsSanitized(
+    public function testRegisterCreateShopUrlIsSanitized(
         string $shopUrl,
         string $expectedUrl,
+        bool $sanitizeShopUrlInDatabase
     ): void {
+        $shopRepository = $this->createMock(ShopRepositoryInterface::class);
+
+        $shop = new MockShop('123', $shopUrl, '1234567890');
+
+        $shopRepository
+            ->expects(static::once())
+            ->method('getShopFromId')
+            ->with('123')
+            ->willReturn(null);
+
+        $shopRepository
+            ->expects(static::once())
+            ->method('createShopStruct')
+            ->willReturn($shop);
+
+        if ($sanitizeShopUrlInDatabase) {
+            $shopRepository
+                ->expects(static::once())
+                ->method('updateShop')
+                ->with($shop);
+        }
+
+        $registrationService = new RegistrationService(
+            $this->appConfiguration,
+            $shopRepository,
+            $this->createMock(RequestVerifier::class),
+            new ResponseSigner(),
+            new RandomStringShopSecretGenerator(),
+            new NullLogger(),
+            null
+        );
+
         $request = new Request(
             'GET',
             sprintf('http://localhost?shop-id=123&shop-url=%s&timestamp=1234567890', $shopUrl)
         );
 
-        $this->registerService->register($request);
+        $registrationService->register($request);
 
-        $shop = $this->shopRepository->getShopFromId('123');
+        static::assertSame($expectedUrl, $shop->getShopUrl());
+    }
+
+    #[DataProvider('shopUrlsProvider')]
+    public function testRegisterUpdateShopUrlIsSanitized(
+        string $shopUrl,
+        string $expectedUrl,
+        bool $sanitizeShopUrlInDatabase
+    ): void {
+        $shopRepository = $this->createMock(ShopRepositoryInterface::class);
+
+        $shop = new MockShop('123', $shopUrl, '1234567890');
+
+        $shopRepository
+            ->expects(static::once())
+            ->method('getShopFromId')
+            ->willReturn($shop);
+
+        $shopRepository
+            ->expects(static::never())
+            ->method('createShopStruct')
+            ->willReturn($shop);
+
+        if ($sanitizeShopUrlInDatabase) {
+            $shopRepository
+                ->expects(static::exactly(2))
+                ->method('updateShop')
+                ->with($shop);
+        } else {
+            $shopRepository
+                ->expects(static::once())
+                ->method('updateShop')
+                ->with($shop);
+        }
+
+        $registrationService = new RegistrationService(
+            $this->appConfiguration,
+            $shopRepository,
+            $this->createMock(RequestVerifier::class),
+            new ResponseSigner(),
+            new RandomStringShopSecretGenerator(),
+            new NullLogger(),
+            null
+        );
+
+        $request = new Request(
+            'GET',
+            sprintf('http://localhost?shop-id=123&shop-url=%s&timestamp=1234567890', $shopUrl)
+        );
+
+        $registrationService->register($request);
 
         static::assertSame($expectedUrl, $shop->getShopUrl());
     }
@@ -526,68 +633,80 @@ class RegistrationServiceTest extends TestCase
     }
 
     /**
-     * @return iterable<array<string, string|null>>
+     * @return iterable<array<string, string|bool>>
      */
     public static function shopUrlsProvider(): iterable
     {
         yield 'Valid URL with port' => [
             'shopUrl' => 'https://my-shop.com:80',
             'expectedUrl' => 'https://my-shop.com:80',
+            'sanitizeShopUrlInDatabase' => false,
         ];
 
         yield 'Valid URL with port and trailing slash' => [
             'shopUrl' => 'https://my-shop.com:8080/',
             'expectedUrl' => 'https://my-shop.com:8080',
+            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Valid URL with port, path and trailing slash' => [
             'shopUrl' => 'https://my-shop.com:8080//test/',
             'expectedUrl' => 'https://my-shop.com:8080/test',
+            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Valid URL without trailing slash' => [
             'shopUrl' => 'https://my-shop.com',
             'expectedUrl' => 'https://my-shop.com',
+            'sanitizeShopUrlInDatabase' => false,
         ];
 
         yield 'Valid URL with trailing slash' => [
             'shopUrl' => 'https://my-shop.com/',
             'expectedUrl' => 'https://my-shop.com',
+            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with trailing slash' => [
             'shopUrl' => 'https://my-shop.com/test/',
             'expectedUrl' => 'https://my-shop.com/test',
+            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with double slashes' => [
             'shopUrl' => 'https://my-shop.com//test',
             'expectedUrl' => 'https://my-shop.com/test',
+            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with 2 slashes and trailing slash' => [
             'shopUrl' => 'https://my-shop.com//test/',
             'expectedUrl' => 'https://my-shop.com/test',
+            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with 3 slashes and trailing slash' => [
             'shopUrl' => 'https://my-shop.com///test/',
             'expectedUrl' => 'https://my-shop.com/test',
+            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with multiple slashes' => [
             'shopUrl' => 'https://my-shop.com///test/test1//test2',
             'expectedUrl' => 'https://my-shop.com/test/test1/test2',
+            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with multiple slashes and trailing slash' => [
             'shopUrl' => 'https://my-shop.com///test/test1//test2/',
             'expectedUrl' => 'https://my-shop.com/test/test1/test2',
+            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with multiple slashes and multplie trailing slash' => [
             'shopUrl' => 'https://my-shop.com///test/test1//test2//',
             'expectedUrl' => 'https://my-shop.com/test/test1/test2',
+            'sanitizeShopUrlInDatabase' => true,
         ];
     }
 }
