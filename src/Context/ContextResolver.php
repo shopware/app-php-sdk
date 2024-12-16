@@ -301,10 +301,14 @@ class ContextResolver
             throw new MalformedWebhookBodyException();
         }
 
+        if (!isset($body['purchases']) || !\is_array($body['purchases'])) {
+            throw new MalformedWebhookBodyException();
+        }
+
         return new FilterAction(
             $shop,
-            $this->parseSource($body['source']),
-            new Collection($body['purchases']),
+            $this->parseSource($body['source'], $shop),
+            new Collection($body['purchases'])
         );
     }
 

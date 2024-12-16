@@ -6,21 +6,20 @@ namespace Shopware\App\SDK\Response;
 
 use Http\Discovery\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
+use Shopware\App\SDK\Framework\Collection;
 
 class InAppPurchasesResponse
 {
     /**
-     * @param array<string> $purchases
-     * @throws \JsonException
+     * @param Collection<string> $purchases
      */
-    public static function filter(array $purchases): ResponseInterface
+    public static function filter(Collection $purchases): ResponseInterface
     {
-        return self::createResponse(['purchases' => $purchases]);
+        return self::createResponse(['purchases' => $purchases->all()]);
     }
 
     /**
      * @param array<mixed> $data
-     * @throws \JsonException
      */
     private static function createResponse(array $data): ResponseInterface
     {
@@ -28,6 +27,6 @@ class InAppPurchasesResponse
 
         return $psr->createResponse(200)
             ->withHeader('Content-Type', 'application/json')
-            ->withBody($psr->createStream(json_encode($data, JSON_THROW_ON_ERROR)));
+            ->withBody($psr->createStream(\json_encode($data, \JSON_THROW_ON_ERROR)));
     }
 }

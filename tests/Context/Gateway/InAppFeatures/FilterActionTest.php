@@ -16,10 +16,10 @@ class FilterActionTest extends TestCase
 {
     public function testConstruct(): void
     {
-        $shop = new MockShop('foo', 'https://example.com', 'secret');
-        $source = new ActionSource('https://example.com', '1.0.0');
         $purchases = new Collection(['purchase-1', 'purchase-2', 'purchase-3']);
 
+        $shop = new MockShop('foo', 'https://example.com', 'secret');
+        $source = new ActionSource('https://example.com', '1.0.0', new Collection());
 
         $action = new FilterAction($shop, $source, $purchases);
 
