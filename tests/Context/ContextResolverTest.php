@@ -1138,9 +1138,94 @@ class ContextResolverTest extends TestCase
         static::assertSame('id2', $shippingMethods->get('technicalName2'));
     }
 
-    /**
-     * @dataProvider methodsProvider
-     */
+    public function testAssembleInAppPurchasesFilterRequest(): void
+    {
+        $expectedPurchases = new Collection(['identifier-1', 'identifier-2', 'identifier-3']);
+
+        $inAppPurchaseProvider = $this->createMock(InAppPurchaseProvider::class);
+        $inAppPurchaseProvider
+            ->method('decodePurchases')
+            ->with('["identifier-1", "identifier-2", "identifier-3"]')
+            ->willReturn($expectedPurchases);
+
+        $contextResolver = new ContextResolver($inAppPurchaseProvider);
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+            ],
+            'purchases' => ['identifier-1', 'identifier-2', 'identifier-3'],
+        ];
+
+        $request = new Request('POST', '/', [], \json_encode($body, \JSON_THROW_ON_ERROR));
+
+        $action = $contextResolver->assembleInAppPurchasesFilterRequest($request, $this->getShop());
+
+        static::assertSame('https://example.com', $action->source->url);
+        static::assertSame('foo', $action->source->appVersion);
+
+        $purchases = $action->purchases;
+        static::assertCount(3, $purchases);
+        static::assertInstanceOf(Collection::class, $purchases);
+        static::assertEquals($expectedPurchases, $purchases);
+    }
+
+    public function testAssembleInAppPurchasesWithEmptyPurchases(): void
+    {
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+            ],
+            'purchases' => [],
+        ];
+
+        $request = new Request('POST', '/', [], \json_encode($body, \JSON_THROW_ON_ERROR));
+
+        $action = $contextResolver->assembleInAppPurchasesFilterRequest($request, $this->getShop());
+
+        static::assertEmpty($action->purchases);
+    }
+
+    public function testAssembleInAppPurchasesWithMalformedPurchases(): void
+    {
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+            ],
+            'purchases' => 'foo-bar',
+        ];
+
+        $request = new Request('POST', '/', [], \json_encode($body, \JSON_THROW_ON_ERROR));
+
+        $this->expectException(MalformedWebhookBodyException::class);
+
+        $contextResolver->assembleInAppPurchasesFilterRequest($request, $this->getShop());
+    }
+
+    public function testAssembleInAppPurchasesWithMalformedSource(): void
+    {
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+
+        $body = [
+            'source' => 'foo',
+            'purchases' => ['foo', 'bar'],
+        ];
+
+        $request = new Request('POST', '/', [], \json_encode($body, \JSON_THROW_ON_ERROR));
+
+        $this->expectException(MalformedWebhookBodyException::class);
+
+        $contextResolver->assembleInAppPurchasesFilterRequest($request, $this->getShop());
+    }
+
+    #[DataProvider('methodsProvider')]
     public function testBodyRewindIsCalled(string $method): void
     {
         $body = static::createMock(StreamInterface::class);
@@ -1216,6 +1301,7 @@ class ContextResolverTest extends TestCase
         yield ['assemblePaymentRefund'];
         yield ['assemblePaymentRecurringCapture'];
         yield ['assembleCheckoutGatewayRequest'];
+        yield ['assembleInAppPurchasesFilterRequest'];
     }
 
     /**
