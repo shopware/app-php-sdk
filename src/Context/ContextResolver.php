@@ -91,11 +91,7 @@ class ContextResolver
             throw new MalformedWebhookBodyException();
         }
 
-        if (isset($params['in-app-purchases'])) {
-            if (empty($params['in-app-purchases'])) {
-                throw new MalformedWebhookBodyException();
-            }
-
+        if (!empty($params['in-app-purchases'])) {
             /** @var non-empty-string $inAppPurchaseString */
             $inAppPurchaseString = $params['in-app-purchases'];
             $inAppPurchases = $this->inAppPurchaseProvider->decodePurchases($inAppPurchaseString, $shop);
