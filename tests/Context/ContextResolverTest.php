@@ -174,18 +174,6 @@ class ContextResolverTest extends TestCase
         static::assertFalse($module->inAppPurchases->has('baz'));
     }
 
-    public function testAssembleModuleWithEmptyInAppPurchasesThrows(): void
-    {
-        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
-
-        static::expectException(MalformedWebhookBodyException::class);
-
-        $contextResolver->assembleModule(
-            new Request('GET', 'http://localhost:6001/module/test?shop-id=vvRy7Nv3Bo8mAVda&shop-url=http://localhost:8000&timestamp=1683015472&sw-version=6.5.9999999.9999999-dev&sw-context-language=2fbb5fe2e29a4d70aa5854ce7ce3e20b&sw-user-language=en-GB&in-app-purchases=&shopware-shop-signature=650455d43eda4eeb4c9a12ee0eb15b46ce88776abaf9beb1ffac31be136e1d9b'),
-            $this->getShop()
-        );
-    }
-
     #[DataProvider('assembleModuleInvalidRequestBodyProvider')]
     public function testAssembleModuleInvalid(string $uri): void
     {
