@@ -8,6 +8,7 @@ use AsyncAws\DynamoDb\DynamoDbClient;
 use AsyncAws\DynamoDb\Input\DeleteItemInput;
 use AsyncAws\DynamoDb\Input\GetItemInput;
 use AsyncAws\DynamoDb\Input\PutItemInput;
+use AsyncAws\DynamoDb\Input\UpdateItemInput;
 use Shopware\App\SDK\Shop\ShopInterface;
 use Shopware\App\SDK\Shop\ShopRepositoryInterface;
 
@@ -82,7 +83,23 @@ class DynamoDBRepository implements ShopRepositoryInterface
 
     public function updateShop(ShopInterface $shop): void
     {
-        $this->createShop($shop);
+        $this->client->updateItem(new UpdateItemInput([
+            'TableName' => $this->tableName,
+            'Key' => [
+                'id' => ['S' => $shop->getShopId()],
+            ],
+            'UpdateExpression' => 'SET active = :active, #u = :url, secret = :secret, clientId = :clientId, clientSecret = :clientSecret',
+            'ExpressionAttributeNames' => [
+                '#u' => 'url',
+            ],
+            'ExpressionAttributeValues' => [
+                ':active' => ['BOOL' => $shop->isShopActive() ? '1' : '0'],
+                ':url' => ['S' => $shop->getShopUrl()],
+                ':secret' => ['S' => $shop->getShopSecret()],
+                ':clientId' => ['S' => (string) $shop->getShopClientId()],
+                ':clientSecret' => ['S' => (string) $shop->getShopClientSecret()],
+            ],
+        ]));
     }
 
     public function deleteShop(string $shopId): void

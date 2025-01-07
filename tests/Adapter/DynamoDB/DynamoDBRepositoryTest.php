@@ -8,6 +8,7 @@ use AsyncAws\DynamoDb\DynamoDbClient;
 use AsyncAws\DynamoDb\Input\DeleteItemInput;
 use AsyncAws\DynamoDb\Input\GetItemInput;
 use AsyncAws\DynamoDb\Input\PutItemInput;
+use AsyncAws\DynamoDb\Input\UpdateItemInput;
 use AsyncAws\DynamoDb\Result\GetItemOutput;
 use AsyncAws\DynamoDb\ValueObject\AttributeValue;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -37,7 +38,7 @@ class DynamoDBRepositoryTest extends TestCase
         $client = $this->createMock(DynamoDbClient::class);
 
         $client
-            ->expects(static::exactly(2))
+            ->expects(static::exactly(1))
             ->method('putItem')
             ->with(static::callback(function (PutItemInput $input) {
                 static::assertSame('tableName', $input->getTableName());
@@ -65,6 +66,45 @@ class DynamoDBRepositoryTest extends TestCase
 
         $shop = new DynamoDBShop('shopId', 'shopUrl', 'shopSecret', 'shopClientId', 'shopClientSecret', true);
         $repository->createShop($shop);
+    }
+
+    public function testUpdateShop(): void
+    {
+        $client = $this->createMock(DynamoDbClient::class);
+
+        $client
+            ->expects(static::exactly(1))
+            ->method('updateItem')
+            ->with(static::callback(function (UpdateItemInput $input) {
+                static::assertSame('tableName', $input->getTableName());
+
+                $key = $input->getKey();
+                static::assertSame('shopId', $key['id']->getS());
+
+                static::assertSame([
+                    '#u' => 'url',
+                ], $input->getExpressionAttributeNames());
+
+                $attributes = $input->getExpressionAttributeValues();
+
+                static::assertArrayHasKey(':url', $attributes);
+                static::assertArrayHasKey(':secret', $attributes);
+                static::assertArrayHasKey(':clientId', $attributes);
+                static::assertArrayHasKey(':clientSecret', $attributes);
+                static::assertArrayHasKey(':active', $attributes);
+
+                static::assertSame('shopUrl', $attributes[':url']->getS());
+                static::assertSame('shopSecret', $attributes[':secret']->getS());
+                static::assertSame('', $attributes[':clientId']->getS());
+                static::assertSame('', $attributes[':clientSecret']->getS());
+                static::assertSame(true, $attributes[':active']->getBool());
+
+                return true;
+            }));
+
+        $repository = new DynamoDBRepository($client, 'tableName');
+
+        $shop = new DynamoDBShop('shopId', 'shopUrl', 'shopSecret', null, null, true);
         $repository->updateShop($shop);
     }
 
