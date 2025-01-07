@@ -105,7 +105,14 @@ class RegistrationService
         /** @var array<string, mixed> $requestContent */
         $requestContent = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
 
-        if (!isset($requestContent['shopId'], $requestContent['apiKey']) || !is_string($requestContent['shopId']) || !is_string($requestContent['apiKey']) || !isset($requestContent['secretKey']) || !is_string($requestContent['secretKey'])) {
+        if (
+            empty($requestContent['shopId']) ||
+            empty($requestContent['apiKey']) ||
+            empty($requestContent['secretKey']) ||
+            !is_string($requestContent['shopId']) ||
+            !is_string($requestContent['apiKey']) ||
+            !is_string($requestContent['secretKey'])
+        ) {
             throw new MissingShopParameterException();
         }
 
