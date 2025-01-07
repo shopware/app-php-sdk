@@ -416,7 +416,7 @@ class RegistrationServiceTest extends TestCase
     }
 
     /**
-     * @dataProvider missingShopParametersProvider
+     * @dataProvider missingRegisterShopParametersProvider
      * @param array<string, mixed> $params
      */
     public function testRegisterMissingShopParameters(array $params): void
@@ -445,7 +445,7 @@ class RegistrationServiceTest extends TestCase
     }
 
     /**
-     * @dataProvider missingShopParametersProvider
+     * @dataProvider missingRegisterConfirmShopParametersProvider
      * @param array<string, mixed> $params
      */
     public function testRegisterConfirmMissingShopParameters(array $params): void
@@ -484,7 +484,7 @@ class RegistrationServiceTest extends TestCase
     /**
      * @return iterable<array<array<string, mixed>>>
      */
-    public static function missingShopParametersProvider(): iterable
+    public static function missingRegisterShopParametersProvider(): iterable
     {
         yield [[]];
         yield [['shop-id' => null]];
@@ -492,16 +492,37 @@ class RegistrationServiceTest extends TestCase
         yield [['shop-url' => null]];
         yield [['shop-url' => 'https://my-shop.com']];
         yield [['shop-id' => 123, 'shop-url' => null]];
-        yield [['shop-id' => '123', 'shop-url' => 'https://my-shop.com', 'apiKey' => null]];
-        yield [['shop-id' => '123', 'shop-url' => 'https://my-shop.com', 'apiKey' => 123]];
-        yield [['shop-id' => '123', 'shop-url' => 'https://my-shop.com', 'secretKey' => null]];
-        yield [['shop-id' => '123', 'shop-url' => 'https://my-shop.com', 'secretKey' => 123]];
+    }
+
+    /**
+     * @return iterable<array<array<string, mixed>>>
+     */
+    public static function missingRegisterConfirmShopParametersProvider(): iterable
+    {
+        yield [[]];
+        yield [['shopId' => null]];
+        yield [['shopId' => 123]];
+        yield [['shop-url' => null]];
+        yield [['shop-url' => 'https://my-shop.com']];
+        yield [['shopId' => 123, 'shop-url' => null]];
+        yield [['shopId' => '123', 'shop-url' => 'https://my-shop.com', 'apiKey' => null]];
+        yield [['shopId' => '123', 'shop-url' => 'https://my-shop.com', 'apiKey' => 123]];
+        yield [['shopId' => '123', 'shop-url' => 'https://my-shop.com', 'secretKey' => null]];
+        yield [['shopId' => '123', 'shop-url' => 'https://my-shop.com', 'secretKey' => 123]];
         yield [['apiKey' => 123]];
         yield [['apiKey' => null]];
         yield [['apiKey' => '123', 'secretKey' => null]];
         yield [['apiKey' => '123', 'secretKey' => 123]];
         yield [['shop-id' => '123', 'apiKey' => '123']];
         yield [['shop-id' => '123', 'apiKey' => '123', 'secretKey' => 123]];
+        yield [['shop-id' => '', 'apiKey' => '', 'secretKey' => '']];
+        yield [['shop-id' => '', 'apiKey' => '', 'secretKey' => '123']];
+        yield [['shop-id' => '', 'apiKey' => '', 'secretKey' => '']];
+        yield [['shop-id' => '', 'apiKey' => '123', 'secretKey' => '']];
+        yield [['shop-id' => '', 'apiKey' => '123', 'secretKey' => '123']];
+        yield [['shop-id' => '123', 'apiKey' => '', 'secretKey' => '']];
+        yield [['shop-id' => '123', 'apiKey' => '', 'secretKey' => '123']];
+        yield [['shop-id' => '123', 'apiKey' => '123', 'secretKey' => '']];
     }
 
     /**
