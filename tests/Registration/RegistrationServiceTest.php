@@ -107,7 +107,7 @@ class RegistrationServiceTest extends TestCase
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('https://my-shop.com', $shop->getShopUrl());
 
-        $json = json_decode((string) $response->getBody()->getContents(), true);
+        $json = json_decode((string)$response->getBody()->getContents(), true);
 
         static::assertCount(1, $events);
         static::assertInstanceOf(BeforeRegistrationStartsEvent::class, $events[0]);
@@ -156,7 +156,7 @@ class RegistrationServiceTest extends TestCase
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('https://my-shop.com', $shop->getShopUrl());
 
-        $json = json_decode((string) $response->getBody()->getContents(), true);
+        $json = json_decode((string)$response->getBody()->getContents(), true);
 
         static::assertIsArray($json);
         static::assertArrayHasKey('proof', $json);
@@ -496,13 +496,12 @@ class RegistrationServiceTest extends TestCase
 
     #[DataProvider('shopUrlsProviderForCreation')]
     public function testRegisterCreateShopUrlIsSanitized(
-        string $shopUrl,
+        string $unsanitizedShopUrl,
         string $expectedUrl,
-        bool $sanitizeShopUrlInDatabase
     ): void {
         $shopRepository = $this->createMock(ShopRepositoryInterface::class);
 
-        $shop = new MockShop('123', $shopUrl, '1234567890');
+        $expectedShop = new MockShop('123', $expectedUrl, '1234567890');
 
         $shopRepository
             ->expects(static::once())
@@ -513,14 +512,7 @@ class RegistrationServiceTest extends TestCase
         $shopRepository
             ->expects(static::once())
             ->method('createShopStruct')
-            ->willReturn($shop);
-
-        if ($sanitizeShopUrlInDatabase) {
-            $shopRepository
-                ->expects(static::once())
-                ->method('updateShop')
-                ->with($shop);
-        }
+            ->willReturn($expectedShop);
 
         $registrationService = new RegistrationService(
             $this->appConfiguration,
@@ -534,25 +526,22 @@ class RegistrationServiceTest extends TestCase
 
         $request = new Request(
             'GET',
-            sprintf('http://localhost?shop-id=123&shop-url=%s&timestamp=1234567890', $shopUrl)
+            sprintf('http://localhost?shop-id=123&shop-url=%s&timestamp=1234567890', $unsanitizedShopUrl)
         );
 
         $registrationService->register($request);
-
-        static::assertSame($expectedUrl, $shop->getShopUrl());
     }
 
 
     #[DataProvider('shopUrlsProviderForUpdate')]
     public function testRegisterUpdateShopUrlIsSanitized(
-        string $shopUrl,
-        string $newShopUrl,
+        string $oldShopUrl,
+        string $newUnsanitizedShopUrl,
         string $expectedUrl,
-        bool $sanitizeShopUrlInDatabase
     ): void {
         $shopRepository = $this->createMock(ShopRepositoryInterface::class);
 
-        $shop = new MockShop('123', $shopUrl, '1234567890');
+        $shop = new MockShop('123', $oldShopUrl, '1234567890');
 
         $shopRepository
             ->expects(static::once())
@@ -563,31 +552,12 @@ class RegistrationServiceTest extends TestCase
             ->expects(static::never())
             ->method('createShopStruct');
 
-        $expectedUrls = [
-            $newShopUrl,
-            $expectedUrl,
-        ];
-
-        $callCount = 0;
-
-        if ($sanitizeShopUrlInDatabase) {
-            $shopRepository
-                ->expects(static::exactly(2))
-                ->method('updateShop')
-                ->with($this->callback(function (MockShop $shop) use (&$callCount, $expectedUrls) {
-                    $expectedUrl = $expectedUrls[$callCount] ?? null;
-                    $result = $shop->getShopUrl() === $expectedUrl;
-                    $callCount++;
-                    return $result;
-                }));
-        } else {
-            $shopRepository
-                ->expects(static::once())
-                ->method('updateShop')
-                ->with($this->callback(function (MockShop $shop) use ($newShopUrl) {
-                    return $shop->getShopUrl() === $newShopUrl;
-                }));
-        }
+        $shopRepository
+            ->expects(static::once())
+            ->method('updateShop')
+            ->with($this->callback(function (MockShop $shop) use ($expectedUrl) {
+                return $shop->getShopUrl() === $expectedUrl;
+            }));
 
         $registrationService = new RegistrationService(
             $this->appConfiguration,
@@ -601,12 +571,10 @@ class RegistrationServiceTest extends TestCase
 
         $request = new Request(
             'GET',
-            sprintf('http://localhost?shop-id=123&shop-url=%s&timestamp=1234567890', $newShopUrl)
+            sprintf('http://localhost?shop-id=123&shop-url=%s&timestamp=1234567890', $newUnsanitizedShopUrl)
         );
 
         $registrationService->register($request);
-
-        static::assertSame($expectedUrl, $shop->getShopUrl());
     }
 
     /**
@@ -659,75 +627,63 @@ class RegistrationServiceTest extends TestCase
     public function shopUrlsProviderForCreation(): iterable
     {
         yield 'Valid URL with port' => [
-            'shopUrl' => 'https://my-shop.com:80',
+            'unsanitizedShopUrl' => 'https://my-shop.com:80',
             'expectedUrl' => 'https://my-shop.com:80',
-            'sanitizeShopUrlInDatabase' => false,
         ];
 
         yield 'Valid URL with port and trailing slash' => [
-            'shopUrl' => 'https://my-shop.com:8080/',
+            'unsanitizedShopUrl' => 'https://my-shop.com:8080/',
             'expectedUrl' => 'https://my-shop.com:8080',
-            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Valid URL with port, path and trailing slash' => [
-            'shopUrl' => 'https://my-shop.com:8080//test/',
+            'unsanitizedShopUrl' => 'https://my-shop.com:8080//test/',
             'expectedUrl' => 'https://my-shop.com:8080/test',
-            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Valid URL without trailing slash' => [
-            'shopUrl' => 'https://my-shop.com',
+            'unsanitizedShopUrl' => 'https://my-shop.com',
             'expectedUrl' => 'https://my-shop.com',
-            'sanitizeShopUrlInDatabase' => false,
         ];
 
         yield 'Valid URL with trailing slash' => [
-            'shopUrl' => 'https://my-shop.com/',
+            'unsanitizedShopUrl' => 'https://my-shop.com/',
             'expectedUrl' => 'https://my-shop.com',
-            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with trailing slash' => [
-            'shopUrl' => 'https://my-shop.com/test/',
+            'unsanitizedShopUrl' => 'https://my-shop.com/test/',
             'expectedUrl' => 'https://my-shop.com/test',
-            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with double slashes' => [
-            'shopUrl' => 'https://my-shop.com//test',
+            'unsanitizedShopUrl' => 'https://my-shop.com//test',
             'expectedUrl' => 'https://my-shop.com/test',
-            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with 2 slashes and trailing slash' => [
-            'shopUrl' => 'https://my-shop.com//test/',
+            'unsanitizedShopUrl' => 'https://my-shop.com//test/',
             'expectedUrl' => 'https://my-shop.com/test',
-            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with 3 slashes and trailing slash' => [
-            'shopUrl' => 'https://my-shop.com///test/',
+            'unsanitizedShopUrl' => 'https://my-shop.com///test/',
             'expectedUrl' => 'https://my-shop.com/test',
-            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with multiple slashes' => [
-            'shopUrl' => 'https://my-shop.com///test/test1//test2',
+            'unsanitizedShopUrl' => 'https://my-shop.com///test/test1//test2',
             'expectedUrl' => 'https://my-shop.com/test/test1/test2',
-            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with multiple slashes and trailing slash' => [
-            'shopUrl' => 'https://my-shop.com///test/test1//test2/',
+            'unsanitizedShopUrl' => 'https://my-shop.com///test/test1//test2/',
             'expectedUrl' => 'https://my-shop.com/test/test1/test2',
-            'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with multiple slashes and multiple trailing slash' => [
-            'shopUrl' => 'https://my-shop.com///test/test1//test2//',
+            'unsanitizedShopUrl' => 'https://my-shop.com///test/test1//test2//',
             'expectedUrl' => 'https://my-shop.com/test/test1/test2',
-            'sanitizeShopUrlInDatabase' => true,
         ];
     }
 
@@ -737,85 +693,83 @@ class RegistrationServiceTest extends TestCase
     public static function shopUrlsProviderForUpdate(): iterable
     {
         yield 'Valid URL with port' => [
-           'shopUrl' => 'https://my-shop.com:80',
-           'newShopUrl' => 'https://my-changed-shop.de:80',
-           'expectedUrl' => 'https://my-changed-shop.de:80',
-           'sanitizeShopUrlInDatabase' => false,
+            'oldShopUrl' => 'https://my-shop.com:80',
+            'newUnsanitizedShopUrl' => 'https://my-changed-shop.de:80',
+            'expectedUrl' => 'https://my-changed-shop.de:80',
         ];
 
         yield 'Valid URL with port and trailing slash' => [
-            'shopUrl' => 'https://my-shop.com:8080/',
-            'newShopUrl' => 'https://my-changed-shop.com:8080/',
+            'oldShopUrl' => 'https://my-shop.com:8080/',
+            'newUnsanitizedShopUrl' => 'https://my-changed-shop.com:8080/',
             'expectedUrl' => 'https://my-changed-shop.com:8080',
-            'sanitizeShopUrlInDatabase' => true,
         ];
-
+        //
         yield 'Valid URL with port, path and trailing slash' => [
-            'shopUrl' => 'https://my-shop.com:8080//test/',
-            'newShopUrl' => 'https://my-changed-shop.com:8080//test/',
+            'oldShopUrl' => 'https://my-shop.com:8080//test/',
+            'newUnsanitizedShopUrl' => 'https://my-changed-shop.com:8080//test/',
             'expectedUrl' => 'https://my-changed-shop.com:8080/test',
             'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Valid URL without trailing slash' => [
-            'shopUrl' => 'https://my-shop.com',
-            'newShopUrl' => 'https://my-changed-shop.com',
+            'oldShopUrl' => 'https://my-shop.com',
+            'newUnsanitizedShopUrl' => 'https://my-changed-shop.com',
             'expectedUrl' => 'https://my-changed-shop.com',
             'sanitizeShopUrlInDatabase' => false,
         ];
 
         yield 'Valid URL with trailing slash' => [
-            'shopUrl' => 'https://my-shop.com/',
-            'newShopUrl' => 'https://my-changed-shop.com/',
+            'oldShopUrl' => 'https://my-shop.com/',
+            'newUnsanitizedShopUrl' => 'https://my-changed-shop.com/',
             'expectedUrl' => 'https://my-changed-shop.com',
             'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with trailing slash' => [
-            'shopUrl' => 'https://my-shop.com/test/',
-            'newShopUrl' => 'https://my-changed-shop.com/test/',
+            'oldShopUrl' => 'https://my-shop.com/test/',
+            'newUnsanitizedShopUrl' => 'https://my-changed-shop.com/test/',
             'expectedUrl' => 'https://my-changed-shop.com/test',
             'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with double slashes' => [
-            'shopUrl' => 'https://my-shop.com//test',
-            'newShopUrl' => 'https://my-changed-shop.com//test',
+            'oldShopUrl' => 'https://my-shop.com//test',
+            'newUnsanitizedShopUrl' => 'https://my-changed-shop.com//test',
             'expectedUrl' => 'https://my-changed-shop.com/test',
             'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with 2 slashes and trailing slash' => [
-            'shopUrl' => 'https://my-shop.com//test/',
-            'newShopUrl' => 'https://my-changed-shop.com//test/',
+            'oldShopUrl' => 'https://my-shop.com//test/',
+            'newUnsanitizedShopUrl' => 'https://my-changed-shop.com//test/',
             'expectedUrl' => 'https://my-changed-shop.com/test',
             'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with 3 slashes and trailing slash' => [
-            'shopUrl' => 'https://my-shop.com///test/',
-            'newShopUrl' => 'https://my-changed-shop.com///test/',
+            'oldShopUrl' => 'https://my-shop.com///test/',
+            'newUnsanitizedShopUrl' => 'https://my-changed-shop.com///test/',
             'expectedUrl' => 'https://my-changed-shop.com/test',
             'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with multiple slashes' => [
-            'shopUrl' => 'https://my-shop.com///test/test1//test2',
-            'newShopUrl' => 'https://my-changed-shop.com///test/test1//test2',
+            'oldShopUrl' => 'https://my-shop.com///test/test1//test2',
+            'newUnsanitizedShopUrl' => 'https://my-changed-shop.com///test/test1//test2',
             'expectedUrl' => 'https://my-changed-shop.com/test/test1/test2',
             'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with multiple slashes and trailing slash' => [
-            'shopUrl' => 'https://my-shop.com///test/test1//test2/',
-            'newShopUrl' => 'https://my-changed-shop.com///test/test1//test2/',
+            'oldShopUrl' => 'https://my-shop.com///test/test1//test2/',
+            'newUnsanitizedShopUrl' => 'https://my-changed-shop.com///test/test1//test2/',
             'expectedUrl' => 'https://my-changed-shop.com/test/test1/test2',
             'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with multiple slashes and multiple trailing slash' => [
-            'shopUrl' => 'https://my-shop.com///test/test1//test2//',
-            'newShopUrl' => 'https://my-changed-shop.com///test/test1//test2//',
+            'oldShopUrl' => 'https://my-shop.com///test/test1//test2//',
+            'newUnsanitizedShopUrl' => 'https://my-changed-shop.com///test/test1//test2//',
             'expectedUrl' => 'https://my-changed-shop.com/test/test1/test2',
             'sanitizeShopUrlInDatabase' => true,
         ];
