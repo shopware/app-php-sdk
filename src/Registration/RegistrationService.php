@@ -58,7 +58,7 @@ class RegistrationService
         if ($shop === null) {
             $shop = $this->shopRepository->createShopStruct(
                 $queries['shop-id'],
-                $this->sanitizeShopUrl($queries['shop-url']),
+                $queries['shop-url'],
                 $this->shopSecretGeneratorInterface->generate()
             );
 
@@ -78,7 +78,6 @@ class RegistrationService
             'shop-url' => $shop->getShopUrl(),
         ]);
 
-
         $psrFactory = new Psr17Factory();
 
         $data = [
@@ -86,6 +85,8 @@ class RegistrationService
             'confirmation_url' => $this->appConfiguration->getRegistrationConfirmUrl(),
             'secret' => $shop->getShopSecret(),
         ];
+
+        $this->fixShopUrlInDatabase($shop);
 
         $response = $psrFactory->createResponse(200);
 
@@ -162,5 +163,16 @@ class RegistrationService
             $port ? ':' . $port : null,
             $normalizedPath
         );
+    }
+
+    private function fixShopUrlInDatabase(ShopInterface $shop): void
+    {
+        $sanitizedShopUrl = $this->sanitizeShopUrl($shop->getShopUrl());
+
+
+        if ($shop->getShopUrl() !== $sanitizedShopUrl) {
+            $shop->setShopUrl($sanitizedShopUrl);
+            $this->shopRepository->updateShop($shop);
+        }
     }
 }
