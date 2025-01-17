@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Registration;
 
 use Http\Discovery\Psr17Factory;
+use Nyholm\Psr7\Uri;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -62,31 +63,32 @@ class RegistrationService
                 $this->shopSecretGeneratorInterface->generate()
             );
 
-            $this->eventDispatcher?->dispatch(new BeforeRegistrationStartsEvent($request, $shop));
+            $sanitizedShop = $this->getSanitizedShop($shop);
+            $this->eventDispatcher?->dispatch(new BeforeRegistrationStartsEvent($request, $sanitizedShop));
 
-            $this->shopRepository->createShop($shop);
+            $this->shopRepository->createShop($sanitizedShop);
         } else {
             $shop->setShopUrl($queries['shop-url']);
 
-            $this->eventDispatcher?->dispatch(new BeforeRegistrationStartsEvent($request, $shop));
+            $sanitizedShop = $this->getSanitizedShop($shop);
+            $this->eventDispatcher?->dispatch(new BeforeRegistrationStartsEvent($request, $sanitizedShop));
 
-            $this->shopRepository->updateShop($shop);
+            $this->shopRepository->updateShop($sanitizedShop);
         }
 
         $this->logger->info('Shop registration request received', [
-            'shop-id' => $shop->getShopId(),
-            'shop-url' => $shop->getShopUrl(),
+            'shop-id' => $sanitizedShop->getShopId(),
+            'shop-url' => $sanitizedShop->getShopUrl(),
         ]);
 
         $psrFactory = new Psr17Factory();
 
         $data = [
+            // old shop is needed because the shop url is not sanitized
             'proof' => $this->responseSigner->getRegistrationSignature($this->appConfiguration, $shop),
             'confirmation_url' => $this->appConfiguration->getRegistrationConfirmUrl(),
             'secret' => $shop->getShopSecret(),
         ];
-
-        $this->fixShopUrlInDatabase($shop);
 
         $response = $psrFactory->createResponse(200);
 
@@ -145,34 +147,30 @@ class RegistrationService
 
     private function sanitizeShopUrl(string $shopUrl): string
     {
-        $parsedUrl = parse_url($shopUrl);
+        $uri = new Uri($shopUrl);
 
-        $protocol = $parsedUrl['scheme'] ?? '';
-        $host = $parsedUrl['host'] ?? '';
-        $path = $parsedUrl['path'] ?? '';
-        $port = $parsedUrl['port'] ?? '';
+        $protocol = $uri->getScheme();
+        $host = $uri->getHost();
+        $path = $uri->getPath();
+        $port = $uri->getPort();
 
         /** @var string $normalizedPath */
         $normalizedPath = preg_replace('#/{2,}#', '/', $path);
         $normalizedPath = rtrim($normalizedPath, '/');
 
-        return sprintf(
-            '%s://%s%s%s',
-            $protocol,
-            $host,
-            $port ? ':' . $port : null,
-            $normalizedPath
-        );
+        $url = $protocol . '://' . $host;
+        if ($port) {
+            $url .= ':' . $port;
+        }
+        $url .= $normalizedPath;
+
+        return $url;
     }
 
-    private function fixShopUrlInDatabase(ShopInterface $shop): void
+    private function getSanitizedShop(ShopInterface $shop): ShopInterface
     {
-        $sanitizedShopUrl = $this->sanitizeShopUrl($shop->getShopUrl());
+        $sanitizedShop = clone $shop;
 
-
-        if ($shop->getShopUrl() !== $sanitizedShopUrl) {
-            $shop->setShopUrl($sanitizedShopUrl);
-            $this->shopRepository->updateShop($shop);
-        }
+        return $sanitizedShop->setShopUrl($this->sanitizeShopUrl($shop->getShopUrl()));
     }
 }
