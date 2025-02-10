@@ -22,7 +22,7 @@ use Strobotti\JWK\KeySetFactory;
  */
 class SBPStoreKeyFetcher
 {
-    final public const SBP_JWT_API_HOST = 'https://next-api.shopware.com';
+    final public const SBP_JWT_API_HOST = 'https://api.shopware.com';
     final public const SBP_JWT_CACHE_KEY = 'store-jwks-key';
 
     public function __construct(
