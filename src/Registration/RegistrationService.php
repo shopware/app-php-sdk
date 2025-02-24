@@ -148,23 +148,10 @@ class RegistrationService
     private function sanitizeShopUrl(string $shopUrl): string
     {
         $uri = new Uri($shopUrl);
+        $path = preg_replace('#/{2,}#', '/', $uri->getPath()) ?? '';
+        $uri = $uri->withPath($path);
 
-        $protocol = $uri->getScheme();
-        $host = $uri->getHost();
-        $path = $uri->getPath();
-        $port = $uri->getPort();
-
-        /** @var string $normalizedPath */
-        $normalizedPath = preg_replace('#/{2,}#', '/', $path);
-        $normalizedPath = rtrim($normalizedPath, '/');
-
-        $url = $protocol . '://' . $host;
-        if ($port) {
-            $url .= ':' . $port;
-        }
-        $url .= $normalizedPath;
-
-        return $url;
+        return (string)$uri;
     }
 
     private function getSanitizedShop(ShopInterface $shop): ShopInterface
