@@ -633,12 +633,12 @@ class RegistrationServiceTest extends TestCase
 
         yield 'Valid URL with port and trailing slash' => [
             'unsanitizedShopUrl' => 'https://my-shop.com:8080/',
-            'expectedUrl' => 'https://my-shop.com:8080',
+            'expectedUrl' => 'https://my-shop.com:8080/',
         ];
 
         yield 'Valid URL with port, path and trailing slash' => [
             'unsanitizedShopUrl' => 'https://my-shop.com:8080//test/',
-            'expectedUrl' => 'https://my-shop.com:8080/test',
+            'expectedUrl' => 'https://my-shop.com:8080/test/',
         ];
 
         yield 'Valid URL without trailing slash' => [
@@ -648,10 +648,10 @@ class RegistrationServiceTest extends TestCase
 
         yield 'Valid URL with trailing slash' => [
             'unsanitizedShopUrl' => 'https://my-shop.com/',
-            'expectedUrl' => 'https://my-shop.com',
+            'expectedUrl' => 'https://my-shop.com/',
         ];
 
-        yield 'Invalid URL with trailing slash' => [
+        yield 'Valid URL with trailing slash and subfolder' => [
             'unsanitizedShopUrl' => 'https://my-shop.com/test/',
             'expectedUrl' => 'https://my-shop.com/test',
         ];
@@ -663,12 +663,12 @@ class RegistrationServiceTest extends TestCase
 
         yield 'Invalid URL with 2 slashes and trailing slash' => [
             'unsanitizedShopUrl' => 'https://my-shop.com//test/',
-            'expectedUrl' => 'https://my-shop.com/test',
+            'expectedUrl' => 'https://my-shop.com/test/',
         ];
 
         yield 'Invalid URL with 3 slashes and trailing slash' => [
             'unsanitizedShopUrl' => 'https://my-shop.com///test/',
-            'expectedUrl' => 'https://my-shop.com/test',
+            'expectedUrl' => 'https://my-shop.com/test/',
         ];
 
         yield 'Invalid URL with multiple slashes' => [
@@ -678,12 +678,12 @@ class RegistrationServiceTest extends TestCase
 
         yield 'Invalid URL with multiple slashes and trailing slash' => [
             'unsanitizedShopUrl' => 'https://my-shop.com///test/test1//test2/',
-            'expectedUrl' => 'https://my-shop.com/test/test1/test2',
+            'expectedUrl' => 'https://my-shop.com/test/test1/test2/',
         ];
 
         yield 'Invalid URL with multiple slashes and multiple trailing slash' => [
             'unsanitizedShopUrl' => 'https://my-shop.com///test/test1//test2//',
-            'expectedUrl' => 'https://my-shop.com/test/test1/test2',
+            'expectedUrl' => 'https://my-shop.com/test/test1/test2/',
         ];
     }
 
@@ -701,13 +701,13 @@ class RegistrationServiceTest extends TestCase
         yield 'Valid URL with port and trailing slash' => [
             'oldShopUrl' => 'https://my-shop.com:8080/',
             'newUnsanitizedShopUrl' => 'https://my-changed-shop.com:8080/',
-            'expectedUrl' => 'https://my-changed-shop.com:8080',
+            'expectedUrl' => 'https://my-changed-shop.com:8080/',
         ];
-        //
+
         yield 'Valid URL with port, path and trailing slash' => [
             'oldShopUrl' => 'https://my-shop.com:8080//test/',
             'newUnsanitizedShopUrl' => 'https://my-changed-shop.com:8080//test/',
-            'expectedUrl' => 'https://my-changed-shop.com:8080/test',
+            'expectedUrl' => 'https://my-changed-shop.com:8080/test/',
             'sanitizeShopUrlInDatabase' => true,
         ];
 
@@ -721,14 +721,14 @@ class RegistrationServiceTest extends TestCase
         yield 'Valid URL with trailing slash' => [
             'oldShopUrl' => 'https://my-shop.com/',
             'newUnsanitizedShopUrl' => 'https://my-changed-shop.com/',
-            'expectedUrl' => 'https://my-changed-shop.com',
+            'expectedUrl' => 'https://my-changed-shop.com/',
             'sanitizeShopUrlInDatabase' => true,
         ];
 
-        yield 'Invalid URL with trailing slash' => [
+        yield 'Valid URL with trailing slash and subfolder' => [
             'oldShopUrl' => 'https://my-shop.com/test/',
             'newUnsanitizedShopUrl' => 'https://my-changed-shop.com/test/',
-            'expectedUrl' => 'https://my-changed-shop.com/test',
+            'expectedUrl' => 'https://my-changed-shop.com/test/',
             'sanitizeShopUrlInDatabase' => true,
         ];
 
@@ -742,14 +742,14 @@ class RegistrationServiceTest extends TestCase
         yield 'Invalid URL with 2 slashes and trailing slash' => [
             'oldShopUrl' => 'https://my-shop.com//test/',
             'newUnsanitizedShopUrl' => 'https://my-changed-shop.com//test/',
-            'expectedUrl' => 'https://my-changed-shop.com/test',
+            'expectedUrl' => 'https://my-changed-shop.com/test/',
             'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with 3 slashes and trailing slash' => [
             'oldShopUrl' => 'https://my-shop.com///test/',
             'newUnsanitizedShopUrl' => 'https://my-changed-shop.com///test/',
-            'expectedUrl' => 'https://my-changed-shop.com/test',
+            'expectedUrl' => 'https://my-changed-shop.com/test/',
             'sanitizeShopUrlInDatabase' => true,
         ];
 
@@ -763,14 +763,14 @@ class RegistrationServiceTest extends TestCase
         yield 'Invalid URL with multiple slashes and trailing slash' => [
             'oldShopUrl' => 'https://my-shop.com///test/test1//test2/',
             'newUnsanitizedShopUrl' => 'https://my-changed-shop.com///test/test1//test2/',
-            'expectedUrl' => 'https://my-changed-shop.com/test/test1/test2',
+            'expectedUrl' => 'https://my-changed-shop.com/test/test1/test2/',
             'sanitizeShopUrlInDatabase' => true,
         ];
 
         yield 'Invalid URL with multiple slashes and multiple trailing slash' => [
             'oldShopUrl' => 'https://my-shop.com///test/test1//test2//',
             'newUnsanitizedShopUrl' => 'https://my-changed-shop.com///test/test1//test2//',
-            'expectedUrl' => 'https://my-changed-shop.com/test/test1/test2',
+            'expectedUrl' => 'https://my-changed-shop.com/test/test1/test2/',
             'sanitizeShopUrlInDatabase' => true,
         ];
     }
