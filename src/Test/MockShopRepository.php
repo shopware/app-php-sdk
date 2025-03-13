@@ -8,12 +8,12 @@ use Shopware\App\SDK\Shop\ShopInterface;
 use Shopware\App\SDK\Shop\ShopRepositoryInterface;
 
 /**
- * @implements ShopRepositoryInterface<MockShop>
+ * @implements ShopRepositoryInterface<ShopInterface>
  */
 class MockShopRepository implements ShopRepositoryInterface
 {
     /**
-     * @var array<string, MockShop>
+     * @var array<string, ShopInterface>
      */
     public array $shops = [];
 
