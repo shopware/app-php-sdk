@@ -27,6 +27,12 @@ class CalculatedTax extends ArrayStruct
         return $this->data['tax'];
     }
 
+    public function getLabel(): ?string
+    {
+        \assert(is_string($this->data['label'] ?? null) || is_null($this->data['label'] ?? null));
+        return $this->data['label'] ?? null;
+    }
+
     /**
      * @param Collection<CalculatedTax> $calculatedTaxes
      * @return Collection<CalculatedTax>
@@ -47,6 +53,7 @@ class CalculatedTax extends ArrayStruct
                 'taxRate' => $calculatedTax->getTaxRate(),
                 'price' => $new[$calculatedTax->getTaxRate()]->getPrice() + $calculatedTax->getPrice(),
                 'tax' => $new[$calculatedTax->getTaxRate()]->getTax() + $calculatedTax->getTax(),
+                'label' => implode(' + ', array_filter([$new[$calculatedTax->getTaxRate()]->getLabel(), $calculatedTax->getLabel()])) ?: null,
             ]);
         }
 

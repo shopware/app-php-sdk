@@ -10,6 +10,7 @@ class CalculatedTax implements \JsonSerializable
         public readonly float $tax,
         public readonly float $taxRate,
         public readonly float $price,
+        public readonly ?string $label = null,
     ) {
     }
 
@@ -27,6 +28,7 @@ class CalculatedTax implements \JsonSerializable
             $this->tax + $tax->tax,
             $this->taxRate,
             $this->price + $tax->price,
+            implode(' + ', array_filter([$this->label, $tax->label])) ?: null,
         );
     }
 }
