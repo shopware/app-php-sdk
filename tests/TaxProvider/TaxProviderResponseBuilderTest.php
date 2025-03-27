@@ -21,7 +21,7 @@ class TaxProviderResponseBuilderTest extends TestCase
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame(
-            '{"lineItemTaxes":[],"deliveryTaxes":[],"cartPriceTaxes":{"100":{"tax":19,"taxRate":100,"price":19}}}',
+            '{"lineItemTaxes":[],"deliveryTaxes":[],"cartPriceTaxes":{"100":{"tax":19,"taxRate":100,"price":19,"label":null}}}',
             $response->getBody()->getContents()
         );
     }
@@ -37,7 +37,7 @@ class TaxProviderResponseBuilderTest extends TestCase
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame(
-            '{"lineItemTaxes":[],"deliveryTaxes":[],"cartPriceTaxes":{"100":{"tax":38,"taxRate":100,"price":38}}}',
+            '{"lineItemTaxes":[],"deliveryTaxes":[],"cartPriceTaxes":{"100":{"tax":38,"taxRate":100,"price":38,"label":null}}}',
             $response->getBody()->getContents()
         );
     }
@@ -51,7 +51,7 @@ class TaxProviderResponseBuilderTest extends TestCase
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame(
-            '{"lineItemTaxes":{"lineItem1":{"100":{"tax":19,"taxRate":100,"price":19}}},"deliveryTaxes":[],"cartPriceTaxes":[]}',
+            '{"lineItemTaxes":{"lineItem1":{"100":{"tax":19,"taxRate":100,"price":19,"label":null}}},"deliveryTaxes":[],"cartPriceTaxes":[]}',
             $response->getBody()->getContents()
         );
     }
@@ -66,7 +66,7 @@ class TaxProviderResponseBuilderTest extends TestCase
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame(
-            '{"lineItemTaxes":{"lineItem1":{"100":{"tax":38,"taxRate":100,"price":19}}},"deliveryTaxes":[],"cartPriceTaxes":[]}',
+            '{"lineItemTaxes":{"lineItem1":{"100":{"tax":38,"taxRate":100,"price":19,"label":null}}},"deliveryTaxes":[],"cartPriceTaxes":[]}',
             $response->getBody()->getContents()
         );
     }
@@ -80,7 +80,7 @@ class TaxProviderResponseBuilderTest extends TestCase
 
         static::assertSame(200, $response->getStatusCode());
         static::assertSame(
-            '{"lineItemTaxes":[],"deliveryTaxes":{"delivery1":{"100":{"tax":19,"taxRate":100,"price":19}}},"cartPriceTaxes":[]}',
+            '{"lineItemTaxes":[],"deliveryTaxes":{"delivery1":{"100":{"tax":19,"taxRate":100,"price":19,"label":null}}},"cartPriceTaxes":[]}',
             $response->getBody()->getContents()
         );
     }
@@ -93,7 +93,7 @@ class TaxProviderResponseBuilderTest extends TestCase
         $response = $builder->buildPayload();
 
         static::assertSame(
-            '{"lineItemTaxes":[],"deliveryTaxes":[],"cartPriceTaxes":{"100":{"tax":19,"taxRate":100,"price":19}}}',
+            '{"lineItemTaxes":[],"deliveryTaxes":[],"cartPriceTaxes":{"100":{"tax":19,"taxRate":100,"price":19,"label":null}}}',
             $response
         );
     }
