@@ -6,9 +6,9 @@ namespace Shopware\App\SDK\Tests\Gateway\Checkout;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Shopware\App\SDK\Gateway\Checkout\CheckoutGatewayCommand;
+use Shopware\App\SDK\Gateway\Checkout\ContextGatewayCommand;
 
-#[CoversClass(CheckoutGatewayCommand::class)]
+#[CoversClass(ContextGatewayCommand::class)]
 class CheckoutGatewayCommandTest extends TestCase
 {
     public function testSetPayloadValue(): void
@@ -60,8 +60,8 @@ class CheckoutGatewayCommandTest extends TestCase
         static::assertEquals(['command' => 'key', 'payload' => ['key' => 'value']], $command->jsonSerialize());
     }
 
-    private function getCommand(): CheckoutGatewayCommand
+    private function getCommand(): ContextGatewayCommand
     {
-        return new class () extends CheckoutGatewayCommand {};
+        return new class () extends ContextGatewayCommand {};
     }
 }

@@ -9,6 +9,7 @@ use Psr\Http\Message\RequestInterface;
 use Shopware\App\SDK\Context\ActionButton\ActionButtonAction;
 use Shopware\App\SDK\Context\Cart\Cart;
 use Shopware\App\SDK\Context\Gateway\Checkout\CheckoutGatewayAction;
+use Shopware\App\SDK\Context\Gateway\Context\ContextGatewayAction;
 use Shopware\App\SDK\Context\Gateway\InAppFeatures\FilterAction;
 use Shopware\App\SDK\Context\InAppPurchase\InAppPurchaseProvider;
 use Shopware\App\SDK\Context\Module\ModuleAction;
@@ -285,6 +286,23 @@ class ContextResolver
             new SalesChannelContext($body['salesChannelContext']),
             new Collection(\array_flip($body['paymentMethods'])),
             new Collection(\array_flip($body['shippingMethods'])),
+        );
+    }
+
+    public function assembleContextGatewayRequest(RequestInterface $request, ShopInterface $shop): ContextGatewayAction
+    {
+        $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+        $request->getBody()->rewind();
+
+        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
+            throw new MalformedWebhookBodyException();
+        }
+
+        return new ContextGatewayAction(
+            $shop,
+            $this->parseSource($body['source'], $shop),
+            new Cart($body['cart']),
+            new SalesChannelContext($body['salesChannelContext'])
         );
     }
 
