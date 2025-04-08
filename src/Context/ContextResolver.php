@@ -294,7 +294,7 @@ class ContextResolver
         $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
         $request->getBody()->rewind();
 
-        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
+        if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source']) || !isset($body['data']) || !\is_array($body['data'])) {
             throw new MalformedWebhookBodyException();
         }
 
@@ -302,7 +302,8 @@ class ContextResolver
             $shop,
             $this->parseSource($body['source'], $shop),
             new Cart($body['cart']),
-            new SalesChannelContext($body['salesChannelContext'])
+            new SalesChannelContext($body['salesChannelContext']),
+            $body['data'],
         );
     }
 

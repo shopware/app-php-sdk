@@ -9,11 +9,15 @@ use Shopware\App\SDK\Shop\ShopInterface;
 
 class ContextGatewayAction
 {
+    /**
+     * @param array<string, mixed> $data - Additional data to be passed to the action.
+     */
     public function __construct(
         public readonly ShopInterface $shop,
         public readonly ActionSource $source,
         public readonly Cart $cart,
         public readonly SalesChannelContext $context,
+        public readonly array $data = [],
     ) {
     }
 }
