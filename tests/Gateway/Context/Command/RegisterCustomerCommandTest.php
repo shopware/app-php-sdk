@@ -23,7 +23,6 @@ class RegisterCustomerCommandTest extends TestCase
 
         static::assertSame($data, $command->data);
         static::assertSame($data, $command->getPayloadValue('data'));
-        static::assertSame('context_register-customer', $command->keyName);
     }
 
     public function testKey(): void

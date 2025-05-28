@@ -17,7 +17,6 @@ class ChangeShippingMethodCommandTest extends TestCase
 
         static::assertSame('shipping_technical-name', $command->technicalName);
         static::assertSame('shipping_technical-name', $command->getPayloadValue('technicalName'));
-        static::assertSame('context_change-shipping-method', $command->keyName);
     }
 
     public function testKey(): void

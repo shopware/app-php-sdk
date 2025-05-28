@@ -17,7 +17,6 @@ class ChangeCurrencyCommandTest extends TestCase
 
         static::assertSame('EUR', $command->iso);
         static::assertSame('EUR', $command->getPayloadValue('iso'));
-        static::assertSame('context_change-currency', $command->keyName);
     }
 
     public function testKey(): void

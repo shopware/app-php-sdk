@@ -17,7 +17,6 @@ class ChangeLanguageCommandTest extends TestCase
 
         static::assertSame('de-DE', $command->iso);
         static::assertSame('de-DE', $command->getPayloadValue('iso'));
-        static::assertSame('context_change-language', $command->keyName);
     }
 
     public function testKey(): void

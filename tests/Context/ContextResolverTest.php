@@ -1177,6 +1177,61 @@ class ContextResolverTest extends TestCase
         static::assertSame(['foo' => 'bar'], $action->data);
     }
 
+    public function testAssembleContextGatewayWithInvalidData(): void
+    {
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+                'inAppPurchases' => 'ey',
+            ],
+            'cart' => [
+                'token' => 'cart-token',
+            ],
+            'salesChannelContext' => [
+                'salesChannel' => [
+                    'id' => 'sales-channel-id'
+                ],
+            ],
+            'data' => 'foo',
+        ];
+
+        $request = new Request('POST', '/', [], json_encode($body, JSON_THROW_ON_ERROR));
+
+        static::expectException(MalformedWebhookBodyException::class);
+
+        $contextResolver->assembleContextGatewayRequest($request, $this->getShop());
+    }
+
+    public function testAssembleContextGatewayWithMissingData(): void
+    {
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+                'inAppPurchases' => 'ey',
+            ],
+            'cart' => [
+                'token' => 'cart-token',
+            ],
+            'salesChannelContext' => [
+                'salesChannel' => [
+                    'id' => 'sales-channel-id'
+                ],
+            ],
+        ];
+
+        $request = new Request('POST', '/', [], json_encode($body, JSON_THROW_ON_ERROR));
+
+        static::expectException(MalformedWebhookBodyException::class);
+
+        $contextResolver->assembleContextGatewayRequest($request, $this->getShop());
+    }
+
     public function testAssembleInAppPurchasesFilterRequest(): void
     {
         $expectedPurchases = new Collection(['identifier-1', 'identifier-2', 'identifier-3']);

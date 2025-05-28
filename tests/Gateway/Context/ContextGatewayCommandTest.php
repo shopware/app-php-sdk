@@ -16,7 +16,7 @@ class ContextGatewayCommandTest extends TestCase
         $command = $this->getCommand();
         $command->setPayloadValue('key', 'value');
 
-        static::assertEquals('value', $command->getPayloadValue('key'));
+        static::assertSame('value', $command->getPayloadValue('key'));
     }
 
     public function testHasPayloadValue(): void
@@ -40,7 +40,7 @@ class ContextGatewayCommandTest extends TestCase
         $command = $this->getCommand();
         $command->setPayloadValue('key', 'value');
 
-        static::assertEquals('value', $command->getPayloadValue('key'));
+        static::assertSame('value', $command->getPayloadValue('key'));
     }
 
     public function testGetNonExistentPayloadValue(): void
@@ -53,16 +53,20 @@ class ContextGatewayCommandTest extends TestCase
 
     public function testJsonSerialize(): void
     {
-        $command = $this->getCommand();
-        $command->keyName = 'key';
+        $command = $this->getCommand('foo');
         $command->setPayloadValue('key', 'value');
 
-        static::assertEquals(['command' => 'key', 'payload' => ['key' => 'value']], $command->jsonSerialize());
+        static::assertSame(['command' => 'foo', 'payload' => ['key' => 'value']], $command->jsonSerialize());
+        static::assertSame('foo', $command->getKey());
     }
 
-    private function getCommand(): ContextGatewayCommand
+    private function getCommand(string $key = 'key'): ContextGatewayCommand
     {
-        return new class () extends ContextGatewayCommand {
+        return new class ($key) extends ContextGatewayCommand {
+            public function __construct(string $key)
+            {
+                $this->keyName = $key;
+            }
         };
     }
 }

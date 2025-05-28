@@ -17,7 +17,6 @@ class LoginCustomerCommandTest extends TestCase
 
         static::assertSame('foo@bar.com', $command->customerEmail);
         static::assertSame('foo@bar.com', $command->getPayloadValue('customerEmail'));
-        static::assertSame('context_login-customer', $command->keyName);
     }
 
     public function testKey(): void

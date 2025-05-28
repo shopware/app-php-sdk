@@ -11,7 +11,12 @@ abstract class ContextGatewayCommand implements \JsonSerializable
      */
     public array $payload = [];
 
-    public string $keyName;
+    protected string $keyName;
+
+    public function getKey(): string
+    {
+        return $this->keyName;
+    }
 
     public function setPayloadValue(string $key, mixed $value): void
     {

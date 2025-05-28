@@ -19,7 +19,6 @@ class ChangeShippingLocationCommandTest extends TestCase
         static::assertSame('DE-BY', $command->countryStateIso);
         static::assertSame('DE', $command->getPayloadValue('countryIso'));
         static::assertSame('DE-BY', $command->getPayloadValue('countryStateIso'));
-        static::assertSame('context_change-shipping-location', $command->keyName);
     }
 
     public function testConstructDefaults(): void
@@ -30,7 +29,6 @@ class ChangeShippingLocationCommandTest extends TestCase
         static::assertSame(null, $command->countryStateIso);
         static::assertFalse($command->hasPayloadValue('countryIso'));
         static::assertFalse($command->hasPayloadValue('countryStateIso'));
-        static::assertSame('context_change-shipping-location', $command->keyName);
     }
 
     public function testKey(): void

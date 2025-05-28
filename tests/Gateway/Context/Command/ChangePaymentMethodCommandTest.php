@@ -17,7 +17,6 @@ class ChangePaymentMethodCommandTest extends TestCase
 
         static::assertSame('payment_technical-name', $command->technicalName);
         static::assertSame('payment_technical-name', $command->getPayloadValue('technicalName'));
-        static::assertSame('context_change-payment-method', $command->keyName);
     }
 
     public function testKey(): void

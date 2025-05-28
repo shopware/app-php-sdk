@@ -19,8 +19,8 @@ use Shopware\App\SDK\Event\BeforeRegistrationStartsEvent;
 use Shopware\App\SDK\Event\RegistrationCompletedEvent;
 use Shopware\App\SDK\Exception\MissingShopParameterException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
-use Shopware\App\SDK\Exception\SignatureNotFoundException;
 use Shopware\App\SDK\Exception\SignatureInvalidException;
+use Shopware\App\SDK\Exception\SignatureNotFoundException;
 use Shopware\App\SDK\Shop\ShopInterface;
 use Shopware\App\SDK\Shop\ShopRepositoryInterface;
 

@@ -17,7 +17,6 @@ class ChangeShippingAddressCommandTest extends TestCase
 
         static::assertSame('foo', $command->addressId);
         static::assertSame('foo', $command->getPayloadValue('addressId'));
-        static::assertSame('context_change-shipping-address', $command->keyName);
     }
 
     public function testKey(): void

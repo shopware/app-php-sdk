@@ -17,7 +17,6 @@ class AddCustomerMessageCommandTest extends TestCase
 
         static::assertSame('foo', $command->message);
         static::assertSame('foo', $command->getPayloadValue('message'));
-        static::assertSame('context_add-customer-message', $command->keyName);
     }
 
     public function testKey(): void
