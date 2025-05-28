@@ -7,10 +7,10 @@ namespace Shopware\App\SDK\Tests\Context;
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Shopware\App\SDK\Context\ContextResolver;
-use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Context\InAppPurchase\InAppPurchase;
 use Shopware\App\SDK\Context\InAppPurchase\InAppPurchaseProvider;
 use Shopware\App\SDK\Context\Payment\PaymentCaptureAction;
@@ -1126,6 +1126,57 @@ class ContextResolverTest extends TestCase
         static::assertSame('id2', $shippingMethods->get('technicalName2'));
     }
 
+    public function testAssembleContextGatewayRequest(): void
+    {
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+                'inAppPurchases' => 'ey',
+            ],
+            'cart' => [
+                'token' => 'cart-token',
+            ],
+            'salesChannelContext' => [
+                'salesChannel' => [
+                    'id' => 'sales-channel-id'
+                ],
+            ],
+            'data' => [
+                'foo' => 'bar',
+            ],
+        ];
+
+        $request = new Request('POST', '/', [], json_encode($body, JSON_THROW_ON_ERROR));
+        $request = $request->withHeader('shopware-app-token', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJGcWFIV1VzQ1JOc3JaOWtRIiwiaWF0IjoxNjg5ODM3MDkyLjI3ODMyOSwibmJmIjoxNjg5ODM3MDkyLjI3ODMyOSwiZXhwIjoxNjg5ODQwNjkyLjI3ODI0Mywic2FsZXNDaGFubmVsSWQiOiIwMTg5NjQwNTU0YjU3MDBjODBjMmM0YTIwMmUyNDAxZCJ9.g8Da0bN3bkkmEdzMeXmI8wlDQEZMCDiKJvqS288B4JI');
+
+        $action = $contextResolver->assembleContextGatewayRequest($request, $this->getShop());
+
+        static::assertSame('https://example.com', $action->source->url);
+        static::assertSame('foo', $action->source->appVersion);
+        static::assertSame(['foo', 'bar'], $action->source->inAppPurchases->keys());
+        static::assertTrue($action->source->inAppPurchases->has('foo'));
+        static::assertTrue($action->source->inAppPurchases->has('bar'));
+        static::assertFalse($action->source->inAppPurchases->has('baz'));
+
+        static::assertSame('cart-token', $action->cart->getToken());
+        static::assertSame('sales-channel-id', $action->context->getSalesChannel()->getId());
+
+        static::assertSame(['foo' => 'bar'], $action->data);
+    }
+
     public function testAssembleInAppPurchasesFilterRequest(): void
     {
         $expectedPurchases = new Collection(['identifier-1', 'identifier-2', 'identifier-3']);
@@ -1289,6 +1340,7 @@ class ContextResolverTest extends TestCase
         yield ['assemblePaymentRefund'];
         yield ['assemblePaymentRecurringCapture'];
         yield ['assembleCheckoutGatewayRequest'];
+        yield ['assembleContextGatewayRequest'];
         yield ['assembleInAppPurchasesFilterRequest'];
     }
 

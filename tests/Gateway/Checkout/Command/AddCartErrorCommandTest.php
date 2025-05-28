@@ -7,14 +7,14 @@ namespace Shopware\App\SDK\Tests\Gateway\Checkout\Command;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Context\Cart\Error;
-use Shopware\App\SDK\Gateway\Checkout\Command\ChangeCurrencyCommand;
+use Shopware\App\SDK\Gateway\Checkout\Command\AddCartErrorCommand;
 
-#[CoversClass(ChangeCurrencyCommand::class)]
+#[CoversClass(AddCartErrorCommand::class)]
 class AddCartErrorCommandTest extends TestCase
 {
     public function testConstruct(): void
     {
-        $command = new ChangeCurrencyCommand('foo', true, Error::LEVEL_ERROR);
+        $command = new AddCartErrorCommand('foo', true, Error::LEVEL_ERROR);
 
         static::assertSame('foo', $command->message);
         static::assertTrue($command->blocking);
@@ -24,7 +24,7 @@ class AddCartErrorCommandTest extends TestCase
 
     public function testConstructWithDefaults(): void
     {
-        $command = new ChangeCurrencyCommand('foo');
+        $command = new AddCartErrorCommand('foo');
 
         static::assertSame('foo', $command->message);
         static::assertFalse($command->blocking);
@@ -34,7 +34,7 @@ class AddCartErrorCommandTest extends TestCase
 
     public function testPayloadOnConstruct(): void
     {
-        $command = new ChangeCurrencyCommand('foo', true, Error::LEVEL_ERROR);
+        $command = new AddCartErrorCommand('foo', true, Error::LEVEL_ERROR);
 
         static::assertSame('foo', $command->getPayloadValue('message'));
         static::assertTrue($command->getPayloadValue('blocking'));
@@ -43,6 +43,6 @@ class AddCartErrorCommandTest extends TestCase
 
     public function testKey(): void
     {
-        static::assertSame('add-cart-error', ChangeCurrencyCommand::KEY);
+        static::assertSame('add-cart-error', AddCartErrorCommand::KEY);
     }
 }

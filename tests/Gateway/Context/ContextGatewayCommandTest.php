@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Shopware\App\SDK\Tests\Gateway\Checkout;
+namespace Shopware\App\SDK\Tests\Gateway\Context;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Shopware\App\SDK\Gateway\Checkout\ContextGatewayCommand;
+use Shopware\App\SDK\Gateway\Context\ContextGatewayCommand;
 
 #[CoversClass(ContextGatewayCommand::class)]
-class CheckoutGatewayCommandTest extends TestCase
+class ContextGatewayCommandTest extends TestCase
 {
     public function testSetPayloadValue(): void
     {
@@ -62,6 +62,7 @@ class CheckoutGatewayCommandTest extends TestCase
 
     private function getCommand(): ContextGatewayCommand
     {
-        return new class () extends ContextGatewayCommand {};
+        return new class () extends ContextGatewayCommand {
+        };
     }
 }
