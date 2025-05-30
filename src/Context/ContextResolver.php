@@ -36,8 +36,9 @@ use Shopware\App\SDK\Shop\ShopInterface;
  */
 class ContextResolver
 {
-    public function __construct(private readonly InAppPurchaseProvider $inAppPurchaseProvider)
-    {
+    public function __construct(
+        private readonly ?InAppPurchaseProvider $inAppPurchaseProvider = null
+    ) {
     }
 
     /**
@@ -94,7 +95,7 @@ class ContextResolver
         if (!empty($params['in-app-purchases'])) {
             /** @var non-empty-string $inAppPurchaseString */
             $inAppPurchaseString = $params['in-app-purchases'];
-            $inAppPurchases = $this->inAppPurchaseProvider->decodePurchases($inAppPurchaseString, $shop);
+            $inAppPurchases = $this->inAppPurchaseProvider?->decodePurchases($inAppPurchaseString, $shop);
         }
 
         return new ModuleAction(
@@ -259,7 +260,7 @@ class ContextResolver
                 throw new MalformedWebhookBodyException();
             }
 
-            $inAppPurchases = $this->inAppPurchaseProvider->decodePurchases($claims['inAppPurchases'], $shop);
+            $inAppPurchases = $this->inAppPurchaseProvider?->decodePurchases($claims['inAppPurchases'], $shop);
         }
 
         return new StorefrontAction(
@@ -322,7 +323,7 @@ class ContextResolver
                 throw new MalformedWebhookBodyException();
             }
 
-            $inAppPurchases = $this->inAppPurchaseProvider->decodePurchases($source['inAppPurchases'], $shop);
+            $inAppPurchases = $this->inAppPurchaseProvider?->decodePurchases($source['inAppPurchases'], $shop);
         }
 
 
