@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Shopware\App\SDK\Tests\Context\InAppPurchase;
 
-use Lcobucci\JWT\Validation\RequiredConstraintsViolated;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;

@@ -38,7 +38,10 @@ class HasValidRSAJWKSignature implements Constraint
         /** @var non-empty-string $pem */
         $pem = $this->convertToPem($key);
 
-        $signer = $this->getSigner($token->headers()->get('alg'));
+        /** @var string $alg */
+        $alg = $token->headers()->get('alg');
+
+        $signer = $this->getSigner($alg);
 
         (new SignedWith($signer, InMemory::plainText($pem)))->assert($token);
     }

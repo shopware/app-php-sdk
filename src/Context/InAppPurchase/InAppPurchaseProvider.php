@@ -48,7 +48,7 @@ class InAppPurchaseProvider
             }
 
             $this->logger->error('Failed to decode in-app purchases: ' . $e->getMessage());
-            
+
             return new Collection();
         }
     }
