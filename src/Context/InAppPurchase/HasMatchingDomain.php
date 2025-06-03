@@ -12,6 +12,8 @@ use Shopware\App\SDK\Shop\ShopInterface;
 
 /**
  * @phpstan-import-type InAppPurchaseArray from InAppPurchaseProvider
+ *
+ * @deprecated Will be removed with version 5.0.0, as no licence domain can be provided for validation
  */
 class HasMatchingDomain implements Constraint
 {

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Shopware\App\SDK\Tests\Context\InAppPurchase;
 
-use Lcobucci\JWT\Validation\RequiredConstraintsViolated;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -122,9 +121,9 @@ class InAppPurchaseProviderTest extends TestCase
                 (new KeySetFactory())->createFromJSON('{"keys": [{"kty": "RSA","n": "yHenasOsOl-Vv2BmpayS1R8l5L-JN99FwaRRKXFssGTjJDwbYdbe3CqTSKqtOfdqZLzE6-bN2-Q1xqZZsgs0_zHNx7EROXNG_uQs1uuGkS6bgGhnq_2d7wzFvCsyI00CDXZxRlGjKAEhvcXormomF1jpUW08Y5tPeUvMSdEZbZxW1ydir-UrMm1RUSgJgSP-sUqLG7kTIJ6SG7cLtF8c8cHcVXFljMyiYLQHYOECj1oklwvfrfaoT3OKdKGumi39rDthXtFa0Aq1OS_P9qfZJ-yXiQlpf2RxRr3Q5EQJ8E9iqrlOndbkSq7eXne2DvvgsiNdyzRWFvxWSPSd9GZXkw","e": "AQAB","kid": "-1xljHNcPM59Qx9OcULA9LS219bsmKCZueVXhdF0N0k","use": "sig","alg": "RS256"}]}'),
             );
 
-        static::expectException(RequiredConstraintsViolated::class);
-
         $provider = new InAppPurchaseProvider($fetcher, $logger);
-        $provider->decodePurchases($token->toString(), $shop, true);
+        $decoded = $provider->decodePurchases($token->toString(), $shop, true);
+
+        static::assertEmpty($decoded);
     }
 }

@@ -14,7 +14,7 @@ use Shopware\App\SDK\Framework\Collection;
 use Shopware\App\SDK\Shop\ShopInterface;
 
 /**
- * @phpstan-type InAppPurchaseArray=array{identifier: string, quantity: int, nextBookingDate?: string, sub: string}
+ * @phpstan-type InAppPurchaseArray array{identifier: string, quantity: int, nextBookingDate?: string, sub: string}
  */
 class InAppPurchaseProvider
 {
@@ -27,21 +27,19 @@ class InAppPurchaseProvider
     /**
      * @param non-empty-string $encodedPurchases
      * @return Collection<InAppPurchase>
-     * @throws \Exception
      */
     public function decodePurchases(string $encodedPurchases, ShopInterface $shop, bool $retried = false): Collection
     {
         try {
             $keys = $this->keyFetcher->getKey($retried);
             $signatureValidator = new HasValidRSAJWKSignature($keys);
-            $domainValidator = new HasMatchingDomain($shop);
 
             $parser = new Parser(new JoseEncoder());
             /** @var Token\Plain $token */
             $token = $parser->parse($encodedPurchases);
 
             $validator = new Validator();
-            $validator->assert($token, $signatureValidator, $domainValidator);
+            $validator->assert($token, $signatureValidator);
 
             return $this->transformClaims($token);
         } catch (\Exception $e) {
@@ -51,7 +49,7 @@ class InAppPurchaseProvider
 
             $this->logger->error('Failed to decode in-app purchases: ' . $e->getMessage());
 
-            throw $e;
+            return new Collection();
         }
     }
 

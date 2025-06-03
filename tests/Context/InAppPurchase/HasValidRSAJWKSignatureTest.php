@@ -112,7 +112,10 @@ class HasValidRSAJWKSignatureTest extends TestCase
         $token = new class () implements Token {
             public function headers(): DataSet
             {
-                return new DataSet([], '');
+                return new DataSet([
+                    'alg' => 'RS256',
+                    'kid' => JWKSHelper::getStaticKid(),
+                ], '');
             }
 
             public function isPermittedFor(string $audience): bool
@@ -157,9 +160,9 @@ class HasValidRSAJWKSignatureTest extends TestCase
         };
 
         static::expectException(\Exception::class);
-        static::expectExceptionMessage('Token must be a plain JWT');
+        static::expectExceptionMessage('You should pass a plain token');
 
-        $constraint = new HasValidRSAJWKSignature(new KeySet());
+        $constraint = new HasValidRSAJWKSignature($this->jwks);
         $constraint->assert($token);
     }
 }

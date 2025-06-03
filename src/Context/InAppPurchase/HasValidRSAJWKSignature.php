@@ -11,9 +11,8 @@ use Lcobucci\JWT\Signer\Rsa\Sha256;
 use Lcobucci\JWT\Signer\Rsa\Sha384;
 use Lcobucci\JWT\Signer\Rsa\Sha512;
 use Lcobucci\JWT\Token;
-use Lcobucci\JWT\UnencryptedToken;
 use Lcobucci\JWT\Validation\Constraint;
-use Lcobucci\JWT\Validation\ConstraintViolation;
+use Lcobucci\JWT\Validation\Constraint\SignedWith;
 use Strobotti\JWK\Key\KeyInterface;
 use Strobotti\JWK\Key\Rsa as RsaKey;
 use Strobotti\JWK\KeyConverter;
@@ -27,12 +26,11 @@ class HasValidRSAJWKSignature implements Constraint
     {
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function assert(Token $token): void
     {
-        if (!$token instanceof UnencryptedToken) {
-            throw new \Exception('Token must be a plain JWT');
-        }
-
         $this->validateAlgorithm($token);
 
         $key = $this->getValidKey($token);
@@ -45,9 +43,7 @@ class HasValidRSAJWKSignature implements Constraint
 
         $signer = $this->getSigner($alg);
 
-        if (!$signer->verify($token->signature()->hash(), $token->payload(), InMemory::plainText($pem))) {
-            throw ConstraintViolation::error('Token signature mismatch', $this);
-        }
+        (new SignedWith($signer, InMemory::plainText($pem)))->assert($token);
     }
 
     private function validateAlgorithm(Token $token): void
