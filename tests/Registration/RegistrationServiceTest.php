@@ -7,6 +7,7 @@ namespace Shopware\App\SDK\Tests\Registration;
 use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
@@ -21,7 +22,6 @@ use Shopware\App\SDK\Exception\MissingShopParameterException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
 use Shopware\App\SDK\Registration\RandomStringShopSecretGenerator;
 use Shopware\App\SDK\Registration\RegistrationService;
-use PHPUnit\Framework\TestCase;
 use Shopware\App\SDK\Shop\ShopRepositoryInterface;
 use Shopware\App\SDK\Test\MockShop;
 use Shopware\App\SDK\Test\MockShopRepository;
@@ -445,10 +445,46 @@ class RegistrationServiceTest extends TestCase
         $this->registerService->registerConfirm($request);
     }
 
+    public function testGetSanitizedShopIsCloned(): void
+    {
+        $shop = new MockShop('123', 'https://foo.com', '1234567890');
+
+        $shopRepo = $this->createMock(ShopRepositoryInterface::class);
+        $shopRepo
+            ->expects(static::once())
+            ->method('getShopFromId')
+            ->with('123')
+            ->willReturn(null);
+
+        $shopRepo
+            ->expects(static::once())
+            ->method('createShopStruct')
+            ->willReturn($shop);
+
+        $shopRepo
+            ->expects(static::once())
+            ->method('createShop')
+            ->with(static::callback(function (MockShop $clonedShop) use ($shop): bool {
+                static::assertEquals($shop, $clonedShop);
+                static::assertNotSame($shop, $clonedShop, 'The shop should be cloned during registration.');
+
+                return true;
+            }));
+
+        $service = new RegistrationService(
+            $this->appConfiguration,
+            $shopRepo,
+            $this->createMock(RequestVerifier::class),
+        );
+
+        $request = new Request('GET', 'http://localhost?shop-id=123&shop-url=https://foo.com');
+        $service->register($request);
+    }
+
     /**
-     * @dataProvider missingRegisterShopParametersProvider
      * @param array<string, mixed> $params
      */
+    #[DataProvider('missingRegisterShopParametersProvider')]
     public function testRegisterMissingShopParameters(array $params): void
     {
         // Skip test, provider is for another test
@@ -475,9 +511,9 @@ class RegistrationServiceTest extends TestCase
     }
 
     /**
-     * @dataProvider missingRegisterConfirmShopParametersProvider
      * @param array<string, mixed> $params
      */
+    #[DataProvider('missingRegisterConfirmShopParametersProvider')]
     public function testRegisterConfirmMissingShopParameters(array $params): void
     {
         $request = new Request('POST', '/', [], \json_encode($params, \JSON_THROW_ON_ERROR));
