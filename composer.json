@@ -32,6 +32,7 @@
     "strobotti/php-jwk": "^1.4"
   },
   "require-dev": {
+    "async-aws/dynamo-db": "~3.2",
     "friendsofphp/php-cs-fixer": "^3.16",
     "infection/infection": "^0.29",
     "nyholm/psr7": "^1.7.0",
@@ -39,9 +40,9 @@
     "php-http/curl-client": "^2.2",
     "phpstan/phpstan": "^1.10.14",
     "phpunit/phpunit": "^10.5",
-    "async-aws/dynamo-db": "~3.2",
-    "symfony/polyfill-uuid": "^1.31",
-    "symfony/http-client": ">=6.4.16"
+    "roave/backward-compatibility-check": "^8.13",
+    "symfony/http-client": ">=6.4.16",
+    "symfony/polyfill-uuid": "^1.31"
   },
   "suggest": {
     "async-aws/dynamo-db": "For using the DynamoDBRepository"
@@ -69,6 +70,7 @@
       "phpunit",
       "php-cs-fixer fix",
       "phpstan analyse"
-    ]
+    ],
+    "bc-check": "vendor/bin/roave-backward-compatibility-check"
   }
 }

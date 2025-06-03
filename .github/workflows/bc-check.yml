@@ -1,0 +1,26 @@
+name: BC check
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  bc-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+          fetch-tags: '1'
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install
+
+      - name: Run bc-check
+        run: composer bc-check -- --format=github-actions --from="origin/${{ github.base_ref }}"
