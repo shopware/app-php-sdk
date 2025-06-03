@@ -40,7 +40,6 @@
     "php-http/curl-client": "^2.2",
     "phpstan/phpstan": "^1.10.14",
     "phpunit/phpunit": "^10.5",
-    "roave/backward-compatibility-check": "^8.13",
     "symfony/http-client": ">=6.4.16",
     "symfony/polyfill-uuid": "^1.31"
   },
