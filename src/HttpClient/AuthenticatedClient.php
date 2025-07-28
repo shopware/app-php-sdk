@@ -43,12 +43,24 @@ class AuthenticatedClient implements ClientInterface
             throw new AuthenticationFailedException($this->shop->getShopId(), $response);
         }
 
-        /** @var array{access_token: string, expires_in: int} $token */
-        $token = json_decode($response->getBody()->getContents(), true);
+        $body = $response->getBody()->getContents();
+
+        try {
+            $token = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            throw new AuthenticationFailedException($this->shop->getShopId(), $response);
+        }
+
+        if (!is_array($token) || !isset($token['access_token'], $token['expires_in'])) {
+            throw new AuthenticationFailedException(
+                $this->shop->getShopId(),
+                $response,
+            );
+        }
 
         $this->cache->set($cacheKey, $token['access_token'], $token['expires_in'] - self::TOKEN_EXPIRE_DIFF);
 
-        return $token['access_token'];
+        return (string) $token['access_token'];
     }
 
     /**

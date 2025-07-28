@@ -172,4 +172,28 @@ class AuthenticatedClientTest extends TestCase
             $cache
         );
     }
+
+    public function testInvalidJsonTokenResponseThrowsException(): void
+    {
+        $mockClient = new MockClient([
+            new Response(200, [], 'not-a-json'),
+        ]);
+
+        $client = $this->getAuthenticatedClient($mockClient);
+
+        static::expectException(AuthenticationFailedException::class);
+        $client->sendRequest(new Request('GET', 'https://example.com'));
+    }
+
+    public function testMissingTokenFieldsThrowsException(): void
+    {
+        $mockClient = new MockClient([
+            new Response(200, [], '{"foo":"bar"}'),
+        ]);
+
+        $client = $this->getAuthenticatedClient($mockClient);
+        static::expectException(AuthenticationFailedException::class);
+
+        $client->sendRequest(new Request('GET', 'https://example.com'));
+    }
 }
