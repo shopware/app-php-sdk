@@ -159,7 +159,8 @@ class ContextResolver
             $this->parseSource($body['source'], $shop),
             new OrderTransaction($body['orderTransaction']),
             isset($body['recurring']) ? new RecurringData($body['recurring']) : null,
-            $body['queryParameters'] ?? []
+            // Support both Shopware 6.7 (requestData) and 6.6 (queryParameters) for backward compatibility
+            $body['requestData'] ?? $body['queryParameters'] ?? []
         );
     }
 
