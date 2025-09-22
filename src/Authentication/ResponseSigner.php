@@ -10,9 +10,19 @@ use Shopware\App\SDK\AppConfiguration;
 
 class ResponseSigner
 {
-    public function getRegistrationSignature(AppConfiguration $appConfiguration, ShopInterface $shop): string
+    /**
+     * @param array{shop-id: string, shop-url: string} $proofParameters
+     */
+    public function getRegistrationSignature(AppConfiguration $appConfiguration, array $proofParameters): string
     {
-        return $this->sign($shop->getShopId() . $shop->getShopUrl() . $appConfiguration->getAppName(), $appConfiguration->getAppSecret());
+        return $this->sign(
+            implode('', [
+                $proofParameters['shop-id'],
+                $proofParameters['shop-url'],
+                $appConfiguration->getAppName()
+            ]),
+            $appConfiguration->getAppSecret()
+        );
     }
 
     public function signResponse(ResponseInterface $response, ShopInterface $shop): ResponseInterface

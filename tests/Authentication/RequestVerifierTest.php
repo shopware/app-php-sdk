@@ -12,12 +12,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\StreamInterface;
-use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Authentication\RequestVerifier;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
 use Shopware\App\SDK\Exception\SignatureInvalidException;
 use Shopware\App\SDK\Exception\SignatureNotFoundException;
-use Shopware\App\SDK\Test\MockShop;
 
 #[CoversClass(RequestVerifier::class)]
 class RequestVerifierTest extends TestCase
@@ -28,7 +26,7 @@ class RequestVerifierTest extends TestCase
 
         $verifier = new RequestVerifier();
         static::expectException(SignatureNotFoundException::class);
-        $verifier->authenticateRegistrationRequest($request, new AppConfiguration('My App', 'my-secret', 'http://localhost'));
+        $verifier->authenticateRegistrationRequest($request, 'my-secret');
     }
 
     public function testAuthenticateRegistrationRequestMissingParameters(): void
@@ -38,7 +36,7 @@ class RequestVerifierTest extends TestCase
 
         $verifier = new RequestVerifier();
         static::expectException(SignatureNotFoundException::class);
-        $verifier->authenticateRegistrationRequest($request, new AppConfiguration('My App', 'my-secret', 'http://localhost'));
+        $verifier->authenticateRegistrationRequest($request, 'my-secret');
     }
 
     public function testAuthenticateRegistrationRequestInvalidSignature(): void
@@ -48,7 +46,7 @@ class RequestVerifierTest extends TestCase
 
         $verifier = new RequestVerifier();
         static::expectException(SignatureInvalidException::class);
-        $verifier->authenticateRegistrationRequest($request, new AppConfiguration('My App', 'my-secret', 'http://localhost'));
+        $verifier->authenticateRegistrationRequest($request, 'my-secret');
     }
 
     #[DoesNotPerformAssertions]
@@ -58,7 +56,7 @@ class RequestVerifierTest extends TestCase
         $request = $request->withHeader('shopware-app-signature', '96c91f86c822e11444b7a57b54ef125ed86b1a639c5360d45c5397daa8c3f70b');
 
         $verifier = new RequestVerifier();
-        $verifier->authenticateRegistrationRequest($request, new AppConfiguration('My App', 'my-secret', 'http://localhost'));
+        $verifier->authenticateRegistrationRequest($request, 'my-secret');
     }
 
     public function testAuthenticatePostMissingHeader(): void
@@ -67,7 +65,7 @@ class RequestVerifierTest extends TestCase
 
         $verifier = new RequestVerifier();
         static::expectException(SignatureNotFoundException::class);
-        $verifier->authenticatePostRequest($request, new MockShop('1', 'a', 'secret'));
+        $verifier->authenticatePostRequest($request, 'secret');
     }
 
     public function testAuthenticatePostInvalidSignature(): void
@@ -77,7 +75,7 @@ class RequestVerifierTest extends TestCase
 
         $verifier = new RequestVerifier();
         static::expectException(SignatureInvalidException::class);
-        $verifier->authenticatePostRequest($request, new MockShop('1', 'a', 'secret'));
+        $verifier->authenticatePostRequest($request, 'secret');
     }
 
     #[DoesNotPerformAssertions]
@@ -87,7 +85,7 @@ class RequestVerifierTest extends TestCase
         $request = $request->withHeader('shopware-shop-signature', 'dc46983557fea127b43af721467eb9b3fde2338fe3e14f51952aa8478c13d355');
 
         $verifier = new RequestVerifier();
-        $verifier->authenticatePostRequest($request, new MockShop('1', 'a', 'secret'));
+        $verifier->authenticatePostRequest($request, 'secret');
     }
 
     public function testAuthenticatePostRequestRewindsBody(): void
@@ -105,7 +103,7 @@ class RequestVerifierTest extends TestCase
         $request = $request->withHeader('shopware-shop-signature', 'dc46983557fea127b43af721467eb9b3fde2338fe3e14f51952aa8478c13d355');
 
         $verifier = new RequestVerifier();
-        $verifier->authenticatePostRequest($request, new MockShop('1', 'a', 'secret'));
+        $verifier->authenticatePostRequest($request, 'secret');
     }
 
     public function testAuthenticateGetMissingSignature(): void
@@ -114,7 +112,7 @@ class RequestVerifierTest extends TestCase
 
         $verifier = new RequestVerifier();
         static::expectException(SignatureNotFoundException::class);
-        $verifier->authenticateGetRequest($request, new MockShop('1', 'a', 'secret'));
+        $verifier->authenticateGetRequest($request, 'secret');
     }
 
     public function testAuthenticateGetInvalidSignature(): void
@@ -123,7 +121,7 @@ class RequestVerifierTest extends TestCase
 
         $verifier = new RequestVerifier();
         static::expectException(SignatureInvalidException::class);
-        $verifier->authenticateGetRequest($request, new MockShop('1', 'a', 'secret'));
+        $verifier->authenticateGetRequest($request, 'secret');
     }
 
     #[DoesNotPerformAssertions]
@@ -132,7 +130,7 @@ class RequestVerifierTest extends TestCase
         $request = new Request('GET', 'https://my-shop.com/webhook?test=1&shopware-shop-signature=9dd645162c4599f510a88a716a3aac9934c46d2964811e3efcdc53b4b672fe1c');
 
         $verifier = new RequestVerifier();
-        $verifier->authenticateGetRequest($request, new MockShop('1', 'a', 'secret'));
+        $verifier->authenticateGetRequest($request, 'secret');
     }
 
     public function testStorefrontRequestEmpty(): void
@@ -142,7 +140,7 @@ class RequestVerifierTest extends TestCase
         $verifier = new RequestVerifier();
         $this->expectException(SignatureNotFoundException::class);
 
-        $verifier->authenticateStorefrontRequest($request, new MockShop('1', 'a', 'secret'));
+        $verifier->authenticateStorefrontRequest($request, '1', 'secret');
     }
 
     public function testStorefrontRequestInvalidShop(): void
@@ -153,7 +151,7 @@ class RequestVerifierTest extends TestCase
         $verifier = new RequestVerifier();
 
         $this->expectException(ShopNotFoundException::class);
-        $verifier->authenticateStorefrontRequest($request, new MockShop('1', 'a', ''));
+        $verifier->authenticateStorefrontRequest($request, '1', '');
     }
 
     #[DoesNotPerformAssertions]
@@ -165,7 +163,7 @@ class RequestVerifierTest extends TestCase
 
         $verifier = new RequestVerifier(new FrozenClock(new DateTimeImmutable('2023-07-20T07:13:00+00:00')));
 
-        $verifier->authenticateStorefrontRequest($request, new MockShop('FqaHWUsCRNsrZ9kQ', 'a', '4XegKN9Xi9ATj3DKfAdWmKm5vkyDjfr0NRfw9shMdyaBtpV3UteqemCPgW7wQ0tPEXjGPQ4vmmPOexSEGvkstgDEaNdFvvrkbPDn21cQ7v0VGxTCfsuwF9H5'));
+        $verifier->authenticateStorefrontRequest($request, 'FqaHWUsCRNsrZ9kQ', '4XegKN9Xi9ATj3DKfAdWmKm5vkyDjfr0NRfw9shMdyaBtpV3UteqemCPgW7wQ0tPEXjGPQ4vmmPOexSEGvkstgDEaNdFvvrkbPDn21cQ7v0VGxTCfsuwF9H5');
     }
 
     public function testStorefrontRequestInvalid(): void
@@ -177,6 +175,78 @@ class RequestVerifierTest extends TestCase
         $verifier = new RequestVerifier(new FrozenClock(new DateTimeImmutable('2023-07-20T07:13:00+00:00')));
 
         static::expectException(RequiredConstraintsViolated::class);
-        $verifier->authenticateStorefrontRequest($request, new MockShop('FqaHWUsCRNsrZ9kQ', 'a', '1XegKN9Xi9ATj3DKfAdWmKm5vkyDjfr0NRfw9shMdyaBtpV3UteqemCPgW7wQ0tPEXjGPQ4vmmPOexSEGvkstgDEaNdFvvrkbPDn21cQ7v0VGxTCfsuwF9H5'));
+        $verifier->authenticateStorefrontRequest($request, 'FqaHWUsCRNsrZ9kQ', '1XegKN9Xi9ATj3DKfAdWmKm5vkyDjfr0NRfw9shMdyaBtpV3UteqemCPgW7wQ0tPEXjGPQ4vmmPOexSEGvkstgDEaNdFvvrkbPDn21cQ7v0VGxTCfsuwF9H5');
+    }
+
+    #[DoesNotPerformAssertions]
+    public function testAuthenticateRegistrationRequestWithShopSignature(): void
+    {
+        $query = 'shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890';
+        $shopSecret = 'shop-secret';
+
+        // Calculate shop signature with the shop secret over the entire query
+        $shopSignature = hash_hmac('sha256', $query, $shopSecret);
+
+        $request = new Request('GET', 'https://my-app.com/register?' . $query);
+        $request = $request->withHeader('shopware-shop-signature', $shopSignature);
+
+        $verifier = new RequestVerifier();
+        $verifier->authenticateRegistrationRequestWithShopSignature($request, $shopSecret);
+    }
+
+    public function testAuthenticateRegistrationRequestWithShopSignatureMissing(): void
+    {
+        $query = 'shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890';
+        $request = new Request('GET', 'https://my-app.com/register?' . $query);
+        // No shop signature header
+
+        $verifier = new RequestVerifier();
+        static::expectException(SignatureNotFoundException::class);
+        $verifier->authenticateRegistrationRequestWithShopSignature($request, 'shop-secret');
+    }
+
+    public function testAuthenticateRegistrationRequestWithShopSignatureInvalid(): void
+    {
+        $query = 'shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890';
+        $request = new Request('GET', 'https://my-app.com/register?' . $query);
+        $request = $request->withHeader('shopware-shop-signature', 'invalid-signature');
+
+        $verifier = new RequestVerifier();
+        static::expectException(SignatureInvalidException::class);
+        $verifier->authenticateRegistrationRequestWithShopSignature($request, 'shop-secret');
+    }
+
+    #[DoesNotPerformAssertions]
+    public function testAuthenticatePostRequestWithCustomHeader(): void
+    {
+        $body = '{"test":"data"}';
+        $secret = 'test-secret';
+        $signature = hash_hmac('sha256', $body, $secret);
+
+        $request = new Request('POST', 'https://my-shop.com/confirm', [], $body);
+        $request = $request->withHeader('custom-header', $signature);
+
+        $verifier = new RequestVerifier();
+        $verifier->authenticatePostRequest($request, $secret, 'custom-header');
+    }
+
+    public function testAuthenticatePostRequestWithCustomHeaderMissing(): void
+    {
+        $request = new Request('POST', 'https://my-shop.com/confirm', [], '{"test":"data"}');
+        // No custom header
+
+        $verifier = new RequestVerifier();
+        static::expectException(SignatureNotFoundException::class);
+        $verifier->authenticatePostRequest($request, 'secret', 'custom-header');
+    }
+
+    public function testAuthenticatePostRequestWithCustomHeaderInvalid(): void
+    {
+        $request = new Request('POST', 'https://my-shop.com/confirm', [], '{"test":"data"}');
+        $request = $request->withHeader('custom-header', 'invalid-signature');
+
+        $verifier = new RequestVerifier();
+        static::expectException(SignatureInvalidException::class);
+        $verifier->authenticatePostRequest($request, 'secret', 'custom-header');
     }
 }

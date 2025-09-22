@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Shop;
 
 use Psr\Http\Message\RequestInterface;
-use Shopware\App\SDK\Authentication\RequestVerifier;
+use Shopware\App\SDK\Authentication\DualSignatureRequestVerifier;
 use Shopware\App\SDK\Exception\MissingShopParameterException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
 use Shopware\App\SDK\Exception\SignatureInvalidException;
@@ -20,7 +20,7 @@ class ShopResolver
     /**
      * @param ShopRepositoryInterface<ShopInterface> $shopRepository
      */
-    public function __construct(private readonly ShopRepositoryInterface $shopRepository, private readonly RequestVerifier $requestVerifier = new RequestVerifier())
+    public function __construct(private readonly ShopRepositoryInterface $shopRepository, private readonly DualSignatureRequestVerifier $requestVerifier = new DualSignatureRequestVerifier())
     {
     }
 
@@ -94,7 +94,11 @@ class ShopResolver
             throw new ShopNotFoundException($shopId);
         }
 
-        $this->requestVerifier->authenticateStorefrontRequest($request, $shop);
+        if ($shop->getShopSecret() === '' || $shop->getShopId() === '') {
+            throw new ShopNotFoundException($shop->getShopId());
+        }
+
+        $this->requestVerifier->authenticateStorefrontRequest($request, $shop->getShopId(), $shop);
 
         return $shop;
     }

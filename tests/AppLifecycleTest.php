@@ -12,7 +12,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Shopware\App\SDK\AppLifecycle;
 use PHPUnit\Framework\TestCase;
-use Shopware\App\SDK\Authentication\RequestVerifier;
+use Shopware\App\SDK\Authentication\DualSignatureRequestVerifier;
 use Shopware\App\SDK\Event\BeforeShopActivateEvent;
 use Shopware\App\SDK\Event\BeforeShopDeactivatedEvent;
 use Shopware\App\SDK\Event\BeforeShopDeletionEvent;
@@ -48,7 +48,7 @@ class AppLifecycleTest extends TestCase
 
         $this->appLifecycle = new AppLifecycle(
             $this->createMock(RegistrationService::class),
-            new ShopResolver($this->shopRepository, $this->createMock(RequestVerifier::class)),
+            new ShopResolver($this->shopRepository, $this->createMock(DualSignatureRequestVerifier::class)),
             $this->shopRepository,
             new NullLogger(),
             $eventDispatcher
@@ -121,7 +121,7 @@ class AppLifecycleTest extends TestCase
     {
         $appLifeCycle = new AppLifecycle(
             $this->createMock(RegistrationService::class),
-            new ShopResolver($this->shopRepository, $this->createMock(RequestVerifier::class)),
+            new ShopResolver($this->shopRepository, $this->createMock(DualSignatureRequestVerifier::class)),
             $this->shopRepository,
             new NullLogger(),
             null
@@ -146,7 +146,7 @@ class AppLifecycleTest extends TestCase
 
         $appLifeCycle = new AppLifecycle(
             $this->createMock(RegistrationService::class),
-            new ShopResolver($this->shopRepository, $this->createMock(RequestVerifier::class)),
+            new ShopResolver($this->shopRepository, $this->createMock(DualSignatureRequestVerifier::class)),
             $this->shopRepository,
             $logger,
             null
@@ -209,7 +209,7 @@ class AppLifecycleTest extends TestCase
     {
         $appLifeCycle = new AppLifecycle(
             $this->createMock(RegistrationService::class),
-            new ShopResolver($this->shopRepository, $this->createMock(RequestVerifier::class)),
+            new ShopResolver($this->shopRepository, $this->createMock(DualSignatureRequestVerifier::class)),
             $this->shopRepository,
             new NullLogger(),
             null
@@ -245,7 +245,7 @@ class AppLifecycleTest extends TestCase
 
         $appLifeCycle = new AppLifecycle(
             $this->createMock(RegistrationService::class),
-            new ShopResolver($this->shopRepository, $this->createMock(RequestVerifier::class)),
+            new ShopResolver($this->shopRepository, $this->createMock(DualSignatureRequestVerifier::class)),
             $this->shopRepository,
             $logger,
             null
@@ -272,7 +272,7 @@ class AppLifecycleTest extends TestCase
 
         $appLifeCycle = new AppLifecycle(
             $this->createMock(RegistrationService::class),
-            new ShopResolver($this->shopRepository, $this->createMock(RequestVerifier::class)),
+            new ShopResolver($this->shopRepository, $this->createMock(DualSignatureRequestVerifier::class)),
             $this->shopRepository,
             $logger,
             null

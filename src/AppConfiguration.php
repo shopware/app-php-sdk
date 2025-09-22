@@ -9,7 +9,8 @@ class AppConfiguration
     public function __construct(
         private readonly string $appName,
         private readonly string $appSecret,
-        private readonly string $registrationConfirmationUrl
+        private readonly string $registrationConfirmationUrl,
+        private readonly bool $enforceDoubleSignature = false
     ) {
     }
 
@@ -26,5 +27,13 @@ class AppConfiguration
     public function getRegistrationConfirmUrl(): string
     {
         return $this->registrationConfirmationUrl;
+    }
+
+    /**
+     * @deprecated tag:v6.0.0 - Will be removed. Double signature verification will always be enforced.
+     */
+    public function enforceDoubleSignature(): bool
+    {
+        return $this->enforceDoubleSignature;
     }
 }

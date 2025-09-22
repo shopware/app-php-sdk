@@ -8,7 +8,7 @@ use Nyholm\Psr7\Request;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
-use Shopware\App\SDK\Authentication\RequestVerifier;
+use Shopware\App\SDK\Authentication\DualSignatureRequestVerifier;
 use Shopware\App\SDK\Exception\MissingShopParameterException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
 use Shopware\App\SDK\Shop\ShopResolver;
@@ -25,7 +25,7 @@ class ShopResolverTest extends TestCase
     protected function setUp(): void
     {
         $this->shopRepository = new MockShopRepository();
-        $this->shopResolver = new ShopResolver($this->shopRepository, $this->createMock(RequestVerifier::class));
+        $this->shopResolver = new ShopResolver($this->shopRepository, $this->createMock(DualSignatureRequestVerifier::class));
     }
 
     public function testResolveSourceInvalidJSON(): void
@@ -74,7 +74,7 @@ class ShopResolverTest extends TestCase
 
         $request = $this->createJsonRequest('{"source": {"shopId": "1"}}');
 
-        $verifier = static::createMock(RequestVerifier::class);
+        $verifier = static::createMock(DualSignatureRequestVerifier::class);
         $verifier
             ->expects(static::once())
             ->method('authenticatePostRequest')
@@ -90,7 +90,7 @@ class ShopResolverTest extends TestCase
 
         $request = $this->createGetRequest('shop-id=1');
 
-        $verifier = static::createMock(RequestVerifier::class);
+        $verifier = static::createMock(DualSignatureRequestVerifier::class);
         $verifier
             ->expects(static::once())
             ->method('authenticateGetRequest')
@@ -127,7 +127,7 @@ class ShopResolverTest extends TestCase
     {
         $request = $this->createJsonRequest($body);
 
-        $resolver = new ShopResolver($this->shopRepository, static::createMock(RequestVerifier::class));
+        $resolver = new ShopResolver($this->shopRepository, static::createMock(DualSignatureRequestVerifier::class));
 
         static::expectException(MissingShopParameterException::class);
         $resolver->resolveShop($request);
@@ -135,7 +135,7 @@ class ShopResolverTest extends TestCase
 
     public function testMissingShopStorefront(): void
     {
-        $resolver = new ShopResolver($this->shopRepository, static::createMock(RequestVerifier::class));
+        $resolver = new ShopResolver($this->shopRepository, static::createMock(DualSignatureRequestVerifier::class));
 
         $request = $this->createGetRequest('shop-id=1');
         $request = $request->withHeader('shopware-app-shop-id', 'test');
@@ -149,7 +149,7 @@ class ShopResolverTest extends TestCase
     {
         $this->shopRepository->createShop(new MockShop('1', 'test.de', 'asd'));
 
-        $requestVerifier = static::createMock(RequestVerifier::class);
+        $requestVerifier = static::createMock(DualSignatureRequestVerifier::class);
         $requestVerifier
             ->expects(static::once())
             ->method('authenticateStorefrontRequest');

@@ -12,6 +12,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Shopware\App\SDK\AppConfiguration;
+use Shopware\App\SDK\Authentication\DualSignatureRequestVerifier;
 use Shopware\App\SDK\Authentication\RequestVerifier;
 use Shopware\App\SDK\Authentication\ResponseSigner;
 use Shopware\App\SDK\Event\BeforeRegistrationCompletedEvent;
@@ -32,7 +33,7 @@ class RegistrationService
     public function __construct(
         private readonly AppConfiguration $appConfiguration,
         private readonly ShopRepositoryInterface $shopRepository,
-        private readonly RequestVerifier $requestVerifier = new RequestVerifier(),
+        private readonly DualSignatureRequestVerifier $dualSignatureVerifier = new DualSignatureRequestVerifier(),
         private readonly ResponseSigner $responseSigner = new ResponseSigner(),
         private readonly ShopSecretGeneratorInterface $shopSecretGeneratorInterface = new RandomStringShopSecretGenerator(),
         private readonly LoggerInterface $logger = new NullLogger(),
@@ -46,8 +47,6 @@ class RegistrationService
      */
     public function register(RequestInterface $request): ResponseInterface
     {
-        $this->requestVerifier->authenticateRegistrationRequest($request, $this->appConfiguration);
-
         \parse_str($request->getUri()->getQuery(), $queries);
 
         if (!isset($queries['shop-id'], $queries['shop-url']) || !is_string($queries['shop-id']) || !is_string($queries['shop-url'])) {
@@ -56,38 +55,52 @@ class RegistrationService
 
         $shop = $this->shopRepository->getShopFromId($queries['shop-id']);
 
+        $this->dualSignatureVerifier->authenticateRegistrationRequest(
+            $request,
+            $this->appConfiguration,
+            $shop
+        );
+
+        $secret = $this->shopSecretGeneratorInterface->generate();
+
+        $proofParameters = [
+            'shop-id' => $queries['shop-id'],
+            'shop-url' => $queries['shop-url'],
+        ];
+
         if ($shop === null) {
-            $shop = $this->shopRepository->createShopStruct(
-                $queries['shop-id'],
-                $queries['shop-url'],
-                $this->shopSecretGeneratorInterface->generate()
-            );
+            $shop = $this->shopRepository
+                ->createShopStruct($queries['shop-id'], $queries['shop-url'], $secret)
+                ->setPendingShopSecret($secret)
+                ->setPendingShopUrl($queries['shop-url']);
 
-            $sanitizedShop = $this->getSanitizedShop($shop);
-            $this->eventDispatcher?->dispatch(new BeforeRegistrationStartsEvent($request, $sanitizedShop));
-
-            $this->shopRepository->createShop($sanitizedShop);
+            $shop = $this->getSanitizedShop($shop);
+            $this->eventDispatcher?->dispatch(new BeforeRegistrationStartsEvent($request, $shop));
+            $this->setVerifiedWithDoubleSignature($shop, $request);
+            $this->shopRepository->createShop($shop);
         } else {
-            $shop->setShopUrl($queries['shop-url']);
+            $shop->setPendingShopSecret($secret)
+                ->setPendingShopUrl($this->sanitizeShopUrl($queries['shop-url'])); // don't break existing URL until confirmed.
 
-            $sanitizedShop = $this->getSanitizedShop($shop);
-            $this->eventDispatcher?->dispatch(new BeforeRegistrationStartsEvent($request, $sanitizedShop));
+            $shop = $this->getSanitizedShop($shop);
+            $this->eventDispatcher?->dispatch(new BeforeRegistrationStartsEvent($request, $shop));
 
-            $this->shopRepository->updateShop($sanitizedShop);
+            $this->setVerifiedWithDoubleSignature($shop, $request);
+
+            $this->shopRepository->updateShop($shop);
         }
 
         $this->logger->info('Shop registration request received', [
-            'shop-id' => $sanitizedShop->getShopId(),
-            'shop-url' => $sanitizedShop->getShopUrl(),
+            'shop-id' => $shop->getShopId(),
+            'shop-url' => $shop->getShopUrl(),
         ]);
 
         $psrFactory = new Psr17Factory();
 
         $data = [
-            // old shop is needed because the shop url is not sanitized
-            'proof' => $this->responseSigner->getRegistrationSignature($this->appConfiguration, $shop),
+            'proof' => $this->responseSigner->getRegistrationSignature($this->appConfiguration, $proofParameters),
             'confirmation_url' => $this->appConfiguration->getRegistrationConfirmUrl(),
-            'secret' => $shop->getShopSecret(),
+            'secret' => $secret,
         ];
 
         $response = $psrFactory->createResponse(200);
@@ -127,13 +140,28 @@ class RegistrationService
 
         $request->getBody()->rewind();
 
-        $this->requestVerifier->authenticatePostRequest($request, $shop);
+        // Use dual signature verifier for registration confirmation
+        $this->dualSignatureVerifier->authenticateRegistrationConfirmation($request, $shop, $this->appConfiguration);
 
         $this->eventDispatcher?->dispatch(new BeforeRegistrationCompletedEvent($shop, $request, $requestContent));
+        $pendingSecret = $shop->getPendingShopSecret();
+        assert($pendingSecret !== null); // should never be null here as registration/authentication would have failed
+        // this is a re-registration with secret rotation.
+        if ($pendingSecret !== $shop->getShopSecret()) {
+            $shop->setPreviousShopSecret($shop->getShopSecret())
+                ->setShopSecret($pendingSecret)
+                ->setSecretsRotatedAt(new \DateTimeImmutable());
+        }
 
-        $this->shopRepository->updateShop(
-            $shop->setShopApiCredentials($requestContent['apiKey'], $requestContent['secretKey'])
-        );
+        $pendingUrl = $shop->getPendingShopUrl();
+        assert($pendingUrl !== null);
+
+        $shop->setShopUrl($this->sanitizeShopUrl($pendingUrl))->setPendingShopUrl(null);
+        $shop->setPendingShopSecret(null);
+        $shop->setShopApiCredentials($requestContent['apiKey'], $requestContent['secretKey']);
+        $shop->setRegistrationConfirmed();
+
+        $this->shopRepository->updateShop($shop);
 
         $this->logger->info('Shop registration confirmed', [
             'shop-id' => $shop->getShopId(),
@@ -156,8 +184,16 @@ class RegistrationService
 
     private function getSanitizedShop(ShopInterface $shop): ShopInterface
     {
-        $sanitizedShop = clone $shop;
+        return $shop->setShopUrl($this->sanitizeShopUrl($shop->getShopUrl()));
+    }
 
-        return $sanitizedShop->setShopUrl($this->sanitizeShopUrl($shop->getShopUrl()));
+    /**
+     * @deprecated tag:v6.0.0 - Will be removed. Double signature verification will always be enforced.
+     */
+    private function setVerifiedWithDoubleSignature(ShopInterface $shop, RequestInterface $request): void
+    {
+        if ($this->appConfiguration->enforceDoubleSignature() || $request->hasHeader(RequestVerifier::SHOPWARE_SHOP_SIGNATURE_HEADER)) {
+            $shop->setVerifiedWithDoubleSignature();
+        }
     }
 }
