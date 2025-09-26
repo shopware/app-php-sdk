@@ -15,12 +15,14 @@ class PaymentFinalizeAction
 {
     /**
      * @param array<mixed> $queryParameters - Contains all query parameters passed to Shopware at the redirect of the payment provider
+     * @deprecated tag:v5.0.0 - Will be renamed to requestData instead.
      */
     public function __construct(
         public readonly ShopInterface $shop,
         public readonly ActionSource $source,
         public readonly OrderTransaction $orderTransaction,
         public readonly ?RecurringData $recurring = null,
+        /** @deprecated tag:v5.0.0 - Will be renamed to requestData instead. */
         public readonly array $queryParameters = [],
     ) {
     }

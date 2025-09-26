@@ -635,7 +635,7 @@ class ContextResolverTest extends TestCase
             'orderTransaction' => [
                 'id' => 'bar',
             ],
-            'queryParameters' => [
+            'requestData' => [
                 'returnId' => '123',
             ],
             'recurring' => [
@@ -661,6 +661,100 @@ class ContextResolverTest extends TestCase
         static::assertNotNull($paymentPayResponse->recurring);
         static::assertSame('baz', $paymentPayResponse->recurring->getSubscriptionId());
         static::assertEquals(new \DateTime('2023-07-18T17:00:00.000+00:00'), $paymentPayResponse->recurring->getNextSchedule());
+    }
+
+    /** @deprecated tag:v5.0.0 - Will be removed, use requestData instead */
+    public function testAssemblePayFinalizeWithQueryParameters(): void
+    {
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+                'inAppPurchases' => 'ey',
+            ],
+            'orderTransaction' => [
+                'id' => 'bar',
+            ],
+            /** @deprecated tag:v5.0.0 - Will be removed, use requestData instead */
+            'queryParameters' => [
+                'returnId' => '123',
+            ],
+            'recurring' => [
+                'subscriptionId' => 'baz',
+                'nextSchedule' => '2023-07-18T17:00:00.000+00:00',
+            ],
+        ];
+
+        $paymentPayResponse = $contextResolver->assemblePaymentFinalize(
+            new Request('POST', '/', [], \json_encode($body, JSON_THROW_ON_ERROR)),
+            $this->getShop()
+        );
+
+        static::assertInstanceOf(PaymentFinalizeAction::class, $paymentPayResponse);
+        static::assertSame('https://example.com', $paymentPayResponse->source->url);
+        static::assertSame('foo', $paymentPayResponse->source->appVersion);
+        static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
+        static::assertNotNull($paymentPayResponse->recurring);
+        static::assertSame('baz', $paymentPayResponse->recurring->getSubscriptionId());
+        static::assertEquals(new \DateTime('2023-07-18T17:00:00.000+00:00'), $paymentPayResponse->recurring->getNextSchedule());
+    }
+
+    /** @deprecated tag:v5.0.0 - Will be removed, use requestData instead */
+    public function testAssemblePayFinalizeWithBothParameters(): void
+    {
+        $collection = new Collection([
+            'foo' => new InAppPurchase('foo', 1),
+            'bar' => new InAppPurchase('bar', 2),
+        ]);
+
+        $provider = $this->createMock(InAppPurchaseProvider::class);
+        $provider
+            ->method('decodePurchases')
+            ->willReturn($collection);
+
+        $contextResolver = new ContextResolver($provider);
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+                'inAppPurchases' => 'ey',
+            ],
+            'orderTransaction' => [
+                'id' => 'bar',
+            ],
+            'requestData' => [
+                'newParam' => 'newValue',
+            ],
+            /** @deprecated tag:v5.0.0 - Will be removed, use requestData instead */
+            'queryParameters' => [
+                'oldParam' => 'oldValue',
+            ],
+            'recurring' => [
+                'subscriptionId' => 'baz',
+                'nextSchedule' => '2023-07-18T17:00:00.000+00:00',
+            ],
+        ];
+
+        $paymentPayResponse = $contextResolver->assemblePaymentFinalize(
+            new Request('POST', '/', [], \json_encode($body, JSON_THROW_ON_ERROR)),
+            $this->getShop()
+        );
+
+        static::assertInstanceOf(PaymentFinalizeAction::class, $paymentPayResponse);
+        static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
     }
 
     public function testPaymentPayCapture(): void
