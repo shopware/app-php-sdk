@@ -30,6 +30,9 @@ class OrderTransactionTest extends TestCase
             'customFields' => [
                 'key' => 'value',
             ],
+            'validationData' => [
+                'key' => 'value'
+            ]
         ]);
 
         static::assertSame('transaction-id', $orderTransaction->getId());
@@ -39,5 +42,7 @@ class OrderTransactionTest extends TestCase
         static::assertSame('order-id', $orderTransaction->getOrder()->getId());
         static::assertArrayHasKey('key', $orderTransaction->getCustomFields());
         static::assertSame('value', $orderTransaction->getCustomFields()['key']);
+        static::assertArrayHasKey('key', $orderTransaction->getValidationData());
+        static::assertSame('value', $orderTransaction->getValidationData()['key']);
     }
 }

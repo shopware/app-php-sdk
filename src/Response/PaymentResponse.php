@@ -89,14 +89,28 @@ class PaymentResponse
         return self::createStatusResponse(self::ACTION_REOPEN);
     }
 
+    /**
+     * @param self::ACTION_* $status
+     */
     public static function createStatusResponse(string $status, string $message = ''): ResponseInterface
     {
         return self::createResponse(array_filter(['status' => $status, 'message' => $message]));
     }
 
+    /**
+     * @deprecated tag:v5.0.0 - Will be removed and is replaced by {@see self::redirectUrl}
+     */
     public static function redirect(string $url): ResponseInterface
     {
         return self::createResponse(['redirectUrl' => $url]);
+    }
+
+    /**
+     * @param self::ACTION_* $status
+     */
+    public static function redirectUrl(string $status, string $url): ResponseInterface
+    {
+        return self::createResponse(array_filter(['status' => $status, 'redirectUrl' => $url]));
     }
 
     /**

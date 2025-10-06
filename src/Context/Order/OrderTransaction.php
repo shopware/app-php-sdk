@@ -42,4 +42,13 @@ class OrderTransaction extends ArrayStruct
         \assert(\is_array($this->data['order']));
         return new Order($this->data['order']);
     }
+
+    /**
+     * @return array<mixed>
+     */
+    public function getValidationData(): array
+    {
+        \assert(\is_array($this->data['validationData']));
+        return $this->data['validationData'];
+    }
 }
