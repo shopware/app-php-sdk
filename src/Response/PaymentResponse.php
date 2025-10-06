@@ -89,14 +89,20 @@ class PaymentResponse
         return self::createStatusResponse(self::ACTION_REOPEN);
     }
 
+    /**
+     * @param self::ACTION_* $status
+     */
     public static function createStatusResponse(string $status, string $message = ''): ResponseInterface
     {
         return self::createResponse(array_filter(['status' => $status, 'message' => $message]));
     }
 
-    public static function redirect(string $url): ResponseInterface
+    /**
+     * @param self::ACTION_*|'' $status
+     */
+    public static function redirect(string $url, string $status = ''): ResponseInterface
     {
-        return self::createResponse(['redirectUrl' => $url]);
+        return self::createResponse(array_filter(['redirectUrl' => $url, 'status' => $status]));
     }
 
     /**
