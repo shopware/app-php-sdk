@@ -98,11 +98,19 @@ class PaymentResponse
     }
 
     /**
-     * @param self::ACTION_*|'' $status
+     * @deprecated tag:v5.0.0 - Will be removed and is replaced by {@see self::redirectUrl}
      */
-    public static function redirect(string $url, string $status = ''): ResponseInterface
+    public static function redirect(string $url): ResponseInterface
     {
-        return self::createResponse(array_filter(['redirectUrl' => $url, 'status' => $status]));
+        return self::createResponse(['redirectUrl' => $url]);
+    }
+
+    /**
+     * @param self::ACTION_* $status
+     */
+    public static function redirectUrl(string $status, string $url): ResponseInterface
+    {
+        return self::createResponse(array_filter(['status' => $status, 'redirectUrl' => $url]));
     }
 
     /**

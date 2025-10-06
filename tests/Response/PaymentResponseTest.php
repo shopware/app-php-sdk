@@ -123,6 +123,9 @@ class PaymentResponseTest extends TestCase
         static::assertSame('{"message":"error"}', $response->getBody()->getContents());
     }
 
+    /**
+     * @deprecated tag:v5.0.0 - Will be removed
+     */
     public function testRedirect(): void
     {
         $response = PaymentResponse::redirect('https://example.com');
@@ -131,11 +134,11 @@ class PaymentResponseTest extends TestCase
         static::assertSame('{"redirectUrl":"https:\/\/example.com"}', $response->getBody()->getContents());
     }
 
-    public function testRedirectWithStatus(): void
+    public function testRedirectUrl(): void
     {
-        $response = PaymentResponse::redirect('https://example.com', PaymentResponse::ACTION_PROCESS);
+        $response = PaymentResponse::redirectUrl(PaymentResponse::ACTION_PROCESS, 'https://example.com');
 
         static::assertSame(200, $response->getStatusCode());
-        static::assertSame('{"redirectUrl":"https:\/\/example.com","status":"process"}', $response->getBody()->getContents());
+        static::assertSame('{"status":"process","redirectUrl":"https:\/\/example.com"}', $response->getBody()->getContents());
     }
 }
