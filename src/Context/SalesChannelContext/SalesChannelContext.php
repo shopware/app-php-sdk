@@ -72,4 +72,10 @@ class SalesChannelContext extends ArrayStruct
 
         return new Customer($this->data['customer']);
     }
+
+    public function getLanguageInfo(): LanguageInfo
+    {
+        \assert(\is_array($this->data['languageInfo']));
+        return new LanguageInfo($this->data['languageInfo']);
+    }
 }

@@ -35,6 +35,10 @@ class SalesChannelContextTest extends TestCase
             'customer' => [
                 'id' => 'customer-id',
             ],
+            'languageInfo' => [
+                'name' => 'English',
+                'localeCode' => 'en-GB',
+            ],
         ]);
 
         static::assertSame('context-token', $context->getToken());
@@ -46,6 +50,8 @@ class SalesChannelContextTest extends TestCase
         static::assertSame('payment-method-id', $context->getPaymentMethod()->getId());
         static::assertSame('sales-channel-id', $context->getSalesChannel()->getId());
         static::assertSame('customer-id', $context->getCustomer()->getId());
+        static::assertSame('English', $context->getLanguageInfo()->getName());
+        static::assertSame('en-GB', $context->getLanguageInfo()->getLocaleCode());
     }
 
     public function testConstructNullable(): void
