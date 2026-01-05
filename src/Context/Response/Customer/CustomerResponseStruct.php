@@ -58,4 +58,9 @@ class CustomerResponseStruct extends ResponseStruct
     public array $vatIds = [];
 
     public bool $acceptedDataProtection = false;
+
+    /**
+     * @var array<string, mixed>
+     */
+    public array $customFields = [];
 }
