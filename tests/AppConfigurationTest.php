@@ -22,7 +22,7 @@ class AppConfigurationTest extends TestCase
         static::assertSame('My App', $config->getAppName());
         static::assertSame('my-secret', $config->getAppSecret());
         static::assertSame('http://localhost', $config->getRegistrationConfirmUrl());
-        static::assertTrue($config->enforceDoubleSignature());
+        static::assertFalse($config->enforceDoubleSignature());
     }
 
     public function testRotationHardeningFlag(): void
