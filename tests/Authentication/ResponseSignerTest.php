@@ -24,7 +24,7 @@ class ResponseSignerTest extends TestCase
 
     public function testRegisterSigning(): void
     {
-        static::assertSame('a1a38c9580bb3bcd0df226086a9783ba4087671ce4968a4469e451c517fff445', $this->signer->getRegistrationSignature(new AppConfiguration('test', 'test', 'http://localhost'), new MockShop('test', 'test.de', 'test')));
+        static::assertSame('a1a38c9580bb3bcd0df226086a9783ba4087671ce4968a4469e451c517fff445', $this->signer->getRegistrationSignature(new AppConfiguration('test', 'test', 'http://localhost'), ['shop-id' => 'test', 'shop-url' => 'test.de']));
     }
 
     public function testResponseSigning(): void

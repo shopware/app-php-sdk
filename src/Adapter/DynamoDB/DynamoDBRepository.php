@@ -28,16 +28,24 @@ class DynamoDBRepository implements ShopRepositoryInterface
 
     public function createShop(ShopInterface $shop): void
     {
+        $item = [
+            'id' => ['S' => $shop->getShopId()],
+            'active' => ['BOOL' => $shop->isShopActive() ? '1' : '0'],
+            'confirmed' => ['BOOL' => $shop->isRegistrationConfirmed() ? '1' : '0'],
+            'url' => ['S' => $shop->getShopUrl()],
+            'secret' => ['S' => $shop->getShopSecret()],
+            'clientId' => ['S' => (string) $shop->getShopClientId()],
+            'clientSecret' => ['S' => (string) $shop->getShopClientSecret()],
+            'pendingShopSecret' => ['S' => (string) $shop->getPendingShopSecret()],
+            'pendingShopUrl' => ['S' => (string) $shop->getPendingShopUrl()],
+            'previousShopSecret' => ['S' => (string) $shop->getPreviousShopSecret()],
+            'secretsRotatedAt' => ['S' => (string) ($shop->getSecretsRotatedAt()?->getTimestamp() ?? '')],
+            'hasVerifiedWithDoubleSignature' => ['BOOL' => $shop->hasVerifiedWithDoubleSignature() ? '1' : '0'],
+        ];
+
         $this->client->putItem(new PutItemInput([
             'TableName' => $this->tableName,
-            'Item' => [
-                'id' => ['S' => $shop->getShopId()],
-                'active' => ['BOOL' => $shop->isShopActive() ? '1' : '0'],
-                'url' => ['S' => $shop->getShopUrl()],
-                'secret' => ['S' => $shop->getShopSecret()],
-                'clientId' => ['S' => (string) $shop->getShopClientId()],
-                'clientSecret' => ['S' => (string) $shop->getShopClientSecret()],
-            ],
+            'Item' => $item,
         ]));
     }
 
@@ -71,6 +79,48 @@ class DynamoDBRepository implements ShopRepositoryInterface
             $active = false;
         }
 
+        $confirmed = true;
+        if (isset($item['confirmed'])) {
+            $confirmed = $item['confirmed']->getBool();
+            if ($confirmed === null) {
+                $confirmed = false;
+            }
+        }
+
+        $pendingShopSecret = isset($item['pendingShopSecret']) ? $item['pendingShopSecret']->getS() : null;
+        $pendingShopUrl = isset($item['pendingShopUrl']) ? $item['pendingShopUrl']->getS() : null;
+        $previousShopSecret = isset($item['previousShopSecret']) ? $item['previousShopSecret']->getS() : null;
+
+        if ($pendingShopSecret === '') {
+            $pendingShopSecret = null;
+        }
+
+        if ($pendingShopUrl === '') {
+            $pendingShopUrl = null;
+        }
+
+        if ($previousShopSecret === '') {
+            $previousShopSecret = null;
+        }
+
+        $secretsRotatedAt = null;
+
+        if (isset($item['secretsRotatedAt'])) {
+            $timestamp = $item['secretsRotatedAt']->getS();
+            if ($timestamp !== null && $timestamp !== '') {
+                $secretsRotatedAt = (new \DateTimeImmutable())->setTimestamp((int) $timestamp);
+            }
+        }
+
+        $hasVerifiedWithDoubleSignature = false;
+        if (isset($item['hasVerifiedWithDoubleSignature'])) {
+            $hasVerifiedWithDoubleSignature = $item['hasVerifiedWithDoubleSignature']->getBool();
+
+            if ($hasVerifiedWithDoubleSignature === null) {
+                $hasVerifiedWithDoubleSignature = false;
+            }
+        }
+
         return new DynamoDBShop(
             $item['id']->getS() ?? '',
             $item['url']->getS() ?? '',
@@ -78,6 +128,12 @@ class DynamoDBRepository implements ShopRepositoryInterface
             $shopClientId,
             $shopClientSecret,
             $active,
+            $pendingShopSecret,
+            $pendingShopUrl,
+            $previousShopSecret,
+            $secretsRotatedAt,
+            $hasVerifiedWithDoubleSignature,
+            $confirmed,
         );
     }
 
@@ -88,16 +144,22 @@ class DynamoDBRepository implements ShopRepositoryInterface
             'Key' => [
                 'id' => ['S' => $shop->getShopId()],
             ],
-            'UpdateExpression' => 'SET active = :active, #u = :url, secret = :secret, clientId = :clientId, clientSecret = :clientSecret',
+            'UpdateExpression' => 'SET active = :active, confirmed = :confirmed, #u = :url, secret = :secret, clientId = :clientId, clientSecret = :clientSecret, pendingShopSecret = :pendingShopSecret, pendingShopUrl = :pendingShopUrl, previousShopSecret = :previousShopSecret, secretsRotatedAt = :secretsRotatedAt, hasVerifiedWithDoubleSignature = :hasVerifiedWithDoubleSignature',
             'ExpressionAttributeNames' => [
                 '#u' => 'url',
             ],
             'ExpressionAttributeValues' => [
                 ':active' => ['BOOL' => $shop->isShopActive() ? '1' : '0'],
+                ':confirmed' => ['BOOL' => $shop->isRegistrationConfirmed() ? '1' : '0'],
                 ':url' => ['S' => $shop->getShopUrl()],
                 ':secret' => ['S' => $shop->getShopSecret()],
                 ':clientId' => ['S' => (string) $shop->getShopClientId()],
                 ':clientSecret' => ['S' => (string) $shop->getShopClientSecret()],
+                ':pendingShopSecret' => ['S' => (string) $shop->getPendingShopSecret()],
+                ':pendingShopUrl' => ['S' => (string) $shop->getPendingShopUrl()],
+                ':previousShopSecret' => ['S' => (string) $shop->getPreviousShopSecret()],
+                ':secretsRotatedAt' => ['S' => (string) ($shop->getSecretsRotatedAt()?->getTimestamp() ?? '')],
+                ':hasVerifiedWithDoubleSignature' => ['BOOL' => $shop->hasVerifiedWithDoubleSignature() ? '1' : '0'],
             ],
         ]));
     }

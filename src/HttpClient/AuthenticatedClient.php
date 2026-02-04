@@ -30,7 +30,9 @@ class AuthenticatedClient implements ClientInterface
 
     private function fetchAccessToken(): string
     {
-        $cacheKey = $this->shop->getShopId() . '-access-token';
+        $clientId = $this->shop->getShopClientId();
+        assert($clientId !== null);
+        $cacheKey = hash('xxh3', $clientId) . '-access-token';
 
         $value = $this->cache->get($cacheKey);
         if (is_string($value)) {

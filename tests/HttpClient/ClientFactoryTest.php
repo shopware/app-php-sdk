@@ -24,7 +24,7 @@ class ClientFactoryTest extends TestCase
     public function testFactory(): void
     {
         $factory = new ClientFactory();
-        $factory->createClient(new MockShop('shop-id', 'shop-secret', ''));
+        $factory->createClient(new MockShop('shop-id', 'shop-secret', '', false, 'client-id', 'client-secret'));
     }
 
     /**
@@ -34,7 +34,7 @@ class ClientFactoryTest extends TestCase
     public function testSimpleFactory(): void
     {
         $factory = new ClientFactory();
-        $factory->createSimpleClient(new MockShop('shop-id', 'shop-secret', ''));
+        $factory->createSimpleClient(new MockShop('shop-id', 'shop-secret', '', false, 'client-id', 'client-secret'));
     }
 
     public function testFactoryOwnClient(): void
@@ -46,7 +46,7 @@ class ClientFactoryTest extends TestCase
             ->willReturn(new Response(200, [], '{"access_token": "a", "expires_in": 3600}'));
 
         $factory = new ClientFactory(new NullCache(), $testClient);
-        $client = $factory->createClient(new MockShop('shop-id', 'shop-secret', ''));
+        $client = $factory->createClient(new MockShop('shop-id', 'shop-secret', '', false, 'client-id', 'client-secret'));
 
         $client->sendRequest(new Request('GET', 'https://example.com'));
     }

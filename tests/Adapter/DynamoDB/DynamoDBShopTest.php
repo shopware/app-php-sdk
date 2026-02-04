@@ -21,6 +21,7 @@ class DynamoDBShopTest extends TestCase
         static::assertSame('shopClientId', $shop->getShopClientId());
         static::assertSame('shopClientSecret', $shop->getShopClientSecret());
         static::assertTrue($shop->isShopActive());
+        static::assertFalse($shop->isRegistrationConfirmed());
 
         $shop->setShopUrl('newShopUrl');
 
@@ -35,8 +36,13 @@ class DynamoDBShopTest extends TestCase
         static::assertSame('newClientId', $shop->getShopClientId());
         static::assertSame('newClientSecret', $shop->getShopClientSecret());
 
+        $shop->setRegistrationConfirmed();
+
+        static::assertTrue($shop->isRegistrationConfirmed());
+
         $shop = new DynamoDBShop('shopId', 'shopUrl', 'shopSecret');
 
         static::assertFalse($shop->isShopActive());
+        static::assertFalse($shop->isRegistrationConfirmed());
     }
 }

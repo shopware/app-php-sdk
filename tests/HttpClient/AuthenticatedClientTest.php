@@ -74,8 +74,9 @@ class AuthenticatedClientTest extends TestCase
         ]);
 
         $cache = $this->createMock(CacheInterface::class);
+        $cacheKey = $this->getCacheKeyForClientId('integration-id');
         $cache->method('get')
-            ->with('shop-id-access-token')
+            ->with($cacheKey)
             ->willReturn('asdass');
 
         $response = $this->getAuthenticatedClient($mockClient, $cache)
@@ -93,10 +94,11 @@ class AuthenticatedClientTest extends TestCase
         ]);
 
         $cache = static::createMock(CacheInterface::class);
+        $cacheKey = $this->getCacheKeyForClientId('integration-id');
         $cache
             ->expects(static::once())
             ->method('set')
-            ->with('shop-id-access-token', 'access-token', 3570);
+            ->with($cacheKey, 'access-token', 3570);
 
         $client = $this->getAuthenticatedClient($mockClient, $cache);
         $client->sendRequest(new Request('GET', 'https://example.com'));
@@ -118,6 +120,28 @@ class AuthenticatedClientTest extends TestCase
 
         $client = $this->getAuthenticatedClient($mockClient);
         $client->sendRequest($request);
+    }
+
+    public function testCacheKeyUsesClientId(): void
+    {
+        $mockClient = new MockClient([
+            new Response(200, [], '{"foo": "bar"}'),
+        ]);
+
+        $clientId = 'integration-key';
+        $shop = new MockShop('shop-id', 'https://example.com', 'shop-secret', false, $clientId, 'client-secret');
+
+        $cache = $this->createMock(CacheInterface::class);
+        $cache
+            ->expects(static::once())
+            ->method('get')
+            ->with($this->getCacheKeyForClientId($clientId))
+            ->willReturn('cached-token');
+
+        $client = new AuthenticatedClient($mockClient, $shop, $cache);
+        $response = $client->sendRequest(new Request('GET', 'https://example.com'));
+
+        static::assertSame(200, $response->getStatusCode());
     }
 
     public function testCreateTokenRequest(): void
@@ -168,9 +192,14 @@ class AuthenticatedClientTest extends TestCase
     {
         return new AuthenticatedClient(
             $mockClient,
-            new MockShop('shop-id', 'shop-secret', 'shop-url'),
+            new MockShop('shop-id', 'https://example.com', 'shop-secret', false, 'integration-id', 'client-secret'),
             $cache
         );
+    }
+
+    private function getCacheKeyForClientId(string $clientId): string
+    {
+        return hash('xxh3', $clientId) . '-access-token';
     }
 
     public function testInvalidJsonTokenResponseThrowsException(): void

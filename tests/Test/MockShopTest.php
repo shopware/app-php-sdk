@@ -21,6 +21,7 @@ class MockShopTest extends TestCase
         static::assertFalse($shop->isShopActive());
         static::assertNull($shop->getShopClientId());
         static::assertNull($shop->getShopClientSecret());
+        static::assertFalse($shop->isRegistrationConfirmed());
     }
 
     public function testConstructWithCustomValues(): void
@@ -33,6 +34,7 @@ class MockShopTest extends TestCase
         static::assertTrue($shop->isShopActive());
         static::assertSame('client-id', $shop->getShopClientId());
         static::assertSame('client-secret', $shop->getShopClientSecret());
+        static::assertFalse($shop->isRegistrationConfirmed());
     }
 
     public function testSetShopApiCredentials(): void
@@ -43,6 +45,15 @@ class MockShopTest extends TestCase
 
         static::assertSame('client-id', $shop->getShopClientId());
         static::assertSame('client-secret', $shop->getShopClientSecret());
+    }
+
+    public function testSetRegistrationConfirmed(): void
+    {
+        $shop = new MockShop('shop-id', 'https://example.com', 'shop-secret');
+
+        $shop->setRegistrationConfirmed();
+
+        static::assertTrue($shop->isRegistrationConfirmed());
     }
 
     public function testSetShopUrl(): void
