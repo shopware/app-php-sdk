@@ -16,6 +16,7 @@ class PaymentRecurringAction
         public readonly ActionSource $source,
         public readonly Order $order,
         public readonly OrderTransaction $orderTransaction,
+        public readonly ?RecurringData $recurring = null,
     ) {
     }
 }

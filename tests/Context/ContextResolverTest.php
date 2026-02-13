@@ -594,6 +594,9 @@ class ContextResolverTest extends TestCase
             'requestData' => [
                 'returnId' => '123',
             ],
+            'recurring' => [
+                'subscriptionId' => 'baz',
+            ],
         ];
 
         $paymentPayResponse = $contextResolver->assemblePaymentRecurringCapture(
@@ -610,6 +613,7 @@ class ContextResolverTest extends TestCase
         static::assertFalse($paymentPayResponse->source->inAppPurchases->has('baz'));
         static::assertSame('foo', $paymentPayResponse->order->getId());
         static::assertSame('bar', $paymentPayResponse->orderTransaction->getId());
+        static::assertSame('baz', $paymentPayResponse->recurring->toArray()['subscriptionId']);
     }
 
     public function testAssemblePayFinalize(): void
