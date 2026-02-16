@@ -23,7 +23,7 @@ jobs:
         run: composer install
 
       - name: Install dependencies
-        run: composer require --dev roave/backward-compatibility-check:^8.13
+        run: composer require --dev roave/backward-compatibility-check:^8.19
 
       - name: Run bc-check
         run: composer bc-check -- --format=github-actions --from="origin/${{ github.base_ref }}"
