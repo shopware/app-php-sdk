@@ -197,6 +197,7 @@ class ContextResolver
             $this->parseSource($body['source'], $shop),
             new Order($body['order']),
             new OrderTransaction($body['orderTransaction']),
+            isset($body['recurring']) ? new RecurringData($body['recurring']) : null,
         );
     }
 

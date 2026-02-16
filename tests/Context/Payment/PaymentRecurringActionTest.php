@@ -11,6 +11,7 @@ use Shopware\App\SDK\Context\InAppPurchase\InAppPurchase;
 use Shopware\App\SDK\Context\Order\Order;
 use Shopware\App\SDK\Context\Order\OrderTransaction;
 use Shopware\App\SDK\Context\Payment\PaymentRecurringAction;
+use Shopware\App\SDK\Context\Payment\RecurringData;
 use Shopware\App\SDK\Framework\Collection;
 use Shopware\App\SDK\Test\MockShop;
 
@@ -24,13 +25,15 @@ class PaymentRecurringActionTest extends TestCase
         $source = new ActionSource('https://shop-url.com', '1.0.0', $IAPs);
         $order = new Order(['id' => 'order-id']);
         $orderTransaction = new OrderTransaction(['id' => 'order-transaction-id']);
+        $recurringData = new RecurringData(['id' => 'recurring-data']);
 
-        $action = new PaymentRecurringAction($shop, $source, $order, $orderTransaction);
+        $action = new PaymentRecurringAction($shop, $source, $order, $orderTransaction, $recurringData);
 
         static::assertSame($shop, $action->shop);
         static::assertSame($source, $action->source);
         static::assertSame($order, $action->order);
         static::assertSame($orderTransaction, $action->orderTransaction);
         static::assertSame($IAPs, $action->source->inAppPurchases);
+        static::assertSame($recurringData, $action->recurring);
     }
 }
