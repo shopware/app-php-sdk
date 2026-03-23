@@ -30,7 +30,7 @@ class ShopResolver
             return $this->resolveFromAppShopIdHeader($request);
         }
 
-        if ($request->getHeaderLine('Content-Type') === 'application/json') {
+        if (str_contains($request->getHeaderLine('Content-Type'), 'application/json')) {
             return $this->resolveFromSource($request);
         }
 
