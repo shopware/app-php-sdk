@@ -30,7 +30,8 @@ class ShopResolver
             return $this->resolveFromAppShopIdHeader($request);
         }
 
-        if ($request->getHeaderLine('Content-Type') === 'application/json') {
+        // some requests (e.g. flow action) return a comma separated list of content-types, so contains check, no equals check
+        if (str_contains($request->getHeaderLine('Content-Type'), 'application/json')) {
             return $this->resolveFromSource($request);
         }
 
