@@ -73,11 +73,11 @@ class DynamoDBRepository implements ShopRepositoryInterface
             $shopClientId = null;
         }
 
-        $active = $this->normalizeBoolean($item['active']->getBool());
+        $active = $item['active']->getBool() ?? false;
 
         $confirmed = true;
         if (isset($item['confirmed'])) {
-            $confirmed = $this->normalizeBoolean($item['confirmed']->getBool());
+            $confirmed = $item['confirmed']->getBool() ?? false;
         }
 
         $pendingShopSecret = isset($item['pendingShopSecret']) ? $item['pendingShopSecret']->getS() : null;
@@ -107,7 +107,7 @@ class DynamoDBRepository implements ShopRepositoryInterface
 
         $hasVerifiedWithDoubleSignature = false;
         if (isset($item['hasVerifiedWithDoubleSignature'])) {
-            $hasVerifiedWithDoubleSignature = $this->normalizeBoolean($item['hasVerifiedWithDoubleSignature']->getBool());
+            $hasVerifiedWithDoubleSignature = $item['hasVerifiedWithDoubleSignature']->getBool() ?? false;
         }
 
         return new DynamoDBShop(
@@ -161,15 +161,6 @@ class DynamoDBRepository implements ShopRepositoryInterface
                 'id' => ['S' => $shopId],
             ],
         ]));
-    }
-
-    private function normalizeBoolean(?bool $value): bool
-    {
-        if ($value === null) {
-            return false;
-        }
-
-        return $value;
     }
 
     private function stringifyTimestamp(?\DateTimeImmutable $timestamp): string

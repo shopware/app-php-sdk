@@ -288,10 +288,12 @@ class DynamoDBRepositoryTest extends TestCase
                 'clientId' => new AttributeValue(['S' => 'clientId']),
                 'clientSecret' => new AttributeValue(['S' => 'clientSecret']),
                 'active' => new AttributeValue(['BOOL' => true]),
+                'confirmed' => new AttributeValue(['BOOL' => true]),
                 'pendingShopSecret' => new AttributeValue(['S' => 'pending-secret']),
                 'pendingShopUrl' => new AttributeValue(['S' => 'https://pending.com']),
                 'previousShopSecret' => new AttributeValue(['S' => 'previous-secret']),
                 'secretsRotatedAt' => new AttributeValue(['S' => (string)$timestamp]),
+                'hasVerifiedWithDoubleSignature' => new AttributeValue(['BOOL' => true]),
             ]);
 
         $client
@@ -303,11 +305,13 @@ class DynamoDBRepositoryTest extends TestCase
         $shop = $repository->getShopFromId('shopId');
 
         static::assertNotNull($shop);
+        static::assertTrue($shop->isShopActive());
         static::assertSame('pending-secret', $shop->getPendingShopSecret());
         static::assertSame('https://pending.com', $shop->getPendingShopUrl());
         static::assertSame('previous-secret', $shop->getPreviousShopSecret());
         static::assertNotNull($shop->getSecretsRotatedAt());
         static::assertSame($timestamp, $shop->getSecretsRotatedAt()->getTimestamp());
+        static::assertTrue($shop->hasVerifiedWithDoubleSignature());
         static::assertTrue($shop->isRegistrationConfirmed());
     }
 
