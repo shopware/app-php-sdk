@@ -73,18 +73,11 @@ class DynamoDBRepository implements ShopRepositoryInterface
             $shopClientId = null;
         }
 
-        $active = $item['active']->getBool();
-
-        if ($active === null) {
-            $active = false;
-        }
+        $active = $item['active']->getBool() ?? false;
 
         $confirmed = true;
         if (isset($item['confirmed'])) {
-            $confirmed = $item['confirmed']->getBool();
-            if ($confirmed === null) {
-                $confirmed = false;
-            }
+            $confirmed = $item['confirmed']->getBool() ?? false;
         }
 
         $pendingShopSecret = isset($item['pendingShopSecret']) ? $item['pendingShopSecret']->getS() : null;
@@ -114,11 +107,7 @@ class DynamoDBRepository implements ShopRepositoryInterface
 
         $hasVerifiedWithDoubleSignature = false;
         if (isset($item['hasVerifiedWithDoubleSignature'])) {
-            $hasVerifiedWithDoubleSignature = $item['hasVerifiedWithDoubleSignature']->getBool();
-
-            if ($hasVerifiedWithDoubleSignature === null) {
-                $hasVerifiedWithDoubleSignature = false;
-            }
+            $hasVerifiedWithDoubleSignature = $item['hasVerifiedWithDoubleSignature']->getBool() ?? false;
         }
 
         return new DynamoDBShop(
