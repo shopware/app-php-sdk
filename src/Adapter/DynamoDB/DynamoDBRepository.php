@@ -39,7 +39,7 @@ class DynamoDBRepository implements ShopRepositoryInterface
             'pendingShopSecret' => ['S' => (string) $shop->getPendingShopSecret()],
             'pendingShopUrl' => ['S' => (string) $shop->getPendingShopUrl()],
             'previousShopSecret' => ['S' => (string) $shop->getPreviousShopSecret()],
-            'secretsRotatedAt' => ['S' => $this->stringifyTimestamp($shop->getSecretsRotatedAt())],
+            'secretsRotatedAt' => ['S' => (string) ($shop->getSecretsRotatedAt()?->getTimestamp() ?? '')],
             'hasVerifiedWithDoubleSignature' => ['BOOL' => $shop->hasVerifiedWithDoubleSignature() ? '1' : '0'],
         ];
 
@@ -147,7 +147,7 @@ class DynamoDBRepository implements ShopRepositoryInterface
                 ':pendingShopSecret' => ['S' => (string) $shop->getPendingShopSecret()],
                 ':pendingShopUrl' => ['S' => (string) $shop->getPendingShopUrl()],
                 ':previousShopSecret' => ['S' => (string) $shop->getPreviousShopSecret()],
-                ':secretsRotatedAt' => ['S' => $this->stringifyTimestamp($shop->getSecretsRotatedAt())],
+                ':secretsRotatedAt' => ['S' => (string) ($shop->getSecretsRotatedAt()?->getTimestamp() ?? '')],
                 ':hasVerifiedWithDoubleSignature' => ['BOOL' => $shop->hasVerifiedWithDoubleSignature() ? '1' : '0'],
             ],
         ]));
@@ -161,10 +161,5 @@ class DynamoDBRepository implements ShopRepositoryInterface
                 'id' => ['S' => $shopId],
             ],
         ]));
-    }
-
-    private function stringifyTimestamp(?\DateTimeImmutable $timestamp): string
-    {
-        return (string) ($timestamp?->getTimestamp() ?? '');
     }
 }
