@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Shopware\App\SDK\Authentication;
 
+use Lcobucci\Clock\SystemClock;
 use Lcobucci\JWT\Validation\RequiredConstraintsViolated;
+use Psr\Clock\ClockInterface;
 use Psr\Http\Message\RequestInterface;
 use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Exception\SignatureInvalidException;
@@ -17,8 +19,11 @@ class DualSignatureRequestVerifier
 
     private const SHOPWARE_SHOP_SIGNATURE_PREVIOUS_HEADER = 'shopware-shop-signature-previous';
 
-    public function __construct(private readonly RequestVerifier $primaryVerifier = new RequestVerifier())
+    private readonly ClockInterface $clock;
+
+    public function __construct(private readonly RequestVerifier $primaryVerifier = new RequestVerifier(), ?ClockInterface $clock = null)
     {
+        $this->clock = $clock ?? new SystemClock(new \DateTimeZone('UTC'));
     }
 
     /**
@@ -89,7 +94,7 @@ class DualSignatureRequestVerifier
         // Check if we're still within the inflight allowance window
         $allowanceEnd = $rotatedAt->modify(sprintf("+%d seconds", self::INFLIGHT_ALLOWANCE));
 
-        if ((new \DateTimeImmutable()) >= $allowanceEnd) {
+        if ($this->clock->now() >= $allowanceEnd) {
             throw $exception;
         }
 

@@ -162,6 +162,18 @@ class ShopResolverTest extends TestCase
         $resolver->resolveShop($request);
     }
 
+    public function testResolveWithStorefrontThrowsWhenSecretIsEmpty(): void
+    {
+        $this->shopRepository->createShop(new MockShop('1', 'test.de', ''));
+
+        $request = $this->createGetRequest('shop-id=1');
+        $request = $request->withHeader('shopware-app-shop-id', '1');
+
+        $this->expectException(ShopNotFoundException::class);
+
+        $this->shopResolver->resolveShop($request);
+    }
+
     /**
      * @return iterable<array{0: string}>
      */

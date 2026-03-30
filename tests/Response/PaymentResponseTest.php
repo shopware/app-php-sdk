@@ -141,4 +141,12 @@ class PaymentResponseTest extends TestCase
         static::assertSame(200, $response->getStatusCode());
         static::assertSame('{"status":"process","redirectUrl":"https:\/\/example.com"}', $response->getBody()->getContents());
     }
+
+    public function testRedirectUrlFiltersEmptyStatus(): void
+    {
+        $response = PaymentResponse::redirectUrl('', 'https://example.com');
+
+        static::assertSame(200, $response->getStatusCode());
+        static::assertSame('{"redirectUrl":"https:\/\/example.com"}', $response->getBody()->getContents());
+    }
 }

@@ -220,6 +220,39 @@ class DynamoDBRepositoryTest extends TestCase
         static::assertFalse($shop->isRegistrationConfirmed());
     }
 
+    public function testGetShopDefaultsNullableBooleansToFalse(): void
+    {
+        $client = $this->createMock(DynamoDbClient::class);
+
+        $output = $this->createMock(GetItemOutput::class);
+        $output
+            ->expects(static::once())
+            ->method('getItem')
+            ->willReturn([
+                'id' => new AttributeValue(['S' => 'shopId']),
+                'url' => new AttributeValue(['S' => 'shopUrl']),
+                'secret' => new AttributeValue(['S' => 'shopSecret']),
+                'clientId' => new AttributeValue(['S' => '']),
+                'clientSecret' => new AttributeValue(['S' => '']),
+                'active' => new AttributeValue([]),
+                'confirmed' => new AttributeValue([]),
+                'hasVerifiedWithDoubleSignature' => new AttributeValue([]),
+            ]);
+
+        $client
+            ->expects(static::once())
+            ->method('getItem')
+            ->willReturn($output);
+
+        $repository = new DynamoDBRepository($client, 'tableName');
+        $shop = $repository->getShopFromId('shopId');
+
+        static::assertNotNull($shop);
+        static::assertFalse($shop->isShopActive());
+        static::assertFalse($shop->isRegistrationConfirmed());
+        static::assertFalse($shop->hasVerifiedWithDoubleSignature());
+    }
+
     public function testDeleteShop(): void
     {
         $client = $this->createMock(DynamoDbClient::class);

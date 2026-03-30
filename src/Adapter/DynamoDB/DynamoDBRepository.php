@@ -39,7 +39,7 @@ class DynamoDBRepository implements ShopRepositoryInterface
             'pendingShopSecret' => ['S' => (string) $shop->getPendingShopSecret()],
             'pendingShopUrl' => ['S' => (string) $shop->getPendingShopUrl()],
             'previousShopSecret' => ['S' => (string) $shop->getPreviousShopSecret()],
-            'secretsRotatedAt' => ['S' => (string) ($shop->getSecretsRotatedAt()?->getTimestamp() ?? '')],
+            'secretsRotatedAt' => ['S' => $this->stringifyTimestamp($shop->getSecretsRotatedAt())],
             'hasVerifiedWithDoubleSignature' => ['BOOL' => $shop->hasVerifiedWithDoubleSignature() ? '1' : '0'],
         ];
 
@@ -73,18 +73,11 @@ class DynamoDBRepository implements ShopRepositoryInterface
             $shopClientId = null;
         }
 
-        $active = $item['active']->getBool();
-
-        if ($active === null) {
-            $active = false;
-        }
+        $active = $this->normalizeBoolean($item['active']->getBool());
 
         $confirmed = true;
         if (isset($item['confirmed'])) {
-            $confirmed = $item['confirmed']->getBool();
-            if ($confirmed === null) {
-                $confirmed = false;
-            }
+            $confirmed = $this->normalizeBoolean($item['confirmed']->getBool());
         }
 
         $pendingShopSecret = isset($item['pendingShopSecret']) ? $item['pendingShopSecret']->getS() : null;
@@ -114,11 +107,7 @@ class DynamoDBRepository implements ShopRepositoryInterface
 
         $hasVerifiedWithDoubleSignature = false;
         if (isset($item['hasVerifiedWithDoubleSignature'])) {
-            $hasVerifiedWithDoubleSignature = $item['hasVerifiedWithDoubleSignature']->getBool();
-
-            if ($hasVerifiedWithDoubleSignature === null) {
-                $hasVerifiedWithDoubleSignature = false;
-            }
+            $hasVerifiedWithDoubleSignature = $this->normalizeBoolean($item['hasVerifiedWithDoubleSignature']->getBool());
         }
 
         return new DynamoDBShop(
@@ -158,7 +147,7 @@ class DynamoDBRepository implements ShopRepositoryInterface
                 ':pendingShopSecret' => ['S' => (string) $shop->getPendingShopSecret()],
                 ':pendingShopUrl' => ['S' => (string) $shop->getPendingShopUrl()],
                 ':previousShopSecret' => ['S' => (string) $shop->getPreviousShopSecret()],
-                ':secretsRotatedAt' => ['S' => (string) ($shop->getSecretsRotatedAt()?->getTimestamp() ?? '')],
+                ':secretsRotatedAt' => ['S' => $this->stringifyTimestamp($shop->getSecretsRotatedAt())],
                 ':hasVerifiedWithDoubleSignature' => ['BOOL' => $shop->hasVerifiedWithDoubleSignature() ? '1' : '0'],
             ],
         ]));
@@ -172,5 +161,19 @@ class DynamoDBRepository implements ShopRepositoryInterface
                 'id' => ['S' => $shopId],
             ],
         ]));
+    }
+
+    private function normalizeBoolean(?bool $value): bool
+    {
+        if ($value === null) {
+            return false;
+        }
+
+        return $value;
+    }
+
+    private function stringifyTimestamp(?\DateTimeImmutable $timestamp): string
+    {
+        return (string) ($timestamp?->getTimestamp() ?? '');
     }
 }
