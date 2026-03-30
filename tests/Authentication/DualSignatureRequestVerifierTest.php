@@ -216,34 +216,47 @@ class DualSignatureRequestVerifierTest extends TestCase
     /**
      * Test that GET request fallback actually tries the previous secret (catches MethodCallRemoval mutant)
      */
-    #[DoesNotPerformAssertions]
     public function testAuthenticateGetRequestFallbackCallsPrimaryVerifier(): void
     {
         $shop = new MockShop('shop-1', 'https://example.com', 'new-secret');
+        $rotatedAt = new \DateTimeImmutable('2026-03-30T08:00:00+00:00');
         $shop->setPreviousShopSecret('old-secret')
-            ->setSecretsRotatedAt(new \DateTimeImmutable('now'));
+            ->setSecretsRotatedAt($rotatedAt);
 
         $query = 'test=1';
-        // Sign with old secret
-        $signature = hash_hmac('sha256', $query, 'old-secret');
-        $request = new Request('GET', sprintf('https://my-app.com/webhook?%s&shopware-shop-signature=%s', $query, $signature));
+        $request = new Request('GET', sprintf('https://my-app.com/webhook?%s&shopware-shop-signature=invalid', $query));
 
-        $verifier = new DualSignatureRequestVerifier(new RequestVerifier());
+        $requestVerifier = $this->createMock(RequestVerifier::class);
+        $matcher = self::exactly(2);
+        $requestVerifier
+            ->expects($matcher)
+            ->method('authenticateGetRequest')
+            ->willReturnCallback(function (RequestInterface $actualRequest, string $secret) use ($matcher, $request, $shop) {
+                static::assertSame($request, $actualRequest);
 
+                if ($matcher->numberOfInvocations() === 1) {
+                    static::assertSame($shop->getShopSecret(), $secret);
+                    throw new SignatureInvalidException($actualRequest);
+                }
+
+                static::assertSame($shop->getPreviousShopSecret(), $secret);
+            });
+
+        $verifier = new DualSignatureRequestVerifier($requestVerifier, new FrozenClock($rotatedAt->modify('+30 seconds')));
         $verifier->authenticateGetRequest($request, $shop);
     }
 
     public function testAuthenticatePostRequestAtExactRotationWindowBoundary(): void
     {
         $shop = new MockShop('shop-1', 'https://example.com', 'new-secret');
-        // Exactly at the 60 second boundary
+        $rotatedAt = new \DateTimeImmutable('2026-03-30T08:00:00+00:00');
         $shop->setPreviousShopSecret('old-secret')
-            ->setSecretsRotatedAt(new \DateTimeImmutable('-60 seconds'));
+            ->setSecretsRotatedAt($rotatedAt);
 
         $request = new Request('POST', 'https://my-app.com/webhook', [], 'body');
         $request = $request->withHeader('shopware-shop-signature', hash_hmac('sha256', 'body', 'old-secret'));
 
-        $verifier = new DualSignatureRequestVerifier(new RequestVerifier());
+        $verifier = new DualSignatureRequestVerifier(new RequestVerifier(), new FrozenClock($rotatedAt->modify('+60 seconds')));
 
         // At exactly 60 seconds, we should be OUTSIDE the window (>=)
         $this->expectException(SignatureInvalidException::class);

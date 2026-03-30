@@ -214,10 +214,46 @@ class AuthenticatedClientTest extends TestCase
         $client->sendRequest(new Request('GET', 'https://example.com'));
     }
 
+    public function testAuthenticationFailsForNon200ResponseWithValidTokenBody(): void
+    {
+        $mockClient = new MockClient([
+            new Response(401, [], '{"access_token": "access-token", "expires_in": 3600}'),
+        ]);
+
+        $client = $this->getAuthenticatedClient($mockClient);
+
+        static::expectException(AuthenticationFailedException::class);
+        $client->sendRequest(new Request('GET', 'https://example.com'));
+    }
+
     public function testMissingTokenFieldsThrowsException(): void
     {
         $mockClient = new MockClient([
             new Response(200, [], '{"foo":"bar"}'),
+        ]);
+
+        $client = $this->getAuthenticatedClient($mockClient);
+        static::expectException(AuthenticationFailedException::class);
+
+        $client->sendRequest(new Request('GET', 'https://example.com'));
+    }
+
+    public function testNonStringAccessTokenThrowsException(): void
+    {
+        $mockClient = new MockClient([
+            new Response(200, [], '{"access_token":123,"expires_in":3600}'),
+        ]);
+
+        $client = $this->getAuthenticatedClient($mockClient);
+        static::expectException(AuthenticationFailedException::class);
+
+        $client->sendRequest(new Request('GET', 'https://example.com'));
+    }
+
+    public function testNonIntegerExpiresInThrowsException(): void
+    {
+        $mockClient = new MockClient([
+            new Response(200, [], '{"access_token":"access-token","expires_in":"3600"}'),
         ]);
 
         $client = $this->getAuthenticatedClient($mockClient);

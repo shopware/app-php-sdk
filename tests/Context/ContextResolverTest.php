@@ -174,6 +174,18 @@ class ContextResolverTest extends TestCase
         static::assertFalse($module->inAppPurchases->has('baz'));
     }
 
+    public function testAssembleModuleWithoutInAppPurchaseProviderReturnsEmptyCollection(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $module = $contextResolver->assembleModule(
+            new Request('GET', 'http://localhost:6001/module/test?sw-version=6.5.9999999.9999999-dev&sw-context-language=2fbb5fe2e29a4d70aa5854ce7ce3e20b&sw-user-language=en-GB&in-app-purchases=foo,bar'),
+            $this->getShop()
+        );
+
+        static::assertCount(0, $module->inAppPurchases);
+    }
+
     #[DataProvider('assembleModuleInvalidRequestBodyProvider')]
     public function testAssembleModuleInvalid(string $uri): void
     {
@@ -948,6 +960,55 @@ class ContextResolverTest extends TestCase
         static::assertSame(395.01, $action->orderTransaction->getAmount()->getTotalPrice());
     }
 
+    public function testAssembleFinalizeFallsBackToLegacyQueryParameters(): void
+    {
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+
+        $action = $contextResolver->assemblePaymentFinalize(
+            new Request('POST', '/', [], \json_encode([
+                'source' => [
+                    'url' => 'https://example.com',
+                    'appVersion' => '1.0.0',
+                ],
+                'orderTransaction' => [
+                    'id' => 'transaction-id',
+                ],
+                'queryParameters' => [
+                    'legacy' => 'value',
+                ],
+            ], JSON_THROW_ON_ERROR)),
+            $this->getShop()
+        );
+
+        static::assertSame(['legacy' => 'value'], $action->queryParameters);
+    }
+
+    public function testAssembleFinalizePrefersRequestDataOverLegacyQueryParameters(): void
+    {
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+
+        $action = $contextResolver->assemblePaymentFinalize(
+            new Request('POST', '/', [], \json_encode([
+                'source' => [
+                    'url' => 'https://example.com',
+                    'appVersion' => '1.0.0',
+                ],
+                'orderTransaction' => [
+                    'id' => 'transaction-id',
+                ],
+                'requestData' => [
+                    'preferred' => 'value',
+                ],
+                'queryParameters' => [
+                    'legacy' => 'value',
+                ],
+            ], JSON_THROW_ON_ERROR)),
+            $this->getShop()
+        );
+
+        static::assertSame(['preferred' => 'value'], $action->queryParameters);
+    }
+
     public function testAssembleCaptureInvalid(): void
     {
         $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
@@ -1130,6 +1191,21 @@ class ContextResolverTest extends TestCase
         static::assertSame('ey', $action->claims->getInAppPurchases());
     }
 
+    public function testAssembleStorefrontRequestWithoutInAppPurchaseProviderReturnsEmptyCollection(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $request = new Request('POST', '/', [], '{}');
+        $request = $request->withHeader('shopware-app-token', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJGcWFIV1VzQ1JOc3JaOWtRIiwiaWF0IjoxNjg5ODM3MDkyLjI3ODMyOSwibmJmIjoxNjg5ODM3MDkyLjI3ODMyOSwiZXhwIjoxNjg5ODQwNjkyLjI3ODI0MywiaW5BcHBQdXJjaGFzZXMiOiJleSIsInNhbGVzQ2hhbm5lbElkIjoiMDE4OTY0MDU1NGI1NzAwYzgwYzJjNGEyMDJlMjQwMWQifQ.0Juj24bUHvprTz_7CHItgrcFCZaWVd4DZfzjMjSD2-A');
+
+        $action = $contextResolver->assembleStorefrontRequest(
+            $request,
+            $this->getShop()
+        );
+
+        static::assertCount(0, $action->inAppPurchases);
+    }
+
     public function testAssembleStorefrontRequestWithEmptyTokenThrows(): void
     {
         $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
@@ -1222,6 +1298,31 @@ class ContextResolverTest extends TestCase
         static::assertCount(2, $shippingMethods);
         static::assertSame('id1', $shippingMethods->get('technicalName1'));
         static::assertSame('id2', $shippingMethods->get('technicalName2'));
+    }
+
+    public function testParseSourceWithoutInAppPurchaseProviderReturnsEmptyCollection(): void
+    {
+        $contextResolver = new ContextResolver();
+
+        $webhook = $contextResolver->assembleWebhook(
+            $this->createApiRequest([
+                'source' => [
+                    'url' => 'https://example.com',
+                    'appVersion' => '1.0.0',
+                    'inAppPurchases' => 'ey',
+                ],
+                'data' => [
+                    'event' => 'order.placed',
+                    'payload' => [
+                        'orderId' => '123',
+                    ],
+                ],
+                'timestamp' => 123456789,
+            ]),
+            $this->getShop()
+        );
+
+        static::assertCount(0, $webhook->source->inAppPurchases);
     }
 
     public function testAssembleContextGatewayRequest(): void

@@ -21,6 +21,7 @@ class MockShopTest extends TestCase
         static::assertFalse($shop->isShopActive());
         static::assertNull($shop->getShopClientId());
         static::assertNull($shop->getShopClientSecret());
+        static::assertFalse($shop->hasVerifiedWithDoubleSignature());
         static::assertFalse($shop->isRegistrationConfirmed());
     }
 
@@ -34,6 +35,7 @@ class MockShopTest extends TestCase
         static::assertTrue($shop->isShopActive());
         static::assertSame('client-id', $shop->getShopClientId());
         static::assertSame('client-secret', $shop->getShopClientSecret());
+        static::assertFalse($shop->hasVerifiedWithDoubleSignature());
         static::assertFalse($shop->isRegistrationConfirmed());
     }
 
@@ -54,6 +56,15 @@ class MockShopTest extends TestCase
         $shop->setRegistrationConfirmed();
 
         static::assertTrue($shop->isRegistrationConfirmed());
+    }
+
+    public function testSetVerifiedWithDoubleSignature(): void
+    {
+        $shop = new MockShop('shop-id', 'https://example.com', 'shop-secret');
+
+        $shop->setVerifiedWithDoubleSignature();
+
+        static::assertTrue($shop->hasVerifiedWithDoubleSignature());
     }
 
     public function testSetShopUrl(): void

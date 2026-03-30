@@ -48,12 +48,26 @@ class AuthenticatedClient implements ClientInterface
         $body = $response->getBody()->getContents();
 
         try {
-            $token = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+            $token = json_decode($body, true, flags: JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
             throw new AuthenticationFailedException($this->shop->getShopId(), $response);
         }
 
-        if (!is_array($token) || !isset($token['access_token'], $token['expires_in'])) {
+        if (!is_array($token)) {
+            throw new AuthenticationFailedException(
+                $this->shop->getShopId(),
+                $response,
+            );
+        }
+
+        if (!is_string($token['access_token'] ?? null)) {
+            throw new AuthenticationFailedException(
+                $this->shop->getShopId(),
+                $response,
+            );
+        }
+
+        if (!is_int($token['expires_in'] ?? null)) {
             throw new AuthenticationFailedException(
                 $this->shop->getShopId(),
                 $response,
@@ -62,7 +76,7 @@ class AuthenticatedClient implements ClientInterface
 
         $this->cache->set($cacheKey, $token['access_token'], $token['expires_in'] - self::TOKEN_EXPIRE_DIFF);
 
-        return (string) $token['access_token'];
+        return $token['access_token'];
     }
 
     /**
