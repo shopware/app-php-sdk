@@ -15,13 +15,13 @@ class CartPrice extends ArrayStruct
 
     public function getNetPrice(): float
     {
-        \assert(is_float($this->data['netPrice']));
+        \assert(is_float($this->data['netPrice']) || \is_int($this->data['netPrice']));
         return $this->data['netPrice'];
     }
 
     public function getTotalPrice(): float
     {
-        \assert(is_float($this->data['totalPrice']));
+        \assert(is_float($this->data['totalPrice']) || \is_int($this->data['totalPrice']));
         return $this->data['totalPrice'];
     }
 
@@ -57,13 +57,13 @@ class CartPrice extends ArrayStruct
 
     public function getPositionPrice(): float
     {
-        \assert(is_float($this->data['positionPrice']));
+        \assert(is_float($this->data['positionPrice']) || \is_int($this->data['positionPrice']));
         return $this->data['positionPrice'];
     }
 
     public function getRawTotal(): float
     {
-        \assert(is_float($this->data['rawTotal']));
+        \assert(is_float($this->data['rawTotal']) || \is_int($this->data['rawTotal']));
         return $this->data['rawTotal'];
     }
 }
