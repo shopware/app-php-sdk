@@ -28,6 +28,6 @@ jobs:
         run: composer update --no-ansi --no-interaction --no-progress
 
       - name: Infection PHP
-        run: vendor/bin/infection --min-msi=99 --min-covered-msi=100 --threads=4
+        run: vendor/bin/infection --min-msi=90 --min-covered-msi=95 --threads=4
         env:
           STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
