@@ -5,9 +5,18 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Context\SalesChannelContext;
 
 use Shopware\App\SDK\Context\ArrayStruct;
+use Shopware\App\SDK\Context\Trait\CustomFieldsAware;
 
 class Country extends ArrayStruct
 {
+    use CustomFieldsAware;
+
+    public function getId(): string
+    {
+        \assert(is_string($this->data['id']));
+        return $this->data['country']['id'];
+    }
+
     public function getName(): string
     {
         \assert(is_string($this->data['name']));
