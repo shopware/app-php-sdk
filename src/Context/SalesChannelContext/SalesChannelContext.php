@@ -78,4 +78,10 @@ class SalesChannelContext extends ArrayStruct
         \assert(\is_array($this->data['languageInfo']));
         return new LanguageInfo($this->data['languageInfo']);
     }
+
+    public function getShippingLocation(): ShippingLocation
+    {
+        \assert(\is_array($this->data['shippingLocation']));
+        return new ShippingLocation($this->data['shippingLocation']);
+    }
 }
