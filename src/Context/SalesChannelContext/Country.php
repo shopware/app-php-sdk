@@ -14,7 +14,7 @@ class Country extends ArrayStruct
     public function getId(): string
     {
         \assert(is_string($this->data['id']));
-        return $this->data['country']['id'];
+        return $this->data['id'];
     }
 
     public function getName(): string
