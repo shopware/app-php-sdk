@@ -18,4 +18,14 @@ class ArrayStructTest extends TestCase
         static::assertSame(['foo' => 'bar', 'baz' => 'bax'], $struct->toArray());
         static::assertSame(['foo' => 'bar', 'baz' => 'bax'], $struct->jsonSerialize());
     }
+
+    public function testIsset(): void
+    {
+        $struct = new class (['foo' => 'bar', 'baz' => null]) extends ArrayStruct {};
+
+        static::assertTrue($struct->isset('foo'));
+        static::assertFalse($struct->isset('baz'));
+        static::assertTrue($struct->isset('baz', true));
+        static::assertFalse($struct->isset('test'));
+    }
 }
