@@ -29,15 +29,15 @@ abstract class ArrayStruct implements \JsonSerializable
         return $this->toArray();
     }
 
-    /**
-     * Associations or fields might be null or not set
-     */
-    public function isset(string $property, bool $allowNull = false): bool
+    public function isset(string $property): bool
     {
-        if ($allowNull) {
-            return array_key_exists($property, $this->data);
-        }
+        return isset($this->data[$property]);
+    }
 
-        return ($this->data[$property] ?? null) !== null;
+    public function isNull(string $property): bool
+    {
+        $data = array_key_exists($property, $this->data) ? $this->data[$property] : true;
+
+        return $data === null;
     }
 }
