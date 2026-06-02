@@ -59,6 +59,18 @@ class OrderCustomerTest extends TestCase
         static::assertSame('foo', $customer->getCustomerNumber());
     }
 
+    public function testGetCustomerId(): void
+    {
+        $customer = new OrderCustomer(['customerId' => 'foo']);
+        static::assertSame('foo', $customer->getCustomerId());
+    }
+
+    public function testNullCustomerId(): void
+    {
+        $customer = new OrderCustomer(['customerId' => null]);
+        static::assertNull($customer->getCustomerId());
+    }
+
     public function testGetSalutation(): void
     {
         $customer = new OrderCustomer(['salutation' => ['id' => 'foo']]);

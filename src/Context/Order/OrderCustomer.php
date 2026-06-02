@@ -64,6 +64,12 @@ class OrderCustomer extends ArrayStruct
         return $this->data['customerNumber'];
     }
 
+    public function getCustomerId(): ?string
+    {
+        \assert(is_string($this->data['customerId']) || is_null($this->data['customerId']));
+        return $this->data['customerId'];
+    }
+
     public function getSalutation(): ?Salutation
     {
         \assert(is_array($this->data['salutation']) || is_null($this->data['salutation']));
