@@ -55,6 +55,11 @@ class RegistrationService
 
         $shop = $this->shopRepository->getShopFromId($queries['shop-id']);
 
+        $this->logger->info(
+            'Shop registration started',
+            $this->registrationLogContext($queries['shop-id'], $queries['shop-url'], $shop)
+        );
+
         $this->dualSignatureVerifier->authenticateRegistrationRequest(
             $request,
             $this->appConfiguration,
@@ -138,6 +143,11 @@ class RegistrationService
             throw new ShopNotFoundException($requestContent['shopId']);
         }
 
+        $this->logger->info(
+            'Shop registration confirmation started',
+            $this->registrationLogContext($requestContent['shopId'], $shop->getShopUrl(), $shop)
+        );
+
         $request->getBody()->rewind();
 
         // Use dual signature verifier for registration confirmation
@@ -151,6 +161,11 @@ class RegistrationService
             $shop->setPreviousShopSecret($shop->getShopSecret())
                 ->setShopSecret($pendingSecret)
                 ->setSecretsRotatedAt(new \DateTimeImmutable());
+
+            $this->logger->info(
+                'Shop secret rotated during registration confirmation',
+                $this->registrationLogContext($shop->getShopId(), $shop->getShopUrl(), $shop)
+            );
         }
 
         $pendingUrl = $shop->getPendingShopUrl();
@@ -185,6 +200,21 @@ class RegistrationService
     private function getSanitizedShop(ShopInterface $shop): ShopInterface
     {
         return $shop->setShopUrl($this->sanitizeShopUrl($shop->getShopUrl()));
+    }
+
+    /**
+     * @return array<string, bool|string|null>
+     */
+    private function registrationLogContext(string $shopId, string $shopUrl, ?ShopInterface $shop = null): array
+    {
+        return [
+            'shop-id' => $shopId,
+            'shop-url' => $shopUrl,
+            'shop-exists' => $shop !== null,
+            'registration-confirmed' => $shop?->isRegistrationConfirmed(),
+            'has-pending-secret' => $shop?->getPendingShopSecret() !== null,
+            'has-previous-secret' => $shop?->getPreviousShopSecret() !== null,
+        ];
     }
 
     /**
