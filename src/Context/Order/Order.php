@@ -160,4 +160,14 @@ class Order extends ArrayStruct
             return new OrderTransaction($transaction);
         }, $this->data['transactions']));
     }
+
+    public function getLanguage(): ?Language
+    {
+        if (!isset($this->data['language'])) {
+            return null;
+        }
+
+        \assert(\is_array($this->data['language']));
+        return new Language($this->data['language']);
+    }
 }
