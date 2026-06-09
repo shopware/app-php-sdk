@@ -163,7 +163,7 @@ class Order extends ArrayStruct
 
     public function getLanguage(): ?Language
     {
-        if (!isset($this->data['language'])) {
+        if (!$this->isset('language')) {
             return null;
         }
 

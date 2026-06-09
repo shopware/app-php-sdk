@@ -22,7 +22,7 @@ class Language extends ArrayStruct
 
     public function getLocale(): ?Locale
     {
-        if (!isset($this->data['locale'])) {
+        if (!$this->isset('locale')) {
             return null;
         }
 
@@ -32,7 +32,7 @@ class Language extends ArrayStruct
 
     public function getTranslationCode(): ?Locale
     {
-        if (!isset($this->data['translationCode'])) {
+        if (!$this->isset('translationCode')) {
             return null;
         }
 
