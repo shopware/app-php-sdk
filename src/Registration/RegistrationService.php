@@ -98,6 +98,11 @@ class RegistrationService
         $this->logger->info('Shop registration request received', [
             'shop-id' => $shop->getShopId(),
             'shop-url' => $shop->getShopUrl(),
+            'signature-payload' => implode('', [
+                $proofParameters['shop-id'],
+                $proofParameters['shop-url'],
+                $this->appConfiguration->getAppName(),
+            ]),
         ]);
 
         $psrFactory = new Psr17Factory();
