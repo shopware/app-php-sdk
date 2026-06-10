@@ -62,4 +62,24 @@ class OrderTest extends TestCase
         static::assertCount(1, $order->getTransactions());
         static::assertSame('transaction-id', $order->getTransactions()->first()?->getId());
     }
+
+    public function testGetLanguage(): void
+    {
+        $order = new Order(['language' => ['id' => 'language-id', 'locale' => ['code' => 'de-DE']]]);
+
+        static::assertSame('language-id', $order->getLanguage()?->getId());
+        static::assertSame('de-DE', $order->getLanguage()?->getLocale()?->getCode());
+    }
+
+    public function testGetLanguageReturnsNullWhenMissing(): void
+    {
+        $order = new Order([]);
+        static::assertNull($order->getLanguage());
+    }
+
+    public function testGetLanguageReturnsNullWhenNull(): void
+    {
+        $order = new Order(['language' => null]);
+        static::assertNull($order->getLanguage());
+    }
 }
