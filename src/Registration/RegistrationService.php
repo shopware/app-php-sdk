@@ -49,7 +49,7 @@ class RegistrationService
     {
         \parse_str($request->getUri()->getQuery(), $queries);
 
-        if (!isset($queries['shop-id'], $queries['shop-url']) || !is_string($queries['shop-id']) || !is_string($queries['shop-url'])) {
+        if (!isset($queries['shop-id'], $queries['shop-url']) || !is_string($queries['shop-id']) || !is_string($queries['shop-url']) || empty($queries['shop-id']) || empty($queries['shop-url'])) {
             throw new MissingShopParameterException();
         }
 
