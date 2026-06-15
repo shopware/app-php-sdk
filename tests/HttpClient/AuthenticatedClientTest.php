@@ -188,6 +188,37 @@ class AuthenticatedClientTest extends TestCase
         $client->sendRequest($request);
     }
 
+    public function testCreateTokenRequestWithTailingSlash(): void
+    {
+        $shop = new MockShop('shop-id', 'https://example.com/subpath//', 'shop-url', true, 'shop-id', 'shop-secret');
+
+        $factory = new Psr17Factory();
+
+        $tokenRequest = null;
+
+        $mockClient = static::createMock(ClientInterface::class);
+        $mockClient
+            ->expects(static::exactly(2))
+            ->method('sendRequest')
+            ->willReturnCallback(function (RequestInterface $request) use (&$tokenRequest): ResponseInterface {
+                $body = \json_decode($request->getBody()->getContents(), true);
+
+                if (\is_array($body) && \array_key_exists('grant_type', $body)) {
+                    $tokenRequest = $request;
+
+                    return new Response(200, [], '{"access_token": "access-token", "expires_in": 3600}');
+                }
+
+                return new Response();
+            });
+
+        $client = new AuthenticatedClient($mockClient, $shop, new NullCache());
+        $client->sendRequest($factory->createRequest('POST', sprintf('%s/stub', $shop->getShopUrl())));
+
+        static::assertInstanceOf(RequestInterface::class, $tokenRequest);
+        static::assertSame('https://example.com/subpath/api/oauth/token', (string) $tokenRequest->getUri());
+    }
+
     public function getAuthenticatedClient(MockClient $mockClient, CacheInterface $cache = new NullCache()): AuthenticatedClient
     {
         return new AuthenticatedClient(
