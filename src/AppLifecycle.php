@@ -60,7 +60,11 @@ class AppLifecycle
     }
 
     /**
-     * Handles the 'app.deleted' Hook to remove the shop from the repository
+     * Handles the 'app.deleted' Hook to remove the shop from the repository.
+     *
+     * When the merchant opts to keep the shop's data on uninstall, Shopware sends
+     * `keepUserData: true` in the webhook payload; the shop is then left untouched
+     * so a later re-registration can restore it.
      */
     public function delete(RequestInterface $request): ResponseInterface
     {
@@ -73,18 +77,35 @@ class AppLifecycle
             return $response;
         }
 
-        $this->eventDispatcher?->dispatch(new BeforeShopDeletionEvent($request, $shop));
+        $keepUserData = $this->shouldKeepUserData($request);
 
-        $this->shopRepository->deleteShop($shop->getShopId());
+        $this->eventDispatcher?->dispatch(new BeforeShopDeletionEvent($request, $shop, $keepUserData));
 
-        $this->eventDispatcher?->dispatch(new ShopDeletedEvent($request, $shop));
+        if (!$keepUserData) {
+            $this->shopRepository->deleteShop($shop->getShopId());
+        }
+
+        $this->eventDispatcher?->dispatch(new ShopDeletedEvent($request, $shop, $keepUserData));
 
         $this->logger->info('Shop uninstalled', [
             'shop-id' => $shop->getShopId(),
             'shop-url' => $shop->getShopUrl(),
+            'keep-user-data' => $keepUserData,
         ]);
 
         return $response;
+    }
+
+    /**
+     * Reads the `keepUserData` flag from the app.deleted webhook payload, defaulting
+     * to false so the shop is removed unless Shopware explicitly asks to keep it.
+     */
+    private function shouldKeepUserData(RequestInterface $request): bool
+    {
+        $body = \json_decode($request->getBody()->getContents(), true);
+        $request->getBody()->rewind();
+
+        return \is_array($body) && ($body['data']['payload']['keepUserData'] ?? false) === true;
     }
 
     private function findShop(RequestInterface $request): ?ShopInterface
