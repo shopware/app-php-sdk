@@ -85,7 +85,7 @@ class AuthenticatedClient implements ClientInterface
     private function createTokenRequest(ShopInterface $shop): RequestInterface
     {
         $factory = new Psr17Factory();
-        $request = $factory->createRequest('POST', sprintf('%s/api/oauth/token', $shop->getShopUrl()));
+        $request = $factory->createRequest('POST', sprintf('%s/api/oauth/token', rtrim($shop->getShopUrl(), '/')));
 
         return $request
             ->withHeader('Content-Type', 'application/json')
