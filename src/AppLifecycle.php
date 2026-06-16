@@ -16,6 +16,7 @@ use Shopware\App\SDK\Event\BeforeShopDeletionEvent;
 use Shopware\App\SDK\Event\ShopActivatedEvent;
 use Shopware\App\SDK\Event\ShopDeactivatedEvent;
 use Shopware\App\SDK\Event\ShopDeletedEvent;
+use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
 use Shopware\App\SDK\Registration\RegistrationService;
 use Shopware\App\SDK\Shop\ShopInterface;
@@ -99,10 +100,19 @@ class AppLifecycle
     /**
      * Reads the `keepUserData` flag from the app.deleted webhook payload, defaulting
      * to false so the shop is removed unless Shopware explicitly asks to keep it.
+     *
+     * Invalid JSON means the webhook body itself is corrupt; it is rejected as a
+     * malformed body rather than silently treated as keepUserData=false.
+     *
+     * @throws MalformedWebhookBodyException when the request body is not valid JSON
      */
     private function shouldKeepUserData(RequestInterface $request): bool
     {
-        $body = \json_decode($request->getBody()->getContents(), true);
+        try {
+            $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            throw new MalformedWebhookBodyException();
+        }
         $request->getBody()->rewind();
 
         return \is_array($body) && ($body['data']['payload']['keepUserData'] ?? false) === true;
