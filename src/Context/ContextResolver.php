@@ -287,8 +287,8 @@ class ContextResolver
             $this->parseSource($body['source'], $shop),
             new Cart($body['cart']),
             new SalesChannelContext($body['salesChannelContext']),
-            new Collection(\array_flip($body['paymentMethods'])),
-            new Collection(\array_flip($body['shippingMethods'])),
+            new Collection($this->arrayFlip($body['paymentMethods'])),
+            new Collection($this->arrayFlip($body['shippingMethods'])),
         );
     }
 
@@ -353,5 +353,22 @@ class ContextResolver
             $source['appVersion'],
             $inAppPurchases ?? new Collection(),
         );
+    }
+
+    /**
+     * As a malformed body should pass, we manually flip an array instead of `array_flip` to correctly cast array keys.
+     *
+     * @param array<mixed> $source
+     * @return iterable<string, string>
+     */
+    private function arrayFlip(array $source): iterable
+    {
+        foreach ($source as $key => $value) {
+            if (!\is_scalar($value)) {
+                continue;
+            }
+
+            yield ((string) $value) => $key;
+        }
     }
 }

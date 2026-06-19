@@ -1300,6 +1300,85 @@ class ContextResolverTest extends TestCase
         static::assertSame('id2', $shippingMethods->get('technicalName2'));
     }
 
+    public function testAssembleCheckoutGatewayRequestFlipsNonStringMethodValues(): void
+    {
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+            ],
+            'cart' => [
+                'token' => 'cart-token',
+            ],
+            'salesChannelContext' => [
+                'salesChannel' => [
+                    'id' => 'sales-channel-id',
+                ],
+            ],
+            // array_flip() would emit a warning and drop the bool/null values; the manual
+            // flip casts every value to a string key instead, so a malformed body still passes.
+            'paymentMethods' => [
+                'id-string' => 'technicalName',
+                'id-int' => 42,
+                'id-true' => true,
+                'id-false' => false,
+                'id-null' => null,
+            ],
+            'shippingMethods' => [],
+        ];
+
+        $request = new Request('POST', '/', [], \json_encode($body, \JSON_THROW_ON_ERROR));
+
+        $action = $contextResolver->assembleCheckoutGatewayRequest($request, $this->getShop());
+
+        $paymentMethods = $action->paymentMethods;
+        // (string) false and (string) null both produce an empty-string key, so they collide
+        // into a single entry: 5 values in, 4 distinct flipped keys out.
+        static::assertCount(4, $paymentMethods);
+        static::assertSame('id-string', $paymentMethods->get('technicalName'));
+        // Numeric-string keys are cast back to integers by PHP arrays.
+        static::assertSame('id-int', $paymentMethods->get(42));
+        static::assertSame('id-true', $paymentMethods->get('1'));
+        // (string) false and (string) null both produce the empty-string key and collapse into one.
+        static::assertContains($paymentMethods->get(''), ['id-false', 'id-null']);
+
+        static::assertCount(0, $action->shippingMethods);
+    }
+
+    public function testAssembleCheckoutGatewayRequestFlipsDuplicateMethodValues(): void
+    {
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+
+        $body = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => 'foo',
+            ],
+            'cart' => [
+                'token' => 'cart-token',
+            ],
+            'salesChannelContext' => [
+                'salesChannel' => [
+                    'id' => 'sales-channel-id',
+                ],
+            ],
+            'paymentMethods' => [
+                'first-id' => 'duplicate',
+                'second-id' => 'duplicate',
+            ],
+            'shippingMethods' => [],
+        ];
+
+        $request = new Request('POST', '/', [], \json_encode($body, \JSON_THROW_ON_ERROR));
+
+        $action = $contextResolver->assembleCheckoutGatewayRequest($request, $this->getShop());
+
+        static::assertCount(1, $action->paymentMethods);
+        static::assertSame('second-id', $action->paymentMethods->get('duplicate'));
+    }
+
     public function testParseSourceWithoutInAppPurchaseProviderReturnsEmptyCollection(): void
     {
         $contextResolver = new ContextResolver();
