@@ -78,7 +78,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable
      */
     public function first(): mixed
     {
-        return $this->elements[\array_key_first($this->elements)] ?? null;
+        return $this->elements[(string) \array_key_first($this->elements)] ?? null;
     }
 
     /**
@@ -86,7 +86,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable
      */
     public function last(): mixed
     {
-        return $this->elements[array_key_last($this->elements)] ?? null;
+        return $this->elements[(string) \array_key_last($this->elements)] ?? null;
     }
 
     /**
