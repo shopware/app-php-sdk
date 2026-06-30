@@ -782,6 +782,41 @@ class DualSignatureRequestVerifierTest extends TestCase
         $verifier->authenticatePostRequest($request, $shop);
     }
 
+    public function testFailureOfALateOldSecretGetRequestReadsShopwareVersionFromQuery(): void
+    {
+        $shop = new MockShop('shop-1', 'https://example.com', 'new-secret');
+        $rotatedAt = new \DateTimeImmutable('2026-03-30T08:00:00+00:00');
+        $shop->setPreviousShopSecret('old-secret')
+            ->setSecretsRotatedAt($rotatedAt);
+
+        // Signed GET requests carry sw-version as a query parameter, not a header. The old-secret signature
+        // is computed over the query string with the signature itself removed (see existing GET tests).
+        $query = 'sw-version=6.6.10.0';
+        $signature = hash_hmac('sha256', $query, 'old-secret');
+        $request = new Request('GET', sprintf('https://my-app.com/webhook?%s&shopware-shop-signature=%s', $query, $signature));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->never())->method('warning');
+        $logger->expects($this->once())
+            ->method('info')
+            ->with('Request signed with the rotated-out secret arrived after the in-flight allowance', static::callback(function (array $context): bool {
+                // The version must be picked up from the query parameter when no sw-version header is present.
+                static::assertSame('6.6.10.0', $context['shopware-version']);
+                static::assertSecretFree($context);
+
+                return true;
+            }));
+
+        $verifier = new DualSignatureRequestVerifier(
+            new RequestVerifier(),
+            new FrozenClock($rotatedAt->modify('+90 seconds')),
+            $logger
+        );
+
+        $this->expectException(SignatureInvalidException::class);
+        $verifier->authenticateGetRequest($request, $shop);
+    }
+
     public function testNoSignaturePostWebhookIsRejectedSilently(): void
     {
         $shop = new MockShop('shop-1', 'https://example.com', 'current-secret');
