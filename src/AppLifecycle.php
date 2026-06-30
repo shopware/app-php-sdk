@@ -16,6 +16,7 @@ use Shopware\App\SDK\Event\BeforeShopDeletionEvent;
 use Shopware\App\SDK\Event\ShopActivatedEvent;
 use Shopware\App\SDK\Event\ShopDeactivatedEvent;
 use Shopware\App\SDK\Event\ShopDeletedEvent;
+use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
 use Shopware\App\SDK\Registration\RegistrationService;
 use Shopware\App\SDK\Shop\ShopInterface;
@@ -60,7 +61,11 @@ class AppLifecycle
     }
 
     /**
-     * Handles the 'app.deleted' Hook to remove the shop from the repository
+     * Handles the 'app.deleted' Hook to remove the shop from the repository.
+     *
+     * When the merchant opts to keep the shop's data on uninstall, Shopware sends
+     * `keepUserData: true` in the webhook payload; the shop is then left untouched
+     * so a later re-registration can restore it.
      */
     public function delete(RequestInterface $request): ResponseInterface
     {
@@ -73,18 +78,44 @@ class AppLifecycle
             return $response;
         }
 
-        $this->eventDispatcher?->dispatch(new BeforeShopDeletionEvent($request, $shop));
+        $keepUserData = $this->shouldKeepUserData($request);
 
-        $this->shopRepository->deleteShop($shop->getShopId());
+        $this->eventDispatcher?->dispatch(new BeforeShopDeletionEvent($request, $shop, $keepUserData));
 
-        $this->eventDispatcher?->dispatch(new ShopDeletedEvent($request, $shop));
+        if (!$keepUserData) {
+            $this->shopRepository->deleteShop($shop->getShopId());
+        }
+
+        $this->eventDispatcher?->dispatch(new ShopDeletedEvent($request, $shop, $keepUserData));
 
         $this->logger->info('Shop uninstalled', [
             'shop-id' => $shop->getShopId(),
             'shop-url' => $shop->getShopUrl(),
+            'keep-user-data' => $keepUserData,
         ]);
 
         return $response;
+    }
+
+    /**
+     * Reads the `keepUserData` flag from the app.deleted webhook payload, defaulting
+     * to false so the shop is removed unless Shopware explicitly asks to keep it.
+     *
+     * Invalid JSON means the webhook body itself is corrupt; it is rejected as a
+     * malformed body rather than silently treated as keepUserData=false.
+     *
+     * @throws MalformedWebhookBodyException when the request body is not valid JSON
+     */
+    private function shouldKeepUserData(RequestInterface $request): bool
+    {
+        try {
+            $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            throw new MalformedWebhookBodyException();
+        }
+        $request->getBody()->rewind();
+
+        return \is_array($body) && ($body['data']['payload']['keepUserData'] ?? false) === true;
     }
 
     private function findShop(RequestInterface $request): ?ShopInterface

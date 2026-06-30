@@ -19,6 +19,7 @@ use Shopware\App\SDK\Event\BeforeShopDeletionEvent;
 use Shopware\App\SDK\Event\ShopActivatedEvent;
 use Shopware\App\SDK\Event\ShopDeactivatedEvent;
 use Shopware\App\SDK\Event\ShopDeletedEvent;
+use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
 use Shopware\App\SDK\Registration\RegistrationService;
 use Shopware\App\SDK\Shop\ShopResolver;
 use Shopware\App\SDK\Test\MockShop;
@@ -107,6 +108,55 @@ class AppLifecycleTest extends TestCase
         static::assertInstanceOf(ShopDeletedEvent::class, $this->events[1]);
     }
 
+    public function testUninstallKeepsShopWhenKeepUserDataIsTrue(): void
+    {
+        $this->shopRepository->createShop(new MockShop('123', 'https://foo.com', '1234567890'));
+
+        $body = (string) \json_encode(['data' => ['payload' => ['keepUserData' => true]]], JSON_THROW_ON_ERROR);
+        $response = $this->appLifecycle->delete(new Request("POST", '/?shop-id=123', [], $body));
+        static::assertSame(204, $response->getStatusCode());
+
+        static::assertNotNull($this->shopRepository->getShopFromId('123'));
+
+        static::assertCount(2, $this->events);
+        static::assertInstanceOf(BeforeShopDeletionEvent::class, $this->events[0]);
+        static::assertTrue($this->events[0]->keepUserData());
+        static::assertInstanceOf(ShopDeletedEvent::class, $this->events[1]);
+        static::assertTrue($this->events[1]->keepUserData());
+    }
+
+    public function testUninstallDeletesShopWhenKeepUserDataIsFalse(): void
+    {
+        $this->shopRepository->createShop(new MockShop('123', 'https://foo.com', '1234567890'));
+
+        $body = (string) \json_encode(['data' => ['payload' => ['keepUserData' => false]]], JSON_THROW_ON_ERROR);
+        $response = $this->appLifecycle->delete(new Request("POST", '/?shop-id=123', [], $body));
+        static::assertSame(204, $response->getStatusCode());
+
+        static::assertNull($this->shopRepository->getShopFromId('123'));
+
+        static::assertCount(2, $this->events);
+        static::assertInstanceOf(BeforeShopDeletionEvent::class, $this->events[0]);
+        static::assertFalse($this->events[0]->keepUserData());
+        static::assertInstanceOf(ShopDeletedEvent::class, $this->events[1]);
+        static::assertFalse($this->events[1]->keepUserData());
+    }
+
+    public function testUninstallThrowsOnMalformedBodyAndKeepsShop(): void
+    {
+        $this->shopRepository->createShop(new MockShop('123', 'https://foo.com', '1234567890'));
+
+        try {
+            $this->appLifecycle->delete(new Request("POST", '/?shop-id=123', [], 'not-json'));
+            static::fail('Expected a MalformedWebhookBodyException on a corrupt body');
+        } catch (MalformedWebhookBodyException) {
+            // expected: a corrupt body must not be treated as keepUserData=false
+        }
+
+        static::assertNotNull($this->shopRepository->getShopFromId('123'));
+        static::assertCount(0, $this->events);
+    }
+
     public function testUninstallNotExisting(): void
     {
         $response = $this->appLifecycle->delete(new Request("POST", '/?shop-id=123', [], '{}'));
@@ -142,7 +192,7 @@ class AppLifecycleTest extends TestCase
         $logger
             ->expects(static::once())
             ->method('info')
-            ->with('Shop uninstalled', ['shop-id' => '123', 'shop-url' => 'https://foo.com']);
+            ->with('Shop uninstalled', ['shop-id' => '123', 'shop-url' => 'https://foo.com', 'keep-user-data' => false]);
 
         $appLifeCycle = new AppLifecycle(
             $this->createMock(RegistrationService::class),
