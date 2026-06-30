@@ -57,14 +57,24 @@ class RegistrationService
 
         $this->logger->info(
             'Shop registration started',
-            $this->registrationLogContext($queries['shop-id'], $queries['shop-url'], $shop)
+            $this->registrationLogContext($request, $queries['shop-id'], $queries['shop-url'], $shop)
         );
 
-        $this->dualSignatureVerifier->authenticateRegistrationRequest(
-            $request,
-            $this->appConfiguration,
-            $shop
-        );
+        try {
+            $this->dualSignatureVerifier->authenticateRegistrationRequest(
+                $request,
+                $this->appConfiguration,
+                $shop
+            );
+        } catch (SignatureInvalidException|SignatureNotFoundException $e) {
+            $this->logger->warning(
+                'Shop registration signature verification failed',
+                $this->registrationLogContext($request, $queries['shop-id'], $queries['shop-url'], $shop)
+                    + ['exception' => $e::class, 'verification-stage' => $e->verificationStage]
+            );
+
+            throw $e;
+        }
 
         $secret = $this->shopSecretGeneratorInterface->generate();
 
@@ -98,6 +108,9 @@ class RegistrationService
         $this->logger->info('Shop registration request received', [
             'shop-id' => $shop->getShopId(),
             'shop-url' => $shop->getShopUrl(),
+            // Raw URL as signed into the proof; differs from the sanitized shop-url when the path is normalized.
+            'signed-shop-url' => $proofParameters['shop-url'],
+            'shopware-version' => self::incomingShopwareVersion($request),
             'signature-payload' => implode('', [
                 $proofParameters['shop-id'],
                 $proofParameters['shop-url'],
@@ -150,13 +163,23 @@ class RegistrationService
 
         $this->logger->info(
             'Shop registration confirmation started',
-            $this->registrationLogContext($requestContent['shopId'], $shop->getShopUrl(), $shop)
+            $this->registrationLogContext($request, $requestContent['shopId'], $shop->getShopUrl(), $shop)
         );
 
         $request->getBody()->rewind();
 
         // Use dual signature verifier for registration confirmation
-        $this->dualSignatureVerifier->authenticateRegistrationConfirmation($request, $shop, $this->appConfiguration);
+        try {
+            $this->dualSignatureVerifier->authenticateRegistrationConfirmation($request, $shop, $this->appConfiguration);
+        } catch (SignatureInvalidException|SignatureNotFoundException $e) {
+            $this->logger->warning(
+                'Shop registration confirmation signature verification failed',
+                $this->registrationLogContext($request, $shop->getShopId(), $shop->getShopUrl(), $shop)
+                    + ['exception' => $e::class, 'verification-stage' => $e->verificationStage]
+            );
+
+            throw $e;
+        }
 
         $this->eventDispatcher?->dispatch(new BeforeRegistrationCompletedEvent($shop, $request, $requestContent));
         $pendingSecret = $shop->getPendingShopSecret();
@@ -169,7 +192,7 @@ class RegistrationService
 
             $this->logger->info(
                 'Shop secret rotated during registration confirmation',
-                $this->registrationLogContext($shop->getShopId(), $shop->getShopUrl(), $shop)
+                $this->registrationLogContext($request, $shop->getShopId(), $shop->getShopUrl(), $shop)
             );
         }
 
@@ -186,6 +209,7 @@ class RegistrationService
         $this->logger->info('Shop registration confirmed', [
             'shop-id' => $shop->getShopId(),
             'shop-url' => $shop->getShopUrl(),
+            'shopware-version' => self::incomingShopwareVersion($request),
         ]);
 
         $this->eventDispatcher?->dispatch(new RegistrationCompletedEvent($request, $shop));
@@ -210,16 +234,30 @@ class RegistrationService
     /**
      * @return array<string, bool|string|null>
      */
-    private function registrationLogContext(string $shopId, string $shopUrl, ?ShopInterface $shop = null): array
+    private function registrationLogContext(RequestInterface $request, string $shopId, string $shopUrl, ?ShopInterface $shop = null): array
     {
         return [
             'shop-id' => $shopId,
             'shop-url' => $shopUrl,
             'shop-exists' => $shop !== null,
             'registration-confirmed' => $shop?->isRegistrationConfirmed(),
-            'has-pending-secret' => $shop?->getPendingShopSecret() !== null,
-            'has-previous-secret' => $shop?->getPreviousShopSecret() !== null,
+            'has-pending-secret' => $shop !== null ? $shop->getPendingShopSecret() !== null : null,
+            'has-previous-secret' => $shop !== null ? $shop->getPreviousShopSecret() !== null : null,
+            'enforce-double-signature' => $this->appConfiguration->enforceDoubleSignature(),
+            'has-verified-with-double-signature' => $shop?->hasVerifiedWithDoubleSignature(),
+            'shopware-version' => self::incomingShopwareVersion($request),
         ];
+    }
+
+    /**
+     * The Shopware version that sent the registration request, read from the `sw-version` header
+     * (Shopware sends it as a header on the register and confirm calls). Null when absent.
+     */
+    private static function incomingShopwareVersion(RequestInterface $request): ?string
+    {
+        $version = $request->getHeaderLine('sw-version');
+
+        return $version !== '' ? $version : null;
     }
 
     /**

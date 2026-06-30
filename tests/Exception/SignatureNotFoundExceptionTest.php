@@ -20,5 +20,15 @@ class SignatureNotFoundExceptionTest extends TestCase
         static::assertSame($request, $exception->getRequest());
         static::assertSame('Signature is not present in request', $exception->getMessage());
         static::assertSame(0, $exception->getCode());
+        static::assertNull($exception->verificationStage);
+    }
+
+    public function testVerificationStageIsAppendedToMessage(): void
+    {
+        $request = new Request('GET', 'http://localhost');
+        $exception = new SignatureNotFoundException($request, null, 'app-signature');
+
+        static::assertSame('app-signature', $exception->verificationStage);
+        static::assertSame('Signature is not present in request (verification stage: app-signature)', $exception->getMessage());
     }
 }

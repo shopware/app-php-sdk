@@ -8,9 +8,20 @@ use Psr\Http\Message\RequestInterface;
 
 class SignatureNotFoundException extends \RuntimeException
 {
-    public function __construct(private readonly RequestInterface $request, ?\Throwable $previous = null)
-    {
-        parent::__construct('Signature is not present in request', 0, $previous);
+    public function __construct(
+        private readonly RequestInterface $request,
+        ?\Throwable $previous = null,
+        /**
+         * Which verification leg failed (e.g. app-signature, shop-signature), or null when not tagged.
+         */
+        public readonly ?string $verificationStage = null
+    ) {
+        $message = 'Signature is not present in request';
+        if ($verificationStage !== null) {
+            $message = \sprintf('%s (verification stage: %s)', $message, $verificationStage);
+        }
+
+        parent::__construct($message, 0, $previous);
     }
 
     public function getRequest(): RequestInterface

@@ -8,6 +8,8 @@ use Lcobucci\Clock\SystemClock;
 use Lcobucci\JWT\Validation\RequiredConstraintsViolated;
 use Psr\Clock\ClockInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Exception\SignatureInvalidException;
 use Shopware\App\SDK\Exception\SignatureNotFoundException;
@@ -21,8 +23,11 @@ class DualSignatureRequestVerifier
 
     private readonly ClockInterface $clock;
 
-    public function __construct(private readonly RequestVerifier $primaryVerifier = new RequestVerifier(), ?ClockInterface $clock = null)
-    {
+    public function __construct(
+        private readonly RequestVerifier $primaryVerifier = new RequestVerifier(),
+        ?ClockInterface $clock = null,
+        private readonly LoggerInterface $logger = new NullLogger()
+    ) {
         $this->clock = $clock ?? new SystemClock(new \DateTimeZone('UTC'));
     }
 
@@ -35,7 +40,7 @@ class DualSignatureRequestVerifier
         try {
             $this->primaryVerifier->authenticatePostRequest($request, $shop->getShopSecret());
         } catch (SignatureInvalidException $exception) {
-            $this->authenticateWithPreviousSecret($request, $shop, $exception, function (RequestInterface $request, string $secret) {
+            $this->authenticateWithPreviousSecret($request, $shop, $exception, function (RequestInterface $request, string $secret): void {
                 $this->primaryVerifier->authenticatePostRequest($request, $secret);
             });
         }
@@ -50,7 +55,7 @@ class DualSignatureRequestVerifier
         try {
             $this->primaryVerifier->authenticateGetRequest($request, $shop->getShopSecret());
         } catch (SignatureInvalidException $exception) {
-            $this->authenticateWithPreviousSecret($request, $shop, $exception, function (RequestInterface $request, string $secret) {
+            $this->authenticateWithPreviousSecret($request, $shop, $exception, function (RequestInterface $request, string $secret): void {
                 $this->primaryVerifier->authenticateGetRequest($request, $secret);
             });
         }
@@ -59,23 +64,27 @@ class DualSignatureRequestVerifier
     /**
      * @throws SignatureInvalidException
      * @throws SignatureNotFoundException
+     * @throws RequiredConstraintsViolated thrown by JWT validation on the signed storefront URL
      */
     public function authenticateStorefrontRequest(RequestInterface $request, string $shopId, ShopInterface $shop): void
     {
         try {
             $this->primaryVerifier->authenticateStorefrontRequest($request, $shopId, $shop->getShopSecret());
         } catch (RequiredConstraintsViolated $exception) {
-            $this->authenticateWithPreviousSecret($request, $shop, $exception, function (RequestInterface $request, string $secret) use ($shopId) {
+            $this->authenticateWithPreviousSecret($request, $shop, $exception, function (RequestInterface $request, string $secret) use ($shopId): void {
                 $this->primaryVerifier->authenticateStorefrontRequest($request, $shopId, $secret);
             });
         }
     }
 
     /**
-     * Helper method to authenticate with the previous secret during rotation window
+     * Authenticate with the previous secret during the rotation window. Past the allowance the request is
+     * rejected; but if the rotated-out secret still matches, we log how late it arrived so the allowance —
+     * a heuristic — can be tuned against real traffic.
      *
      * @param callable(RequestInterface, string): void $authenticator
      * @throws SignatureInvalidException
+     * @throws RequiredConstraintsViolated when the rethrown $exception originates from JWT validation
      */
     private function authenticateWithPreviousSecret(
         RequestInterface $request,
@@ -86,20 +95,47 @@ class DualSignatureRequestVerifier
         $rotatedAt = $shop->getSecretsRotatedAt();
         $previousSecret = $shop->getPreviousShopSecret();
 
-        // No previous secret or rotation timestamp available
         if ($previousSecret === null || $rotatedAt === null) {
             throw $exception;
         }
 
-        // Check if we're still within the inflight allowance window
-        $allowanceEnd = $rotatedAt->modify(sprintf("+%d seconds", self::INFLIGHT_ALLOWANCE));
+        $allowanceEnd = $rotatedAt->modify(sprintf('+%d seconds', self::INFLIGHT_ALLOWANCE));
+        $now = $this->clock->now();
 
-        if ($this->clock->now() >= $allowanceEnd) {
+        if ($now >= $allowanceEnd) {
+            // The HMAC is cheap, so we still check: a match is a valid request that arrived late. Log how far
+            // past the window it is (to tune the allowance), then reject. A non-match throws and stays silent.
+            $authenticator($request, $previousSecret);
+
+            $this->logger->info('Request signed with the rotated-out secret arrived after the in-flight allowance', [
+                'shop-id' => $shop->getShopId(),
+                'secrets-rotated-at' => $rotatedAt->format(\DateTimeInterface::ATOM),
+                'inflight-allowance-seconds' => self::INFLIGHT_ALLOWANCE,
+                'seconds-after-rotation' => $now->getTimestamp() - $rotatedAt->getTimestamp(),
+                'shopware-version' => self::incomingShopwareVersion($request),
+            ]);
+
             throw $exception;
         }
 
-        // Try authenticating with the previous secret
         $authenticator($request, $previousSecret);
+    }
+
+    /**
+     * The Shopware version that sent the request — the `sw-version` header on webhook (POST) requests,
+     * or the `sw-version` query parameter on signed GET requests. Null when absent.
+     */
+    private static function incomingShopwareVersion(RequestInterface $request): ?string
+    {
+        $header = $request->getHeaderLine('sw-version');
+        if ($header !== '') {
+            return $header;
+        }
+
+        \parse_str($request->getUri()->getQuery(), $query);
+        $version = $query['sw-version'] ?? null;
+
+        return \is_string($version) && $version !== '' ? $version : null;
     }
 
     /**
@@ -116,18 +152,19 @@ class DualSignatureRequestVerifier
         $pendingSecret = $shop->getPendingShopSecret();
         // Missing registration step, during registration confirmation the pending secret must be set.
         if ($pendingSecret === null) {
-            throw new SignatureInvalidException($request);
+            throw new SignatureInvalidException($request, verificationStage: 'missing-pending-secret');
         }
 
         // New registration: that is not yet confirmed from shop, verify with secret shared during registration handshake is sufficient.
-        $this->primaryVerifier->authenticatePostRequest($request, $pendingSecret);
+        $this->verifyLeg('pending-secret', fn () => $this->primaryVerifier->authenticatePostRequest($request, $pendingSecret));
+
         if (! $shop->isRegistrationConfirmed()) {
             return;
         }
 
         // OLD SHOP RE-REGISTRATION: If double signature is enforced, also verify with OLD current secret (the secret that the shop is actively using).
         if ($this->shouldEnforceDoubleSignatureForRegisterConfirm($appConfiguration, $shop, $request)) {
-            $this->primaryVerifier->authenticatePostRequest($request, $shop->getShopSecret(), self::SHOPWARE_SHOP_SIGNATURE_PREVIOUS_HEADER);
+            $this->verifyLeg('previous-signature', fn () => $this->primaryVerifier->authenticatePostRequest($request, $shop->getShopSecret(), self::SHOPWARE_SHOP_SIGNATURE_PREVIOUS_HEADER));
         }
     }
 
@@ -146,11 +183,28 @@ class DualSignatureRequestVerifier
         ?ShopInterface $shop = null
     ): void {
         // Always verify app signature first
-        $this->primaryVerifier->authenticateRegistrationRequest($request, $appConfiguration->getAppSecret());
+        $this->verifyLeg('app-signature', fn () => $this->primaryVerifier->authenticateRegistrationRequest($request, $appConfiguration->getAppSecret()));
 
         // If there's a confirmed registration and double signature is enforced, also verify with shop's current secret
         if ($shop?->isRegistrationConfirmed() === true && $this->shouldEnforceDoubleSignatureForRegister($appConfiguration, $shop, $request)) {
-            $this->primaryVerifier->authenticateRegistrationRequestWithShopSignature($request, $shop->getShopSecret());
+            $this->verifyLeg('shop-signature', fn () => $this->primaryVerifier->authenticateRegistrationRequestWithShopSignature($request, $shop->getShopSecret()));
+        }
+    }
+
+    /**
+     * Run one verification leg; on failure, re-tag the exception with the leg that produced it (a non-secret
+     * label for the registration log), keeping the original as `previous`.
+     *
+     * @param callable(): void $leg
+     */
+    private function verifyLeg(string $stage, callable $leg): void
+    {
+        try {
+            $leg();
+        } catch (SignatureInvalidException|SignatureNotFoundException $e) {
+            throw $e instanceof SignatureNotFoundException
+                ? new SignatureNotFoundException($e->getRequest(), $e, $stage)
+                : new SignatureInvalidException($e->getRequest(), $e, $stage);
         }
     }
 

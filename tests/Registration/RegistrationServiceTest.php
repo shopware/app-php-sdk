@@ -451,14 +451,24 @@ class RegistrationServiceTest extends TestCase
 
     public function testRegisterMessageIsLogged(): void
     {
-        $logger = static::createMock(LoggerInterface::class);
-        $logger
-            ->expects(static::once())
+        // register() logs "started" then "request received"; assert the second.
+        $logger = $this->createMock(LoggerInterface::class);
+        $matcher = $this->exactly(2);
+        $logger->expects($matcher)
             ->method('info')
-            ->with('Shop registration request received', [
-                'shop-id' => '123',
-                'shop-url' => 'https://my-shop.com',
-            ]);
+            ->willReturnCallback(function (string $message, array $context) use ($matcher): void {
+                if ($matcher->numberOfInvocations() !== 2) {
+                    return;
+                }
+
+                static::assertSame('Shop registration request received', $message);
+                static::assertSame('123', $context['shop-id']);
+                static::assertSame('https://my-shop.com', $context['shop-url']);
+                static::assertSame('https://my-shop.com', $context['signed-shop-url']);
+                static::assertSame('6.6.10.0', $context['shopware-version']);
+                // The signed payload is shop-id + shop-url + app name, in that order.
+                static::assertStringStartsWith('123https://my-shop.com', $context['signature-payload']);
+            });
 
         $registrationService = new RegistrationService(
             $this->appConfiguration,
@@ -470,20 +480,28 @@ class RegistrationServiceTest extends TestCase
             null
         );
 
-        $request = new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890');
+        $request = (new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890'))
+            ->withHeader('sw-version', '6.6.10.0');
         $registrationService->register($request);
     }
 
     public function testRegisterConfirmMessageIsLogged(): void
     {
-        $logger = static::createMock(LoggerInterface::class);
-        $logger
-            ->expects(static::once())
+        // registerConfirm() logs "confirmation started" then "confirmed" (no rotation here); assert the second.
+        $logger = $this->createMock(LoggerInterface::class);
+        $matcher = $this->exactly(2);
+        $logger->expects($matcher)
             ->method('info')
-            ->with('Shop registration confirmed', [
-                'shop-id' => '123',
-                'shop-url' => 'https://my-shop.com',
-            ]);
+            ->willReturnCallback(function (string $message, array $context) use ($matcher): void {
+                if ($matcher->numberOfInvocations() !== 2) {
+                    return;
+                }
+
+                static::assertSame('Shop registration confirmed', $message);
+                static::assertSame('123', $context['shop-id']);
+                static::assertSame('https://my-shop.com', $context['shop-url']);
+                static::assertSame('6.6.10.0', $context['shopware-version']);
+            });
 
         $registrationService = new RegistrationService(
             $this->appConfiguration,
@@ -499,8 +517,226 @@ class RegistrationServiceTest extends TestCase
         $shop->setPendingShopSecret('1234567890');
         $shop->setPendingShopUrl('https://my-shop.com');
         $this->shopRepository->createShop($shop);
+        $request = (new Request('POST', 'http://localhost', [], '{"shopId": "123", "apiKey": "1", "secretKey": "2"}'))
+            ->withHeader('sw-version', '6.6.10.0');
+
+        $registrationService->registerConfirm($request);
+    }
+
+    public function testRegisterConfirmRotatesTheSecretAndLogsForAReRegistration(): void
+    {
+        // A re-registration confirm logs "confirmation started", then "Shop secret rotated", then "confirmed".
+        $logger = $this->createMock(LoggerInterface::class);
+        $matcher = $this->exactly(3);
+        $logger->expects($matcher)
+            ->method('info')
+            ->willReturnCallback(function (string $message, array $context) use ($matcher): void {
+                if ($matcher->numberOfInvocations() !== 2) {
+                    return;
+                }
+
+                static::assertSame('Shop secret rotated during registration confirmation', $message);
+                static::assertSame('123', $context['shop-id']);
+                static::assertTrue($context['has-previous-secret']);
+            });
+
+        $registrationService = new RegistrationService(
+            $this->appConfiguration,
+            $this->shopRepository,
+            new DualSignatureRequestVerifier($this->createMock(RequestVerifier::class)),
+            new ResponseSigner(),
+            new RandomStringShopSecretGenerator(),
+            $logger,
+            null
+        );
+
+        // An already-confirmed shop whose pending secret differs from the active one: confirming it rotates.
+        $shop = new MockShop('123', 'https://foo.com', 'current-secret');
+        $shop->setPendingShopSecret('rotated-in-secret')
+            ->setPendingShopUrl('https://my-shop.com')
+            ->setRegistrationConfirmed();
+        $this->shopRepository->createShop($shop);
+
+        $request = (new Request('POST', 'http://localhost', [], '{"shopId": "123", "apiKey": "1", "secretKey": "2"}'))
+            ->withHeader('sw-version', '6.6.10.0');
+
+        $registrationService->registerConfirm($request);
+
+        // The pending secret becomes the active one; the old active secret is kept as the previous secret.
+        $rotated = $this->shopRepository->getShopFromId('123');
+        static::assertNotNull($rotated);
+        static::assertSame('rotated-in-secret', $rotated->getShopSecret());
+        static::assertSame('current-secret', $rotated->getPreviousShopSecret());
+        static::assertNotNull($rotated->getSecretsRotatedAt());
+    }
+
+    public function testRegisterStartedLogIncludesDoubleSignatureContext(): void
+    {
+        // "Shop registration started" is the first info log register() emits.
+        $logger = $this->createMock(LoggerInterface::class);
+        $matcher = $this->exactly(2);
+        $logger->expects($matcher)
+            ->method('info')
+            ->willReturnCallback(function (string $message, array $context) use ($matcher): void {
+                if ($matcher->numberOfInvocations() !== 1) {
+                    return;
+                }
+
+                static::assertSame('Shop registration started', $message);
+                // appConfiguration in setUp() enforces double signature; no shop exists yet, so shop-derived flags are null/false.
+                static::assertFalse($context['shop-exists']);
+                static::assertTrue($context['enforce-double-signature']);
+                static::assertNull($context['has-verified-with-double-signature']);
+                static::assertNull($context['has-previous-secret']);
+                static::assertSame('6.6.10.0', $context['shopware-version']);
+            });
+
+        $registrationService = new RegistrationService(
+            $this->appConfiguration,
+            $this->shopRepository,
+            new DualSignatureRequestVerifier($this->createMock(RequestVerifier::class)),
+            new ResponseSigner(),
+            new RandomStringShopSecretGenerator(),
+            $logger,
+            null
+        );
+
+        $request = (new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890'))
+            ->withHeader('sw-version', '6.6.10.0');
+        $registrationService->register($request);
+    }
+
+    public function testRegisterLogsWarningAndRethrowsOnSignatureFailure(): void
+    {
+        $query = 'shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890';
+        $request = new Request('GET', 'http://localhost?' . $query);
+        $request = $request->withHeader('shopware-app-signature', 'invalid-signature')
+            ->withHeader('sw-version', '6.6.10.0');
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('warning')
+            ->with('Shop registration signature verification failed', static::callback(function (array $context): bool {
+                static::assertSame('123', $context['shop-id']);
+                static::assertSame('https://my-shop.com', $context['shop-url']);
+                static::assertSame(SignatureInvalidException::class, $context['exception']);
+                // The app signature is the first leg verified, so it is the failing stage here.
+                static::assertSame('app-signature', $context['verification-stage']);
+                static::assertArrayHasKey('enforce-double-signature', $context);
+                static::assertSame('6.6.10.0', $context['shopware-version']);
+
+                return true;
+            }));
+
+        $registrationService = new RegistrationService(
+            $this->appConfiguration,
+            $this->shopRepository,
+            new DualSignatureRequestVerifier(),
+            new ResponseSigner(),
+            new RandomStringShopSecretGenerator(),
+            $logger,
+            null
+        );
+
+        $this->expectException(SignatureInvalidException::class);
+        $registrationService->register($request);
+    }
+
+    public function testRegisterConfirmLogsWarningAndRethrowsOnSignatureFailure(): void
+    {
+        $shop = new MockShop('123', 'https://my-shop.com', 'current-secret');
+        // No pending secret set -> confirmation verification throws SignatureInvalidException.
+        $this->shopRepository->createShop($shop);
+
+        $request = (new Request('POST', 'http://localhost', [], '{"shopId": "123", "apiKey": "1", "secretKey": "2"}'))
+            ->withHeader('sw-version', '6.6.10.0');
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('warning')
+            ->with('Shop registration confirmation signature verification failed', static::callback(function (array $context): bool {
+                static::assertSame('123', $context['shop-id']);
+                static::assertSame(SignatureInvalidException::class, $context['exception']);
+                // No pending secret was ever stored, so confirmation fails at that stage.
+                static::assertSame('missing-pending-secret', $context['verification-stage']);
+                static::assertSame('6.6.10.0', $context['shopware-version']);
+
+                return true;
+            }));
+
+        $registrationService = new RegistrationService(
+            $this->appConfiguration,
+            $this->shopRepository,
+            new DualSignatureRequestVerifier(),
+            new ResponseSigner(),
+            new RandomStringShopSecretGenerator(),
+            $logger,
+            null
+        );
+
+        $this->expectException(SignatureInvalidException::class);
+        $registrationService->registerConfirm($request);
+    }
+
+    public function testRegisterLogsNotFoundStageWhenAppSignatureMissing(): void
+    {
+        // No shopware-app-signature header -> the app-signature leg raises SignatureNotFoundException, not Invalid.
+        $request = new Request('GET', 'http://localhost?shop-id=123&shop-url=https://my-shop.com&timestamp=1234567890');
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('warning')
+            ->with('Shop registration signature verification failed', static::callback(function (array $context): bool {
+                static::assertSame(SignatureNotFoundException::class, $context['exception']);
+                static::assertSame('app-signature', $context['verification-stage']);
+
+                return true;
+            }));
+
+        $registrationService = new RegistrationService(
+            $this->appConfiguration,
+            $this->shopRepository,
+            new DualSignatureRequestVerifier(),
+            new ResponseSigner(),
+            new RandomStringShopSecretGenerator(),
+            $logger,
+            null
+        );
+
+        $this->expectException(SignatureNotFoundException::class);
+        $registrationService->register($request);
+    }
+
+    public function testRegisterConfirmLogsNotFoundStageWhenPendingSignatureMissing(): void
+    {
+        $shop = new MockShop('123', 'https://my-shop.com', 'current-secret');
+        $shop->setPendingShopSecret('pending-secret');
+        $this->shopRepository->createShop($shop);
+
+        // Pending secret is set, but the request carries no shop signature -> the pending-secret leg raises NotFound.
         $request = new Request('POST', 'http://localhost', [], '{"shopId": "123", "apiKey": "1", "secretKey": "2"}');
 
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('warning')
+            ->with('Shop registration confirmation signature verification failed', static::callback(function (array $context): bool {
+                static::assertSame(SignatureNotFoundException::class, $context['exception']);
+                static::assertSame('pending-secret', $context['verification-stage']);
+
+                return true;
+            }));
+
+        $registrationService = new RegistrationService(
+            $this->appConfiguration,
+            $this->shopRepository,
+            new DualSignatureRequestVerifier(),
+            new ResponseSigner(),
+            new RandomStringShopSecretGenerator(),
+            $logger,
+            null
+        );
+
+        $this->expectException(SignatureNotFoundException::class);
         $registrationService->registerConfirm($request);
     }
 
