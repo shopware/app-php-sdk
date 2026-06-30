@@ -28,6 +28,7 @@
     "psr/http-factory": "^1.0",
     "psr/http-factory-implementation": "*",
     "psr/http-message": "^1.0 || ^2.0",
+    "psr/log": "^1.0 || ^2.0 || ^3.0",
     "psr/simple-cache": "^3.0",
     "strobotti/php-jwk": "^1.4"
   },

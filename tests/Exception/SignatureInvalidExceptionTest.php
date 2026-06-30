@@ -20,5 +20,15 @@ class SignatureInvalidExceptionTest extends TestCase
         static::assertSame($request, $exception->getRequest());
         static::assertSame('Signature could not be verified', $exception->getMessage());
         static::assertSame(0, $exception->getCode());
+        static::assertNull($exception->verificationStage);
+    }
+
+    public function testVerificationStageIsAppendedToMessage(): void
+    {
+        $request = new Request('GET', 'http://localhost');
+        $exception = new SignatureInvalidException($request, null, 'app-signature');
+
+        static::assertSame('app-signature', $exception->verificationStage);
+        static::assertSame('Signature could not be verified (verification stage: app-signature)', $exception->getMessage());
     }
 }

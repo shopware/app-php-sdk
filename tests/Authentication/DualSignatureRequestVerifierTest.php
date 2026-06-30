@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
+use Psr\Log\LoggerInterface;
 use Shopware\App\SDK\AppConfiguration;
 use Shopware\App\SDK\Authentication\DualSignatureRequestVerifier;
 use Shopware\App\SDK\Authentication\RequestVerifier;
@@ -345,8 +346,12 @@ class DualSignatureRequestVerifierTest extends TestCase
         $appConfig = new AppConfiguration('My App', 'app-secret', 'http://localhost', true); // enforceDoubleSignature = true
         $verifier = new DualSignatureRequestVerifier(new RequestVerifier());
 
-        $this->expectException(SignatureInvalidException::class);
-        $verifier->authenticateRegistrationConfirmation($request, $shop, $appConfig);
+        try {
+            $verifier->authenticateRegistrationConfirmation($request, $shop, $appConfig);
+            static::fail('Expected SignatureInvalidException');
+        } catch (SignatureInvalidException $e) {
+            static::assertSame('previous-signature', $e->verificationStage);
+        }
     }
 
     /**
@@ -384,8 +389,12 @@ class DualSignatureRequestVerifierTest extends TestCase
         $appConfig = new AppConfiguration('My App', 'app-secret', 'http://localhost', true); // enforceDoubleSignature = true
         $verifier = new DualSignatureRequestVerifier(new RequestVerifier());
 
-        $this->expectException(SignatureInvalidException::class);
-        $verifier->authenticateRegistrationConfirmation($request, $shop, $appConfig);
+        try {
+            $verifier->authenticateRegistrationConfirmation($request, $shop, $appConfig);
+            static::fail('Expected SignatureInvalidException');
+        } catch (SignatureInvalidException $e) {
+            static::assertSame('pending-secret', $e->verificationStage);
+        }
     }
 
     #[DoesNotPerformAssertions]
@@ -511,8 +520,13 @@ class DualSignatureRequestVerifierTest extends TestCase
 
         $verifier = new DualSignatureRequestVerifier(new RequestVerifier());
 
-        $this->expectException(SignatureInvalidException::class);
-        $verifier->authenticateRegistrationRequest($request, $appConfig, $shop);
+        // App signature is valid, so the failing leg is the shop signature.
+        try {
+            $verifier->authenticateRegistrationRequest($request, $appConfig, $shop);
+            static::fail('Expected SignatureInvalidException');
+        } catch (SignatureInvalidException $e) {
+            static::assertSame('shop-signature', $e->verificationStage);
+        }
     }
 
     public function testAuthenticateRegistrationRequestForcesOldShopThatUsedDoubleVerificationToUseDoubleVerification(): void
@@ -704,5 +718,214 @@ class DualSignatureRequestVerifierTest extends TestCase
 
         $verifier = new DualSignatureRequestVerifier(new RequestVerifier());
         $verifier->authenticateRegistrationConfirmation($request, $shop, $appConfig);
+    }
+
+    public function testPreviousSecretFallbackAuthenticatesAnInFlightRequestWithinTheWindow(): void
+    {
+        $shop = new MockShop('shop-1', 'https://example.com', 'new-secret');
+        $rotatedAt = new \DateTimeImmutable('2026-03-30T08:00:00+00:00');
+        $shop->setPreviousShopSecret('old-secret')
+            ->setSecretsRotatedAt($rotatedAt);
+
+        // Real HMAC: a POST signed with the OLD secret, arriving 30s into the 60s window, must authenticate.
+        $request = new Request('POST', 'https://my-app.com/webhook', [], 'body');
+        $request = $request->withHeader('shopware-shop-signature', hash_hmac('sha256', 'body', 'old-secret'));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        // A rescued in-flight request is a success: it must not raise a failure warning.
+        $logger->expects($this->never())->method('warning');
+
+        $verifier = new DualSignatureRequestVerifier(
+            new RequestVerifier(),
+            new FrozenClock($rotatedAt->modify('+30 seconds')),
+            $logger
+        );
+
+        $verifier->authenticatePostRequest($request, $shop);
+    }
+
+    public function testFailureOfALateOldSecretRequestIsFlaggedOutsideTheRotationWindow(): void
+    {
+        $shop = new MockShop('shop-1', 'https://example.com', 'new-secret');
+        $rotatedAt = new \DateTimeImmutable('2026-03-30T08:00:00+00:00');
+        $shop->setPreviousShopSecret('old-secret')
+            ->setSecretsRotatedAt($rotatedAt);
+
+        // Signed with the OLD secret, arriving 90s after rotation -> 30s past the 60s allowance.
+        $request = new Request('POST', 'https://my-app.com/webhook', [], 'body');
+        $request = $request->withHeader('shopware-shop-signature', hash_hmac('sha256', 'body', 'old-secret'))
+            ->withHeader('sw-version', '6.6.10.0');
+
+        $logger = $this->createMock(LoggerInterface::class);
+        // A valid request that arrived late is not a webhook failure to warn on; it is logged at info to tune the allowance.
+        $logger->expects($this->never())->method('warning');
+        $logger->expects($this->once())
+            ->method('info')
+            ->with('Request signed with the rotated-out secret arrived after the in-flight allowance', static::callback(function (array $context) use ($rotatedAt): bool {
+                static::assertSame('shop-1', $context['shop-id']);
+                static::assertSame($rotatedAt->format(\DateTimeInterface::ATOM), $context['secrets-rotated-at']);
+                static::assertSame(60, $context['inflight-allowance-seconds']);
+                static::assertSame(90, $context['seconds-after-rotation']);
+                static::assertSame('6.6.10.0', $context['shopware-version']);
+                static::assertSecretFree($context);
+
+                return true;
+            }));
+
+        $verifier = new DualSignatureRequestVerifier(
+            new RequestVerifier(),
+            new FrozenClock($rotatedAt->modify('+90 seconds')),
+            $logger
+        );
+
+        $this->expectException(SignatureInvalidException::class);
+        $verifier->authenticatePostRequest($request, $shop);
+    }
+
+    public function testFailureOfALateOldSecretGetRequestReadsShopwareVersionFromQuery(): void
+    {
+        $shop = new MockShop('shop-1', 'https://example.com', 'new-secret');
+        $rotatedAt = new \DateTimeImmutable('2026-03-30T08:00:00+00:00');
+        $shop->setPreviousShopSecret('old-secret')
+            ->setSecretsRotatedAt($rotatedAt);
+
+        // Signed GET requests carry sw-version as a query parameter, not a header. The old-secret signature
+        // is computed over the query string with the signature itself removed (see existing GET tests).
+        $query = 'sw-version=6.6.10.0';
+        $signature = hash_hmac('sha256', $query, 'old-secret');
+        $request = new Request('GET', sprintf('https://my-app.com/webhook?%s&shopware-shop-signature=%s', $query, $signature));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->never())->method('warning');
+        $logger->expects($this->once())
+            ->method('info')
+            ->with('Request signed with the rotated-out secret arrived after the in-flight allowance', static::callback(function (array $context): bool {
+                // The version must be picked up from the query parameter when no sw-version header is present.
+                static::assertSame('6.6.10.0', $context['shopware-version']);
+                static::assertSecretFree($context);
+
+                return true;
+            }));
+
+        $verifier = new DualSignatureRequestVerifier(
+            new RequestVerifier(),
+            new FrozenClock($rotatedAt->modify('+90 seconds')),
+            $logger
+        );
+
+        $this->expectException(SignatureInvalidException::class);
+        $verifier->authenticateGetRequest($request, $shop);
+    }
+
+    public function testNoSignaturePostWebhookIsRejectedSilently(): void
+    {
+        $shop = new MockShop('shop-1', 'https://example.com', 'current-secret');
+
+        // No signature header -> SignatureNotFoundException. Like a wrong signature, this is not logged; the
+        // host returns a 4xx and that is the signal.
+        $request = (new Request('POST', 'https://my-app.com/webhook', [], 'body'))
+            ->withHeader('sw-version', '6.6.10.0');
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->never())->method('warning');
+        $logger->expects($this->never())->method('info');
+
+        $verifier = new DualSignatureRequestVerifier(new RequestVerifier(), null, $logger);
+
+        $this->expectException(SignatureNotFoundException::class);
+        $verifier->authenticatePostRequest($request, $shop);
+    }
+
+    public function testWrongSignatureOnAWebhookIsRejectedSilently(): void
+    {
+        $shop = new MockShop('shop-1', 'https://example.com', 'current-secret');
+
+        // A wrong (but present) signature is the common webhook failure: rejected, but never logged — logging
+        // every bad webhook would be unacceptable noise.
+        $request = (new Request('POST', 'https://my-app.com/webhook', [], 'body'))
+            ->withHeader('shopware-shop-signature', 'invalid-signature')
+            ->withHeader('sw-version', '6.6.10.0');
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->never())->method('warning');
+        $logger->expects($this->never())->method('info');
+
+        $verifier = new DualSignatureRequestVerifier(new RequestVerifier(), null, $logger);
+
+        $this->expectException(SignatureInvalidException::class);
+        $verifier->authenticatePostRequest($request, $shop);
+    }
+
+    public function testInWindowRequestMatchingNeitherSecretIsRejectedSilently(): void
+    {
+        $shop = new MockShop('shop-1', 'https://example.com', 'new-secret');
+        $rotatedAt = new \DateTimeImmutable('2026-03-30T08:00:00+00:00');
+        $shop->setPreviousShopSecret('old-secret')
+            ->setSecretsRotatedAt($rotatedAt);
+
+        // Inside the window but matching neither secret: the previous secret is tried, fails, and the request
+        // is rejected without any log.
+        $request = (new Request('POST', 'https://my-app.com/webhook', [], 'body'))
+            ->withHeader('shopware-shop-signature', hash_hmac('sha256', 'body', 'unknown-key'));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->never())->method('warning');
+        $logger->expects($this->never())->method('info');
+
+        $verifier = new DualSignatureRequestVerifier(new RequestVerifier(), new FrozenClock($rotatedAt->modify('+30 seconds')), $logger);
+
+        $this->expectException(SignatureInvalidException::class);
+        $verifier->authenticatePostRequest($request, $shop);
+    }
+
+    public function testLateRequestMatchingNeitherSecretIsRejectedSilently(): void
+    {
+        $shop = new MockShop('shop-1', 'https://example.com', 'new-secret');
+        $rotatedAt = new \DateTimeImmutable('2026-03-30T08:00:00+00:00');
+        $shop->setPreviousShopSecret('old-secret')
+            ->setSecretsRotatedAt($rotatedAt);
+
+        // Past the window AND matching neither secret: rejected, with no strand log (the old secret didn't match).
+        $request = (new Request('POST', 'https://my-app.com/webhook', [], 'body'))
+            ->withHeader('shopware-shop-signature', hash_hmac('sha256', 'body', 'unknown-key'));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->never())->method('warning');
+        $logger->expects($this->never())->method('info');
+
+        $verifier = new DualSignatureRequestVerifier(new RequestVerifier(), new FrozenClock($rotatedAt->modify('+90 seconds')), $logger);
+
+        $this->expectException(SignatureInvalidException::class);
+        $verifier->authenticatePostRequest($request, $shop);
+    }
+
+    /**
+     * Guards the hard security constraint: no log context value may carry secret material.
+     *
+     * @param array<string, mixed> $context
+     */
+    private static function assertSecretFree(array $context): void
+    {
+        $forbidden = [
+            'current-secret',
+            'new-secret',
+            'old-secret',
+            'invalid-signature',
+            'body',
+        ];
+
+        foreach ($context as $key => $value) {
+            if (!is_scalar($value)) {
+                continue;
+            }
+
+            foreach ($forbidden as $needle) {
+                static::assertStringNotContainsString(
+                    $needle,
+                    (string) $value,
+                    sprintf('Context key "%s" leaked a secret value.', $key)
+                );
+            }
+        }
     }
 }
