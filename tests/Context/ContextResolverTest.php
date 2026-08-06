@@ -1638,6 +1638,53 @@ class ContextResolverTest extends TestCase
     }
 
     /**
+     * @param array<string, mixed> $body
+     */
+    #[DataProvider('sourceBodyProvider')]
+    public function testParseSourceReadsRequestHeaders(string $method, array $body): void
+    {
+        $request = new Request('POST', '/', [
+            'sw-version' => '6.7.0.0',
+            'sw-user-language' => 'en-GB',
+        ], \json_encode($body, \JSON_THROW_ON_ERROR));
+
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+        $action = $contextResolver->$method($request, $this->getShop());
+
+        static::assertSame('6.7.0.0', $action->source->shopwareVersion);
+        static::assertSame('en-GB', $action->source->userLanguage);
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
+    #[DataProvider('sourceBodyProvider')]
+    public function testParseSourceWithoutRequestHeaders(string $method, array $body): void
+    {
+        $request = new Request('POST', '/', [], \json_encode($body, \JSON_THROW_ON_ERROR));
+
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+        $action = $contextResolver->$method($request, $this->getShop());
+
+        static::assertNull($action->source->shopwareVersion);
+        static::assertNull($action->source->userLanguage);
+    }
+
+    public function testParseSourceWithEmptyRequestHeaders(): void
+    {
+        $request = new Request('POST', '/', [
+            'sw-version' => '',
+            'sw-user-language' => '',
+        ], '{"source":{"url":"https://example.com","appVersion":"1.0.0"},"purchases":[]}');
+
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+        $action = $contextResolver->assembleInAppPurchasesFilterRequest($request, $this->getShop());
+
+        static::assertNull($action->source->shopwareVersion);
+        static::assertNull($action->source->userLanguage);
+    }
+
+    /**
      * @return iterable<string[]>
      */
     public static function assembleStorefrontInvalidHeaders(): iterable
@@ -1675,6 +1722,70 @@ class ContextResolverTest extends TestCase
         yield ['assembleCheckoutGatewayRequest'];
         yield ['assembleContextGatewayRequest'];
         yield ['assembleInAppPurchasesFilterRequest'];
+    }
+
+    /**
+     * A minimal valid body per assemble method that resolves a source.
+     *
+     * @return iterable<string, array{string, array<string, mixed>}>
+     */
+    public static function sourceBodyProvider(): iterable
+    {
+        $source = [
+            'source' => [
+                'url' => 'https://example.com',
+                'appVersion' => '1.0.0',
+            ],
+        ];
+
+        yield 'assembleWebhook' => ['assembleWebhook', $source + [
+            'data' => ['event' => 'order.placed', 'payload' => []],
+            'timestamp' => 123456789,
+        ]];
+        yield 'assembleActionButton' => ['assembleActionButton', $source + [
+            'data' => ['ids' => ['123'], 'entity' => 'order', 'action' => 'open'],
+        ]];
+        yield 'assembleTaxProvider' => ['assembleTaxProvider', $source + [
+            'context' => [],
+            'cart' => [],
+        ]];
+        yield 'assemblePaymentPay' => ['assemblePaymentPay', $source + [
+            'order' => [],
+            'orderTransaction' => [],
+        ]];
+        yield 'assemblePaymentFinalize' => ['assemblePaymentFinalize', $source + [
+            'orderTransaction' => [],
+        ]];
+        yield 'assemblePaymentCapture' => ['assemblePaymentCapture', $source + [
+            'order' => [],
+            'orderTransaction' => [],
+        ]];
+        yield 'assemblePaymentRecurringCapture' => ['assemblePaymentRecurringCapture', $source + [
+            'order' => [],
+            'orderTransaction' => [],
+        ]];
+        yield 'assemblePaymentValidate' => ['assemblePaymentValidate', $source + [
+            'cart' => [],
+            'salesChannelContext' => [],
+        ]];
+        yield 'assemblePaymentRefund' => ['assemblePaymentRefund', $source + [
+            'order' => [],
+            'refund' => [],
+        ]];
+        yield 'assembleCheckoutGatewayRequest' => ['assembleCheckoutGatewayRequest', $source + [
+            'cart' => [],
+            'salesChannelContext' => [],
+            'paymentMethods' => [],
+            'shippingMethods' => [],
+        ]];
+        yield 'assembleContextGatewayRequest' => ['assembleContextGatewayRequest', $source + [
+            'cart' => [],
+            'salesChannelContext' => [],
+            'data' => [],
+        ]];
+        yield 'assembleInAppPurchasesFilterRequest' => ['assembleInAppPurchasesFilterRequest', $source + [
+            'purchases' => [],
+        ]];
     }
 
     /**
