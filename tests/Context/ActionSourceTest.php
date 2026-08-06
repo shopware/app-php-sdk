@@ -22,5 +22,21 @@ class ActionSourceTest extends TestCase
         static::assertSame($url, $source->url);
         static::assertSame($version, $source->appVersion);
         static::assertEquals(new Collection(), $source->inAppPurchases);
+        static::assertNull($source->shopwareVersion);
+        static::assertNull($source->userLanguage);
+    }
+
+    public function testConstruct(): void
+    {
+        $url = 'https://example.com';
+        $version = '1.0.0';
+
+        $source = new ActionSource($url, $version, new Collection(), '6.7.0.0', 'en-GB');
+
+        static::assertSame($url, $source->url);
+        static::assertSame($version, $source->appVersion);
+        static::assertEquals(new Collection(), $source->inAppPurchases);
+        static::assertSame('6.7.0.0', $source->shopwareVersion);
+        static::assertSame('en-GB', $source->userLanguage);
     }
 }

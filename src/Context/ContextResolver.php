@@ -56,7 +56,7 @@ class ContextResolver
 
         return new WebhookAction(
             $shop,
-            $this->parseSource($body['source'], $shop),
+            $this->parseSource($body['source'], $shop, $request),
             $body['data']['event'],
             $body['data']['payload'],
             new DateTimeImmutable('@' . $body['timestamp'])
@@ -74,7 +74,7 @@ class ContextResolver
 
         return new ActionButtonAction(
             $shop,
-            $this->parseSource($body['source'], $shop),
+            $this->parseSource($body['source'], $shop, $request),
             $body['data']['ids'],
             $body['data']['entity'],
             $body['data']['action']
@@ -119,7 +119,7 @@ class ContextResolver
 
         return new TaxProviderAction(
             $shop,
-            $this->parseSource($body['source'], $shop),
+            $this->parseSource($body['source'], $shop, $request),
             new SalesChannelContext($body['context']),
             new Cart($body['cart'])
         );
@@ -136,7 +136,7 @@ class ContextResolver
 
         return new PaymentPayAction(
             $shop,
-            $this->parseSource($body['source'], $shop),
+            $this->parseSource($body['source'], $shop, $request),
             new Order($body['order']),
             new OrderTransaction($body['orderTransaction']),
             $body['returnUrl'] ?? null,
@@ -156,7 +156,7 @@ class ContextResolver
 
         return new PaymentFinalizeAction(
             $shop,
-            $this->parseSource($body['source'], $shop),
+            $this->parseSource($body['source'], $shop, $request),
             new OrderTransaction($body['orderTransaction']),
             isset($body['recurring']) ? new RecurringData($body['recurring']) : null,
             // Support both Shopware 6.7 (requestData) and 6.6 (queryParameters) for backward compatibility
@@ -175,7 +175,7 @@ class ContextResolver
 
         return new PaymentCaptureAction(
             $shop,
-            $this->parseSource($body['source'], $shop),
+            $this->parseSource($body['source'], $shop, $request),
             new Order($body['order']),
             new OrderTransaction($body['orderTransaction']),
             isset($body['recurring']) ? new RecurringData($body['recurring']) : null,
@@ -194,7 +194,7 @@ class ContextResolver
 
         return new PaymentRecurringAction(
             $shop,
-            $this->parseSource($body['source'], $shop),
+            $this->parseSource($body['source'], $shop, $request),
             new Order($body['order']),
             new OrderTransaction($body['orderTransaction']),
             isset($body['recurring']) ? new RecurringData($body['recurring']) : null,
@@ -212,7 +212,7 @@ class ContextResolver
 
         return new PaymentValidateAction(
             $shop,
-            $this->parseSource($body['source'], $shop),
+            $this->parseSource($body['source'], $shop, $request),
             new Cart($body['cart']),
             new SalesChannelContext($body['salesChannelContext']),
             $body['requestData'] ?? []
@@ -230,7 +230,7 @@ class ContextResolver
 
         return new RefundAction(
             $shop,
-            $this->parseSource($body['source'], $shop),
+            $this->parseSource($body['source'], $shop, $request),
             new Order($body['order']),
             new Refund($body['refund']),
         );
@@ -284,7 +284,7 @@ class ContextResolver
 
         return new CheckoutGatewayAction(
             $shop,
-            $this->parseSource($body['source'], $shop),
+            $this->parseSource($body['source'], $shop, $request),
             new Cart($body['cart']),
             new SalesChannelContext($body['salesChannelContext']),
             new Collection($this->arrayFlip($body['paymentMethods'])),
@@ -303,7 +303,7 @@ class ContextResolver
 
         return new ContextGatewayAction(
             $shop,
-            $this->parseSource($body['source'], $shop),
+            $this->parseSource($body['source'], $shop, $request),
             new Cart($body['cart']),
             new SalesChannelContext($body['salesChannelContext']),
             $body['data'],
@@ -325,7 +325,7 @@ class ContextResolver
 
         return new FilterAction(
             $shop,
-            $this->parseSource($body['source'], $shop),
+            $this->parseSource($body['source'], $shop, $request),
             new Collection($body['purchases'])
         );
     }
@@ -333,7 +333,7 @@ class ContextResolver
     /**
      * @param array<string, mixed> $source
      */
-    private function parseSource(array $source, ShopInterface $shop): ActionSource
+    private function parseSource(array $source, ShopInterface $shop, RequestInterface $request): ActionSource
     {
         if (!isset($source['url'], $source['appVersion']) || !\is_string($source['url']) || !\is_string($source['appVersion'])) {
             throw new MalformedWebhookBodyException();
@@ -352,6 +352,8 @@ class ContextResolver
             $source['url'],
             $source['appVersion'],
             $inAppPurchases ?? new Collection(),
+            $request->getHeaderLine('sw-version') ?: null,
+            $request->getHeaderLine('sw-user-language') ?: null,
         );
     }
 
