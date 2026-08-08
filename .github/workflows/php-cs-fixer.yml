@@ -1,4 +1,4 @@
-name: CS-Fixer
+name: PHP CS Fixer
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  cs-fixer:
+  php-cs-fixer:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,4 +25,4 @@ jobs:
         run: composer install
 
       - name: Run PHP-CS-Fixer
-        run: vendor/bin/php-cs-fixer fix --dry-run
+        run: vendor/bin/php-cs-fixer check
