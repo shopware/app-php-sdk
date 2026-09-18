@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Shopware\App\SDK\Context\ContextResolver;
 use Shopware\App\SDK\Context\InAppPurchase\InAppPurchase;
@@ -34,6 +35,17 @@ class ContextResolverTest extends TestCase
             $this->createApiRequest([]),
             $this->getShop()
         );
+    }
+
+    public function testAssembleWebhookUsesParsedBody(): void
+    {
+        $contextResolver = new ContextResolver($this->createMock(InAppPurchaseProvider::class));
+        $request = $this->createMock(ServerRequestInterface::class);
+        $request->expects(static::once())->method('getParsedBody')->willReturn([]);
+        $request->expects(static::never())->method('getBody');
+
+        static::expectException(MalformedWebhookBodyException::class);
+        $contextResolver->assembleWebhook($request, $this->getShop());
     }
 
     public function testAssembleWebhook(): void
