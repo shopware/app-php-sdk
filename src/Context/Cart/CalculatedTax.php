@@ -42,18 +42,20 @@ class CalculatedTax extends ArrayStruct
         $new = [];
 
         foreach ($calculatedTaxes as $calculatedTax) {
-            $exists = isset($new[$calculatedTax->getTaxRate()]);
+            $key = (string) $calculatedTax->getTaxRate();
+
+            $exists = isset($new[$key]);
             if (!$exists) {
-                $new[$calculatedTax->getTaxRate()] = $calculatedTax;
+                $new[$key] = $calculatedTax;
 
                 continue;
             }
 
-            $new[$calculatedTax->getTaxRate()] = new CalculatedTax([
+            $new[$key] = new CalculatedTax([
                 'taxRate' => $calculatedTax->getTaxRate(),
-                'price' => $new[$calculatedTax->getTaxRate()]->getPrice() + $calculatedTax->getPrice(),
-                'tax' => $new[$calculatedTax->getTaxRate()]->getTax() + $calculatedTax->getTax(),
-                'label' => implode(' + ', array_filter([$new[$calculatedTax->getTaxRate()]->getLabel(), $calculatedTax->getLabel()])) ?: null,
+                'price' => $new[$key]->getPrice() + $calculatedTax->getPrice(),
+                'tax' => $new[$key]->getTax() + $calculatedTax->getTax(),
+                'label' => implode(' + ', array_filter([$new[$key]->getLabel(), $calculatedTax->getLabel()])) ?: null,
             ]);
         }
 
