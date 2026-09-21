@@ -116,8 +116,8 @@ class AppLifecycle
         }
 
         return \is_array($body)
-            && \is_array($body['data'])
-            && \is_array($body['data']['payload'])
+            && \is_array($body['data'] ?? null)
+            && \is_array($body['data']['payload'] ?? null)
             && ($body['data']['payload']['keepUserData'] ?? false) === true;
     }
 
