@@ -6,6 +6,7 @@ namespace Shopware\App\SDK\Tests;
 
 use Nyholm\Psr7\Request;
 use Nyholm\Psr7\Response;
+use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
@@ -123,6 +124,20 @@ class AppLifecycleTest extends TestCase
         static::assertTrue($this->events[0]->keepUserData());
         static::assertInstanceOf(ShopDeletedEvent::class, $this->events[1]);
         static::assertTrue($this->events[1]->keepUserData());
+    }
+
+    public function testUninstallUsesTheParsedBody(): void
+    {
+        $this->shopRepository->createShop(new MockShop('123', 'https://foo.com', '1234567890'));
+
+        // an empty body stream cannot be decoded, so keeping the shop proves the parsed body was used
+        $request = (new ServerRequest('POST', '/?shop-id=123', [], ''))
+            ->withParsedBody(['data' => ['payload' => ['keepUserData' => true]]]);
+
+        $response = $this->appLifecycle->delete($request);
+
+        static::assertSame(204, $response->getStatusCode());
+        static::assertNotNull($this->shopRepository->getShopFromId('123'));
     }
 
     public function testUninstallDeletesShopWhenKeepUserDataIsFalse(): void

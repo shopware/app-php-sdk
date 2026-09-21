@@ -9,6 +9,7 @@ use Shopware\App\SDK\Authentication\DualSignatureRequestVerifier;
 use Shopware\App\SDK\Exception\MissingShopParameterException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
 use Shopware\App\SDK\Exception\SignatureInvalidException;
+use Shopware\App\SDK\Framework\RequestBodyParser;
 
 /**
  * Resolve and verify a request to a shop
@@ -45,8 +46,7 @@ class ShopResolver
      */
     private function resolveFromSource(RequestInterface $request): ShopInterface
     {
-        $body = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
-        $request->getBody()->rewind();
+        $body = RequestBodyParser::parse($request);
 
         if (!is_array($body) || !isset($body['source']) || !isset($body['source']['shopId']) || !is_string($body['source']['shopId'])) {
             throw new MissingShopParameterException();

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Tests\Registration;
 
 use Nyholm\Psr7\Request;
+use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -817,6 +818,33 @@ class RegistrationServiceTest extends TestCase
         );
 
         $registrationService->registerConfirm($request);
+    }
+
+    public function testRegisterConfirmUsesTheParsedBody(): void
+    {
+        $shop = new MockShop('123', 'https://foo.com', '1234567890');
+        $shop->setPendingShopSecret('1234567890');
+        $shop->setPendingShopUrl('https://my-shop.com');
+        $this->shopRepository->createShop($shop);
+
+        // an empty body stream cannot be decoded, so confirming the shop proves the parsed body was used
+        $request = (new ServerRequest('POST', 'http://localhost', [], ''))
+            ->withParsedBody(['shopId' => '123', 'apiKey' => '1', 'secretKey' => '2']);
+
+        $this->registerService->registerConfirm($request);
+
+        $confirmedShop = $this->shopRepository->getShopFromId('123');
+        static::assertNotNull($confirmedShop);
+        static::assertSame('1', $confirmedShop->getShopClientId());
+        static::assertSame('2', $confirmedShop->getShopClientSecret());
+    }
+
+    public function testRegisterConfirmRejectsABodyThatIsNotAJsonObject(): void
+    {
+        $request = new Request('POST', 'http://localhost', [], '"foo"');
+
+        static::expectException(MissingShopParameterException::class);
+        $this->registerService->registerConfirm($request);
     }
 
     public function testBodyRewindIsCalled(): void
