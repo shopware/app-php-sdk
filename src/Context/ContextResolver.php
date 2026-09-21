@@ -6,7 +6,6 @@ namespace Shopware\App\SDK\Context;
 
 use DateTimeImmutable;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use Shopware\App\SDK\Context\ActionButton\ActionButtonAction;
 use Shopware\App\SDK\Context\Cart\Cart;
 use Shopware\App\SDK\Context\Gateway\Checkout\CheckoutGatewayAction;
@@ -31,6 +30,7 @@ use Shopware\App\SDK\Context\TaxProvider\TaxProviderAction;
 use Shopware\App\SDK\Context\Webhook\WebhookAction;
 use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
 use Shopware\App\SDK\Framework\Collection;
+use Shopware\App\SDK\Framework\RequestBodyParser;
 use Shopware\App\SDK\Shop\ShopInterface;
 
 /**
@@ -48,7 +48,7 @@ class ContextResolver
      */
     public function assembleWebhook(RequestInterface $request, ShopInterface $shop): WebhookAction
     {
-        $body = $this->getBody($request);
+        $body = RequestBodyParser::parse($request);
 
         if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
             throw new MalformedWebhookBodyException();
@@ -65,7 +65,7 @@ class ContextResolver
 
     public function assembleActionButton(RequestInterface $request, ShopInterface $shop): ActionButtonAction
     {
-        $body = $this->getBody($request);
+        $body = RequestBodyParser::parse($request);
 
         if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
             throw new MalformedWebhookBodyException();
@@ -109,7 +109,7 @@ class ContextResolver
 
     public function assembleTaxProvider(RequestInterface $request, ShopInterface $shop): TaxProviderAction
     {
-        $body = $this->getBody($request);
+        $body = RequestBodyParser::parse($request);
 
         if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
             throw new MalformedWebhookBodyException();
@@ -125,7 +125,7 @@ class ContextResolver
 
     public function assemblePaymentPay(RequestInterface $request, ShopInterface $shop): PaymentPayAction
     {
-        $body = $this->getBody($request);
+        $body = RequestBodyParser::parse($request);
 
         if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
             throw new MalformedWebhookBodyException();
@@ -144,7 +144,7 @@ class ContextResolver
 
     public function assemblePaymentFinalize(RequestInterface $request, ShopInterface $shop): PaymentFinalizeAction
     {
-        $body = $this->getBody($request);
+        $body = RequestBodyParser::parse($request);
 
         if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
             throw new MalformedWebhookBodyException();
@@ -162,7 +162,7 @@ class ContextResolver
 
     public function assemblePaymentCapture(RequestInterface $request, ShopInterface $shop): PaymentCaptureAction
     {
-        $body = $this->getBody($request);
+        $body = RequestBodyParser::parse($request);
 
         if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
             throw new MalformedWebhookBodyException();
@@ -180,7 +180,7 @@ class ContextResolver
 
     public function assemblePaymentRecurringCapture(RequestInterface $request, ShopInterface $shop): PaymentRecurringAction
     {
-        $body = $this->getBody($request);
+        $body = RequestBodyParser::parse($request);
 
         if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
             throw new MalformedWebhookBodyException();
@@ -197,7 +197,7 @@ class ContextResolver
 
     public function assemblePaymentValidate(RequestInterface $request, ShopInterface $shop): PaymentValidateAction
     {
-        $body = $this->getBody($request);
+        $body = RequestBodyParser::parse($request);
 
         if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
             throw new MalformedWebhookBodyException();
@@ -214,7 +214,7 @@ class ContextResolver
 
     public function assemblePaymentRefund(RequestInterface $request, ShopInterface $shop): RefundAction
     {
-        $body = $this->getBody($request);
+        $body = RequestBodyParser::parse($request);
 
         if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
             throw new MalformedWebhookBodyException();
@@ -267,7 +267,7 @@ class ContextResolver
 
     public function assembleCheckoutGatewayRequest(RequestInterface $request, ShopInterface $shop): CheckoutGatewayAction
     {
-        $body = $this->getBody($request);
+        $body = RequestBodyParser::parse($request);
 
         if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
             throw new MalformedWebhookBodyException();
@@ -285,7 +285,7 @@ class ContextResolver
 
     public function assembleContextGatewayRequest(RequestInterface $request, ShopInterface $shop): ContextGatewayAction
     {
-        $body = $this->getBody($request);
+        $body = RequestBodyParser::parse($request);
 
         if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source']) || !isset($body['data']) || !\is_array($body['data'])) {
             throw new MalformedWebhookBodyException();
@@ -302,7 +302,7 @@ class ContextResolver
 
     public function assembleInAppPurchasesFilterRequest(RequestInterface $request, ShopInterface $shop): FilterAction
     {
-        $body = $this->getBody($request);
+        $body = RequestBodyParser::parse($request);
 
         if (!\is_array($body) || !isset($body['source']) || !\is_array($body['source'])) {
             throw new MalformedWebhookBodyException();
@@ -317,25 +317,6 @@ class ContextResolver
             $this->parseSource($body['source'], $shop, $request),
             new Collection($body['purchases'])
         );
-    }
-
-    /**
-     * @throws \JsonException
-     */
-    private function getBody(RequestInterface $request): mixed
-    {
-        if ($request instanceof ServerRequestInterface) {
-            $body = $request->getParsedBody();
-
-            if ($body !== null) {
-                return $body;
-            }
-        }
-
-        $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
-        $request->getBody()->rewind();
-
-        return $body;
     }
 
     /**

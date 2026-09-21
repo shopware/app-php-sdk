@@ -18,6 +18,7 @@ use Shopware\App\SDK\Event\ShopDeactivatedEvent;
 use Shopware\App\SDK\Event\ShopDeletedEvent;
 use Shopware\App\SDK\Exception\MalformedWebhookBodyException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
+use Shopware\App\SDK\Framework\RequestBodyParser;
 use Shopware\App\SDK\Registration\RegistrationService;
 use Shopware\App\SDK\Shop\ShopInterface;
 use Shopware\App\SDK\Shop\ShopRepositoryInterface;
@@ -109,11 +110,10 @@ class AppLifecycle
     private function shouldKeepUserData(RequestInterface $request): bool
     {
         try {
-            $body = \json_decode($request->getBody()->getContents(), true, flags: \JSON_THROW_ON_ERROR);
+            $body = RequestBodyParser::parse($request);
         } catch (\JsonException) {
             throw new MalformedWebhookBodyException();
         }
-        $request->getBody()->rewind();
 
         return \is_array($body) && ($body['data']['payload']['keepUserData'] ?? false) === true;
     }

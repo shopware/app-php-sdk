@@ -22,6 +22,7 @@ use Shopware\App\SDK\Exception\MissingShopParameterException;
 use Shopware\App\SDK\Exception\ShopNotFoundException;
 use Shopware\App\SDK\Exception\SignatureInvalidException;
 use Shopware\App\SDK\Exception\SignatureNotFoundException;
+use Shopware\App\SDK\Framework\RequestBodyParser;
 use Shopware\App\SDK\Shop\ShopInterface;
 use Shopware\App\SDK\Shop\ShopRepositoryInterface;
 
@@ -141,8 +142,7 @@ class RegistrationService
      */
     public function registerConfirm(RequestInterface $request): ResponseInterface
     {
-        /** @var array<string, mixed> $requestContent */
-        $requestContent = \json_decode($request->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
+        $requestContent = RequestBodyParser::parse($request);
 
         if (
             empty($requestContent['shopId']) ||
@@ -165,8 +165,6 @@ class RegistrationService
             'Shop registration confirmation started',
             $this->registrationLogContext($request, $requestContent['shopId'], $shop->getShopUrl(), $shop)
         );
-
-        $request->getBody()->rewind();
 
         // Use dual signature verifier for registration confirmation
         try {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Shopware\App\SDK\Tests\Shop;
 
 use Nyholm\Psr7\Request;
+use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
@@ -98,6 +99,19 @@ class ShopResolverTest extends TestCase
 
         $resolver = new ShopResolver($this->shopRepository, $verifier);
         $resolver->resolveShop($request);
+    }
+
+    public function testResolveSourceUsesTheParsedBody(): void
+    {
+        $this->shopRepository->createShop(new MockShop('1', 'test.de', 'asd'));
+
+        // an empty body stream cannot be decoded, so resolving the shop proves the parsed body was used
+        $request = (new ServerRequest('POST', 'https://example.com', ['Content-Type' => 'application/json'], ''))
+            ->withParsedBody(['source' => ['shopId' => '1']]);
+
+        $shop = $this->shopResolver->resolveShop($request);
+
+        static::assertSame('1', $shop->getShopId());
     }
 
     public function testRequestRewindIsCalled(): void
