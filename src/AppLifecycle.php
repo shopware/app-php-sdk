@@ -115,7 +115,10 @@ class AppLifecycle
             throw new MalformedWebhookBodyException();
         }
 
-        return \is_array($body) && ($body['data']['payload']['keepUserData'] ?? false) === true;
+        return \is_array($body)
+            && \is_array($body['data'])
+            && \is_array($body['data']['payload'])
+            && ($body['data']['payload']['keepUserData'] ?? false) === true;
     }
 
     private function findShop(RequestInterface $request): ?ShopInterface
